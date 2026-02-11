@@ -228,10 +228,6 @@ const Scene3D = () => {
         <FloatingRing radius={3.5} speed={0.15} offset={Math.PI / 3} />
         <FloatingRing radius={4} speed={0.1} offset={Math.PI / 1.5} />
         <ParticleCloud />
-        <DNAHelix />
-        <OrbitingDots />
-        <GridPlane />
-        <WireframeTorus />
       </Canvas>
     </div>
   );
