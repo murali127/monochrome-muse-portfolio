@@ -4,7 +4,7 @@ import SectionHeader from './SectionHeader';
 
 const AboutSection = () => {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-100px' });
+  const inView = useInView(ref, { once: true, margin: '200px 0px' });
 
   const diagnostics = [
     { label: 'LOCATION', value: 'HYDERABAD, IN' },
@@ -24,7 +24,7 @@ const AboutSection = () => {
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             className="space-y-6"
           >
             <p className="font-body text-base text-muted-foreground leading-relaxed">
@@ -50,7 +50,7 @@ const AboutSection = () => {
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.4 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
             className="glass-panel border-glow p-6 space-y-4"
           >
             <div className="font-ndot text-[10px] tracking-[0.3em] text-foreground mb-4 flex items-center gap-2">

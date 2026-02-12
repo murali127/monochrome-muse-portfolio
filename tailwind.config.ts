@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        ndot: ["NDot57", "monospace"],
-        body: ["Space Grotesk", "sans-serif"],
-        mono: ["IBM Plex Mono", "monospace"],
+        ndot: ["'DotGothic16'", "monospace"],
+        body: ["'DotGothic16'", "monospace"],
+        mono: ["'DotGothic16'", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",

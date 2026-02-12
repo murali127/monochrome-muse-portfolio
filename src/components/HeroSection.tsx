@@ -25,7 +25,7 @@ const HeroSection = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
-              transition={{ delay: 2.8, duration: 0.5 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
               className="inline-flex items-center gap-2 glass-panel px-3 py-1"
             >
               <span className="h-2 w-2 rounded-full bg-foreground animate-pulse" />
@@ -37,7 +37,7 @@ const HeroSection = () => {
             <motion.h1
               initial={{ opacity: 0, y: 60 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: 0.7, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="font-ndot text-5xl sm:text-7xl lg:text-8xl leading-[0.9] tracking-tight text-foreground text-glow"
             >
               MURALI
@@ -48,7 +48,7 @@ const HeroSection = () => {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 3.3, duration: 0.6 }}
+              transition={{ delay: 0.9, duration: 0.6 }}
               className="font-mono text-sm text-muted-foreground max-w-md leading-relaxed"
             >
               Full-Stack Developer & AI/ML Enthusiast crafting intelligent digital experiences 
@@ -59,7 +59,7 @@ const HeroSection = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
-              transition={{ delay: 3.5, duration: 0.6 }}
+              transition={{ delay: 1.1, duration: 0.6 }}
               className="flex gap-8"
             >
               {[
@@ -78,7 +78,7 @@ const HeroSection = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 3.7, duration: 0.6 }}
+              transition={{ delay: 1.3, duration: 0.6 }}
               className="flex gap-4"
             >
               <a
@@ -103,7 +103,7 @@ const HeroSection = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ delay: 3.2, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ delay: 0.8, duration: 1, ease: [0.16, 1, 0.3, 1] }}
             className="relative flex justify-center"
           >
             <div className="relative">
@@ -144,7 +144,7 @@ const HeroSection = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 4, duration: 0.6 }}
+          transition={{ delay: 1.5, duration: 0.6 }}
           className="mt-24 overflow-hidden border-t border-b border-border py-4"
         >
           <div className="marquee-track">

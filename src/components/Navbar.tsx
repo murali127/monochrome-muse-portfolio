@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import logo from '@/assets/logo.png';
 
 const navItems = ['ABOUT', 'SKILLS', 'EXPERIENCE', 'PROJECTS', 'CONTACT'];
 
@@ -35,16 +36,39 @@ const Navbar = () => {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      transition={{ duration: 0.6, delay: 2.5 }}
+      transition={{ duration: 0.6, delay: 0.3 }}
       className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
         scrolled ? 'glass-panel border-b border-border' : ''
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="font-ndot text-sm tracking-[0.3em] text-foreground" data-cursor-hover>
-          MP_
+      <div className="flex items-center justify-between px-4 py-3">
+        {/* Logo + Name - Left Corner */}
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="group flex items-center gap-3"
+          data-cursor-hover
+        >
+          <div className="relative">
+            {/* Glow ring behind logo */}
+            <div className="absolute -inset-1 rounded-full bg-foreground/10 blur-md group-hover:bg-foreground/20 transition-all duration-500" />
+            <div className="absolute -inset-0.5 rounded-full border border-foreground/20 group-hover:border-foreground/40 transition-all duration-500 animate-pulse" />
+            <img
+              src={logo}
+              alt="Logo"
+              className="relative h-10 w-10 object-contain rounded-full transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]"
+            />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-ndot text-sm tracking-[0.2em] text-foreground group-hover:text-glow transition-all duration-300">
+              MURALI
+            </span>
+            <span className="font-ndot text-[8px] tracking-[0.3em] text-muted-foreground">
+              PAILA
+            </span>
+          </div>
         </button>
 
+        {/* Nav Links - Center */}
         <div className="hidden items-center gap-8 md:flex">
           {navItems.map((item) => (
             <button
@@ -65,6 +89,7 @@ const Navbar = () => {
           ))}
         </div>
 
+        {/* CTA - Right */}
         <button
           onClick={() => scrollTo('CONTACT')}
           className="glass-panel-hover rounded-none px-4 py-2 font-ndot text-[10px] tracking-[0.2em] text-foreground"
