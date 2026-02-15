@@ -1,7 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const ParticleField = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [color, setColor] = useState({ r: 255, g: 255, b: 255 });
+
+  useEffect(() => {
+    const updateColor = () => {
+      const isLight = document.documentElement.classList.contains('light');
+      setColor(isLight ? { r: 0, g: 0, b: 0 } : { r: 255, g: 255, b: 255 });
+    };
+
+    updateColor();
+    const observer = new MutationObserver(updateColor);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -70,7 +84,7 @@ const ParticleField = () => {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
+        ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${p.opacity})`;
         ctx.fill();
 
         // Draw connections
@@ -81,7 +95,7 @@ const ParticleField = () => {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.06 * (1 - d / 120)})`;
+            ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${0.06 * (1 - d / 120)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -97,7 +111,7 @@ const ParticleField = () => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouse);
     };
-  }, []);
+  }, [color]);
 
   return (
     <canvas

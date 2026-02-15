@@ -31,11 +31,38 @@
     --glass-hover: 0 0% 100% / 0.08;
     --glow: 0 0% 100% / 0.15;
   }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 96%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 96%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 88%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 0% 85%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 0% 60%;
+    --destructive-foreground: 0 0% 0%;
+    --border: 0 0% 82%;
+    --input: 0 0% 82%;
+    --ring: 0 0% 0%;
+    --glass: 0 0% 0% / 0.04;
+    --glass-border: 0 0% 0% / 0.08;
+    --glass-hover: 0 0% 0% / 0.08;
+    --glow: 0 0% 0% / 0.15;
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
   body {
     @apply bg-background text-foreground;
@@ -44,6 +71,7 @@
     overflow-x: hidden;
     font-size: 16px;
     line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'DotGothic16', monospace !important;
@@ -53,8 +81,8 @@
     font-family: 'DotGothic16', monospace !important;
   }
   ::selection {
-    background: white;
-    color: black;
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
   }
 }
 

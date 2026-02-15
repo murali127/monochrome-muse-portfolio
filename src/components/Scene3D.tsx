@@ -1,9 +1,9 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float } from '@react-three/drei';
 import * as THREE from 'three';
 
-const WireframeSphere = () => {
+const WireframeSphere = ({ color }: { color: string }) => {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
@@ -17,13 +17,13 @@ const WireframeSphere = () => {
     <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.5}>
       <mesh ref={meshRef}>
         <icosahedronGeometry args={[2, 3]} />
-        <meshBasicMaterial wireframe color="white" transparent opacity={0.12} />
+        <meshBasicMaterial wireframe color={color} transparent opacity={0.12} />
       </mesh>
     </Float>
   );
 };
 
-const FloatingRing = ({ radius, speed, offset }: { radius: number; speed: number; offset: number }) => {
+const FloatingRing = ({ radius, speed, offset, color }: { radius: number; speed: number; offset: number; color: string }) => {
   const ref = useRef<THREE.Mesh>(null);
 
   const geometry = useMemo(() => {
@@ -39,12 +39,12 @@ const FloatingRing = ({ radius, speed, offset }: { radius: number; speed: number
 
   return (
     <mesh ref={ref} geometry={geometry}>
-      <meshBasicMaterial color="white" transparent opacity={0.08} />
+      <meshBasicMaterial color={color} transparent opacity={0.08} />
     </mesh>
   );
 };
 
-const DNAHelix = () => {
+const DNAHelix = ({ color }: { color: string }) => {
   const groupRef = useRef<THREE.Group>(null);
   const count = 40;
 
@@ -74,7 +74,7 @@ const DNAHelix = () => {
       {spheres.map((s, i) => (
         <mesh key={i} position={s.pos}>
           <sphereGeometry args={[0.04, 8, 8]} />
-          <meshBasicMaterial color="white" transparent opacity={0.35} />
+          <meshBasicMaterial color={color} transparent opacity={0.35} />
         </mesh>
       ))}
       {connections.map((c, i) => {
@@ -87,7 +87,7 @@ const DNAHelix = () => {
         return (
           <mesh key={`c-${i}`} position={mid} quaternion={quat}>
             <cylinderGeometry args={[0.005, 0.005, len, 4]} />
-            <meshBasicMaterial color="white" transparent opacity={0.15} />
+            <meshBasicMaterial color={color} transparent opacity={0.15} />
           </mesh>
         );
       })}
@@ -95,7 +95,7 @@ const DNAHelix = () => {
   );
 };
 
-const OrbitingDots = () => {
+const OrbitingDots = ({ color }: { color: string }) => {
   const ref = useRef<THREE.Group>(null);
   const dotCount = 60;
 
@@ -132,14 +132,14 @@ const OrbitingDots = () => {
       {dots.map((d, i) => (
         <mesh key={i}>
           <sphereGeometry args={[d.size, 6, 6]} />
-          <meshBasicMaterial color="white" transparent opacity={0.5} />
+          <meshBasicMaterial color={color} transparent opacity={0.5} />
         </mesh>
       ))}
     </group>
   );
 };
 
-const GridPlane = () => {
+const GridPlane = ({ color }: { color: string }) => {
   const ref = useRef<THREE.GridHelper>(null);
 
   useFrame((state) => {
@@ -151,16 +151,16 @@ const GridPlane = () => {
   return (
     <gridHelper
       ref={ref}
-      args={[30, 30, 'white', 'white']}
+      args={[30, 30, color, color]}
       position={[0, -4, 0]}
       rotation={[0, 0, 0]}
     >
-      <meshBasicMaterial attach="material" color="white" transparent opacity={0.04} />
+      <meshBasicMaterial attach="material" color={color} transparent opacity={0.04} />
     </gridHelper>
   );
 };
 
-const ParticleCloud = () => {
+const ParticleCloud = ({ color }: { color: string }) => {
   const ref = useRef<THREE.Points>(null);
   const count = 600;
 
@@ -194,12 +194,12 @@ const ParticleCloud = () => {
           itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial size={0.018} color="white" transparent opacity={0.35} sizeAttenuation />
+      <pointsMaterial size={0.018} color={color} transparent opacity={0.35} sizeAttenuation />
     </points>
   );
 };
 
-const WireframeTorus = () => {
+const WireframeTorus = ({ color }: { color: string }) => {
   const ref = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
@@ -213,21 +213,36 @@ const WireframeTorus = () => {
     <Float speed={0.8} rotationIntensity={0.2} floatIntensity={0.4}>
       <mesh ref={ref} position={[-5, 1, -2]}>
         <torusKnotGeometry args={[1, 0.3, 100, 16]} />
-        <meshBasicMaterial wireframe color="white" transparent opacity={0.06} />
+        <meshBasicMaterial wireframe color={color} transparent opacity={0.06} />
       </mesh>
     </Float>
   );
 };
 
 const Scene3D = () => {
+  const [color, setColor] = useState('white');
+
+  useEffect(() => {
+    const updateColor = () => {
+      const isLight = document.documentElement.classList.contains('light');
+      setColor(isLight ? 'black' : 'white');
+    };
+
+    updateColor();
+    const observer = new MutationObserver(updateColor);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="fixed inset-0 z-[1] pointer-events-none">
       <Canvas camera={{ position: [0, 0, 8], fov: 55 }} gl={{ alpha: true, antialias: true }}>
-        <WireframeSphere />
-        <FloatingRing radius={3} speed={0.2} offset={0} />
-        <FloatingRing radius={3.5} speed={0.15} offset={Math.PI / 3} />
-        <FloatingRing radius={4} speed={0.1} offset={Math.PI / 1.5} />
-        <ParticleCloud />
+        <WireframeSphere color={color} />
+        <FloatingRing radius={3} speed={0.2} offset={0} color={color} />
+        <FloatingRing radius={3.5} speed={0.15} offset={Math.PI / 3} color={color} />
+        <FloatingRing radius={4} speed={0.1} offset={Math.PI / 1.5} color={color} />
+        <ParticleCloud color={color} />
       </Canvas>
     </div>
   );

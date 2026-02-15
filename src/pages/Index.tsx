@@ -11,6 +11,7 @@ import ExperienceSection from '@/components/ExperienceSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import AchievementsSection from '@/components/AchievementsSection';
 import ContactSection from '@/components/ContactSection';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const Index = () => {
   const [booted, setBooted] = useState(false);
@@ -25,6 +26,7 @@ const Index = () => {
           <ParticleField />
           <Scene3D />
           <div className="noise-overlay" />
+          <ThemeToggle />
 
           <div className="relative z-10">
             <Navbar />

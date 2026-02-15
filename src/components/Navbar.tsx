@@ -1,12 +1,27 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import logo from '@/assets/logo.png';
+import darkLogo from '@/assets/logo.png';
+import lightLogo from '@/assets/light_logo.png';
 
 const navItems = ['ABOUT', 'SKILLS', 'EXPERIENCE', 'PROJECTS', 'CONTACT'];
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('');
+  const [logo, setLogo] = useState(darkLogo);
+
+  useEffect(() => {
+    const updateLogo = () => {
+      const isLight = document.documentElement.classList.contains('light');
+      setLogo(isLight ? lightLogo : darkLogo);
+    };
+
+    updateLogo();
+    const observer = new MutationObserver(updateLogo);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,7 +70,10 @@ const Navbar = () => {
             <img
               src={logo}
               alt="Logo"
-              className="relative h-10 w-10 object-contain rounded-full transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]"
+              className="relative h-10 w-10 object-contain rounded-full transition-all duration-500 group-hover:scale-110"
+              style={{
+                filter: 'drop-shadow(0 0 12px hsla(var(--foreground) / 0.4))'
+              }}
             />
           </div>
           <div className="flex flex-col">
