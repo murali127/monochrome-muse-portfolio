@@ -3,12 +3,16 @@ import { motion, useInView } from 'framer-motion';
 import SectionHeader from './SectionHeader';
 
 const achievements = [
-  { title: 'SMART INDIA HACKATHON', detail: 'National level finalist — Built AI-powered solution', year: '2023' },
-  { title: 'CODING COMPETITIONS', detail: 'Multiple wins in university-level coding contests', year: '2022-23' },
-  { title: 'RESEARCH PAPER', detail: 'Published work on deep learning in medical imaging', year: '2023' },
-  { title: 'OPEN SOURCE', detail: 'Active contributor to ML/AI open source projects', year: 'ONGOING' },
-  { title: 'CERTIFICATIONS', detail: 'TensorFlow, Python, Web Development certifications', year: '2022-23' },
-  { title: 'LEADERSHIP', detail: 'Led technical teams in multiple project deliveries', year: '2023' },
+  { title: 'DTI IDEATHON 2024', detail: 'Top 2 finalist — Developed innovative MERN stack platform', year: '2024' },
+  { title: 'PRODUCTION SYSTEM', detail: 'Sevak Dashboard supporting 300-400+ daily sessions in production', year: '2025' },
+  { title: 'CISCO CERTIFICATIONS', detail: 'CCNA, Python Essentials, Introduction to Cybersecurity', year: '2024-25' },
+  { title: 'TECHNICAL LEAD', detail: 'Open Forge GVPCE — Improved sprint efficiency by 20%, CI/CD pipeline management', year: '2024-26' },
+  { title: 'CYBERSECURITY LEAD', detail: 'GDSC GVPCE — 3 events + 100+ students, CTF competitions organized', year: '2024-26' },
+  { title: 'INFOSYS SPRINGBOARD', detail: 'Proposed unique solution contributing to product accuracy & team success', year: '2025' },
+  { title: 'POSTMAN API EXPERT', detail: 'API Fundamentals Student Expert certification', year: '2025' },
+  { title: 'NIT ROURKELA', detail: 'Deep Learning certification', year: '2024' },
+  { title: 'NPTEL BLOCKCHAIN', detail: 'Blockchain Technology certification', year: '2024' },
+  { title: 'COURSERA', detail: 'Foundations of Cybersecurity', year: '2024' },
 ];
 
 const AchievementsSection = () => {

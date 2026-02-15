@@ -7,14 +7,14 @@ const BootLoader = ({ onComplete }: { onComplete: () => void }) => {
   const [done, setDone] = useState(false);
 
   const bootLines = [
-    '> INITIALIZING SYSTEM...',
-    '> LOADING PORTFOLIO_MODULE v2.0',
-    '> SCANNING NEURAL_NETWORK...',
-    '> RENDERING 3D_ENGINE...',
-    '> CALIBRATING DISPLAY...',
-    '> ESTABLISHING CONNECTION...',
-    '> MURALI_PAILA.EXE LOADED',
-    '> SYSTEM READY_',
+    '> BREWING COFFEE... ☕',
+    '> CHARGING CREATIVE NEURONS...',
+    '> DEBUGGING LAST NIGHT\'S BUGS... 🐛',
+    '> DOWNLOADING UNLIMITED MOTIVATION...',
+    '> INSTALLING CONFIDENCE.EXE...',
+    '> SYNCING WITH FUTURE OPPORTUNITIES...',
+    '> MURALI_PAILA.EXE LOADED ✓',
+    '> READY TO BUILD SOMETHING EPIC_',
   ];
 
   useEffect(() => {
@@ -46,7 +46,7 @@ const BootLoader = ({ onComplete }: { onComplete: () => void }) => {
         >
           <div className="w-full max-w-lg px-8">
             <div className="mb-8 font-ndot text-xl tracking-widest text-foreground text-glow">
-              NOTHING.PORTFOLIO
+              MURALI PAILA
             </div>
             <div className="mb-6 space-y-1 font-mono text-xs text-muted-foreground">
               {lines.map((line, i) => (

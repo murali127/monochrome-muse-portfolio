@@ -9,10 +9,10 @@ const ContactSection = () => {
     '$ whoami',
     'murali_paila // developer',
     '$ cat contact.txt',
-    'email: muralipaila@example.com',
-    'github: github.com/muralipaila',
+    'email: muralijay360@gmail.com',
+    'github: github.com/murali127',
     'linkedin: linkedin.com/in/muralipaila',
-    'location: Hyderabad, India',
+    'location: Visakhapatnam, India',
     '$ echo "Let\'s build something amazing_"',
   ]);
 
@@ -42,7 +42,7 @@ const ContactSection = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="mailto:muralipaila@example.com"
+                href="mailto:muralijay360@gmail.com"
                 className="glass-panel-hover border-glow px-6 py-3 font-ndot text-[10px] tracking-[0.3em] text-foreground inline-flex items-center gap-2"
                 data-cursor-hover
               >
@@ -50,7 +50,7 @@ const ContactSection = () => {
                 SEND EMAIL
               </a>
               <a
-                href="https://github.com/muralipaila"
+                href="https://github.com/murali127"
                 target="_blank"
                 className="glass-panel-hover px-6 py-3 font-ndot text-[10px] tracking-[0.3em] text-muted-foreground hover:text-foreground"
                 data-cursor-hover
@@ -58,7 +58,7 @@ const ContactSection = () => {
                 GITHUB →
               </a>
               <a
-                href="https://linkedin.com/in/muralipaila"
+                href="https://www.linkedin.com/in/muralipaila/"
                 target="_blank"
                 className="glass-panel-hover px-6 py-3 font-ndot text-[10px] tracking-[0.3em] text-muted-foreground hover:text-foreground"
                 data-cursor-hover

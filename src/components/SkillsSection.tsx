@@ -5,19 +5,19 @@ import SectionHeader from './SectionHeader';
 const skillCategories = [
   {
     title: 'LANGUAGES',
-    skills: ['Python', 'Java', 'JavaScript', 'C', 'Dart', 'SQL'],
+    skills: ['Python', 'JavaScript', 'C', 'C++', 'Java', 'HTML5', 'CSS3', 'SQL'],
   },
   {
     title: 'FRAMEWORKS',
-    skills: ['React.js', 'Django', 'Flutter', 'TensorFlow', 'Keras', 'OpenCV'],
+    skills: ['React.js', 'Node.js', 'Express.js', 'Django', 'Flask', 'Streamlit'],
   },
   {
-    title: 'TOOLS & CLOUD',
-    skills: ['Git', 'Docker', 'Firebase', 'MySQL', 'Figma', 'Linux'],
+    title: 'DATABASES & TOOLS',
+    skills: ['MongoDB', 'MySQL', 'PostgreSQL', 'SQLite', 'Git', 'Docker', 'Postman', 'Netlify'],
   },
   {
     title: 'AI / ML',
-    skills: ['Deep Learning', 'NLP', 'Computer Vision', 'CNNs', 'Transfer Learning', 'Data Analysis'],
+    skills: ['RAG', 'LightRAG', 'YOLOX', 'TensorFlow', 'OpenCV', 'NumPy', 'Pandas', 'Gemini API'],
   },
 ];
 

@@ -51,8 +51,8 @@ const HeroSection = () => {
               transition={{ delay: 0.9, duration: 0.6 }}
               className="font-mono text-sm text-muted-foreground max-w-md leading-relaxed"
             >
-              Full-Stack Developer & AI/ML Enthusiast crafting intelligent digital experiences 
-              with clean architecture and innovative solutions.
+              Gen AI Engineer & Full-Stack Developer crafting production-ready AI solutions 
+              from RAG-powered chatbots to scalable MERN applications.
             </motion.p>
 
             {/* Stats */}
@@ -63,9 +63,9 @@ const HeroSection = () => {
               className="flex gap-8"
             >
               {[
-                { label: 'PROJECTS', value: '10+' },
-                { label: 'EXPERIENCE', value: '2YRS' },
-                { label: 'TECH STACK', value: '15+' },
+                { label: 'PROJECTS', value: '12+' },
+                { label: 'EXPERIENCE', value: '1.5YR' },
+                { label: 'CERTS', value: '10+' },
               ].map((stat) => (
                 <div key={stat.label} className="space-y-1">
                   <div className="font-ndot text-2xl text-foreground">{stat.value}</div>
@@ -88,6 +88,15 @@ const HeroSection = () => {
               >
                 <span className="h-1.5 w-1.5 bg-foreground" />
                 CONTACT ME
+              </a>
+              <a
+                href="/resume.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass-panel-hover border-glow px-6 py-3 font-ndot text-[10px] tracking-[0.3em] text-foreground"
+                data-cursor-hover
+              >
+                VIEW RESUME
               </a>
               <a
                 href="#projects"
