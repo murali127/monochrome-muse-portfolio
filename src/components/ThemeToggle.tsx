@@ -26,7 +26,9 @@ const ThemeToggle = () => {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.5, duration: 0.3 }}
       onClick={toggleTheme}
-      className="fixed bottom-8 right-8 z-[200] glass-panel-hover p-4 rounded-full group"
+      onMouseDown={(e) => e.stopPropagation()}
+      className="fixed bottom-8 right-8 z-[9999] glass-panel-hover p-4 rounded-full group pointer-events-auto"
+      style={{ pointerEvents: 'auto' }}
       data-cursor-hover
       aria-label="Toggle theme"
     >

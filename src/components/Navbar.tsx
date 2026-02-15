@@ -60,8 +60,10 @@ const Navbar = () => {
         {/* Logo + Name - Left Corner */}
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="group flex items-center gap-3"
+          onMouseDown={(e) => e.preventDefault()}
+          className="group flex items-center gap-3 focus:outline-none"
           data-cursor-hover
+          tabIndex={-1}
         >
           <div className="relative">
             {/* Glow ring behind logo */}
@@ -92,7 +94,8 @@ const Navbar = () => {
             <button
               key={item}
               onClick={() => scrollTo(item)}
-              className={`font-ndot text-[10px] tracking-[0.2em] transition-all duration-300 ${
+              onMouseDown={(e) => e.preventDefault()}
+              className={`font-ndot text-[10px] tracking-[0.2em] transition-all duration-300 focus:outline-none ${
                 activeSection === item
                   ? 'text-foreground text-glow'
                   : 'text-muted-foreground hover:text-foreground'
@@ -110,7 +113,8 @@ const Navbar = () => {
         {/* CTA - Right */}
         <button
           onClick={() => scrollTo('CONTACT')}
-          className="glass-panel-hover rounded-none px-4 py-2 font-ndot text-[10px] tracking-[0.2em] text-foreground"
+          onMouseDown={(e) => e.preventDefault()}
+          className="glass-panel-hover rounded-none px-4 py-2 font-ndot text-[10px] tracking-[0.2em] text-foreground focus:outline-none"
           data-cursor-hover
         >
           GET IN TOUCH
