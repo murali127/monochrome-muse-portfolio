@@ -46,65 +46,76 @@ const ProjectsSection = () => {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   return (
-    <section id="projects" className="relative py-32 px-6 grid-lines-bg" ref={ref}>
-      <div className="mx-auto max-w-7xl">
+    <section id="projects" className="relative py-32 px-6 overflow-hidden" ref={ref}>
+      <div className="pointer-events-none absolute inset-0 opacity-30 dot-grid-bg" />
+      <div className="mx-auto max-w-7xl relative">
         <SectionHeader label="OUTPUT_LOG" title="PROJECTS" number="04" />
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-5">
           {projects.map((project, i) => (
-            <motion.div
+            <motion.article
               key={project.title}
               initial={{ opacity: 0, y: 40 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: i * 0.15 }}
-              className="glass-panel-hover border-glow p-8 group relative overflow-hidden"
+              transition={{ duration: 0.6, delay: i * 0.1 }}
+              className={`hud-frame glass-panel group relative overflow-hidden p-8 ${
+                i === 0 ? 'md:col-span-2 md:grid md:grid-cols-2 md:gap-10' : ''
+              }`}
               onMouseEnter={() => setHoveredIdx(i)}
               onMouseLeave={() => setHoveredIdx(null)}
+              style={{
+                transform: hoveredIdx === i ? 'translateY(-4px)' : undefined,
+                transition: 'transform 0.4s ease, box-shadow 0.4s ease',
+                boxShadow: hoveredIdx === i ? '0 0 40px hsl(var(--foreground) / 0.08)' : undefined,
+              }}
               data-cursor-hover
             >
-              {/* Corner accents */}
-              <div className="absolute top-0 right-0 w-12 h-12 border-t border-r border-foreground/0 group-hover:border-foreground/20 transition-all duration-500" />
-              <div className="absolute bottom-0 left-0 w-12 h-12 border-b border-l border-foreground/0 group-hover:border-foreground/20 transition-all duration-500" />
+              <span className="hud-corner hud-tl" />
+              <span className="hud-corner hud-tr" />
+              <span className="hud-corner hud-bl" />
+              <span className="hud-corner hud-br" />
 
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-ndot text-[9px] tracking-[0.3em] text-muted-foreground">{project.type}</span>
-                <span className="font-mono text-[10px] text-muted-foreground">#{String(i + 1).padStart(2, '0')}</span>
+              <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="absolute left-0 right-0 h-16 bg-gradient-to-b from-foreground/5 to-transparent animate-[scan_4s_linear_infinite]" />
               </div>
 
-              <h3 className="font-ndot text-2xl text-foreground mb-3 text-glow">{project.title}</h3>
-
-              <p className="font-mono text-xs text-muted-foreground leading-relaxed mb-6 group-hover:text-foreground/70 transition-colors duration-300">
-                {project.description}
-              </p>
-
-              {/* Metrics */}
-              <div className="flex gap-4 mb-6">
-                {Object.entries(project.metrics).map(([key, val]) => (
-                  <div key={key} className="glass-panel px-3 py-1.5">
-                    <div className="font-ndot text-sm text-foreground">{val}</div>
-                    <div className="font-ndot text-[7px] tracking-[0.2em] text-muted-foreground">{key.toUpperCase()}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Tech tags */}
-              <div className="flex flex-wrap gap-2">
-                {project.tech.map((t) => (
-                  <span key={t} className="font-ndot text-[8px] tracking-[0.2em] text-muted-foreground border border-border px-2 py-1 group-hover:border-foreground/20 group-hover:text-foreground/60 transition-all duration-300">
-                    {t}
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <span className="font-ndot text-[9px] tracking-[0.3em] text-muted-foreground">{project.type}</span>
+                  <span className="font-ndot text-[10px] tracking-[0.2em] text-foreground/50">
+                    PRJ_{String(i + 1).padStart(2, '0')}
                   </span>
-                ))}
+                </div>
+
+                <h3 className="font-ndot text-2xl sm:text-3xl text-foreground mb-4 text-glow">{project.title}</h3>
+
+                <p className="font-mono text-xs text-muted-foreground leading-relaxed mb-6 max-w-xl">
+                  {project.description}
+                </p>
               </div>
 
-              {/* Hover reveal line */}
-              <motion.div
-                className="absolute bottom-0 left-0 right-0 h-[1px] bg-foreground/30"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: hoveredIdx === i ? 1 : 0 }}
-                transition={{ duration: 0.4 }}
-                style={{ transformOrigin: 'left' }}
-              />
-            </motion.div>
+              <div className="flex flex-col justify-end">
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  {Object.entries(project.metrics).map(([key, val]) => (
+                    <div key={key} className="border border-border/80 px-3 py-3">
+                      <div className="font-ndot text-lg text-foreground">{val}</div>
+                      <div className="font-ndot text-[7px] tracking-[0.22em] text-muted-foreground">{key.toUpperCase()}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {project.tech.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full border border-border px-3 py-1 font-ndot text-[8px] tracking-[0.18em] text-muted-foreground group-hover:border-foreground/30 group-hover:text-foreground/80 transition-all duration-300"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.article>
           ))}
         </div>
       </div>
