@@ -99,6 +99,15 @@ const HeroSection = () => {
                 VIEW RESUME
               </a>
               <a
+                href="https://sitesrush.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass-panel-hover border-glow px-6 py-3 font-ndot text-[10px] tracking-[0.3em] text-foreground"
+                data-cursor-hover
+              >
+                SITESRUSH.IN
+              </a>
+              <a
                 href="#projects"
                 className="glass-panel-hover px-6 py-3 font-ndot text-[10px] tracking-[0.3em] text-muted-foreground hover:text-foreground"
                 data-cursor-hover
