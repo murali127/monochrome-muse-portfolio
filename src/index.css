@@ -67,7 +67,7 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'DotGothic16', monospace !important;
-    cursor: none;
+
     overflow-x: hidden;
     font-size: 16px;
     line-height: 1.6;
@@ -304,4 +304,31 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(0 0% 50%);
+}
+
+@media (pointer: fine) {
+  body {
+    cursor: none;
+  }
+}
+
+@media (pointer: coarse) {
+  body {
+    cursor: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Accessible Keyboard Focus Rings */
+:focus-visible {
+  outline: 2px solid hsl(var(--foreground));
+  outline-offset: 2px;
 }

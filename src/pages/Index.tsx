@@ -6,9 +6,11 @@ import BootLoader from '@/components/BootLoader';
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import AboutSection from '@/components/AboutSection';
+import EducationSection from '@/components/EducationSection';
 import SkillsSection from '@/components/SkillsSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import ProjectsSection from '@/components/ProjectsSection';
+import AchievementsSection from '@/components/AchievementsSection';
 import ContactSection from '@/components/ContactSection';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -27,15 +29,17 @@ const Index = () => {
           <div className="noise-overlay" />
           <ThemeToggle />
 
-          <div className="relative z-10">
+          <main className="relative z-10">
             <Navbar />
             <HeroSection />
             <AboutSection />
+            <EducationSection />
             <SkillsSection />
             <ExperienceSection />
             <ProjectsSection />
+            <AchievementsSection />
             <ContactSection />
-          </div>
+          </main>
         </>
       )}
     </div>

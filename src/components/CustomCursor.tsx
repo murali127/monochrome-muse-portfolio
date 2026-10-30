@@ -8,6 +8,11 @@ const CustomCursor = () => {
   const mousePos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
+    // Check if pointer is fine (mouse/trackpad), not touch
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      return;
+    }
+
     const moveCursor = (e: MouseEvent) => {
       mousePos.current = { x: e.clientX, y: e.clientY };
       
@@ -21,10 +26,10 @@ const CustomCursor = () => {
       }
     };
 
-    const handleMouseDown = (e: MouseEvent) => {
+    const handleMouseDown = () => {
       setClicking(true);
     };
-    const handleMouseUp = (e: MouseEvent) => {
+    const handleMouseUp = () => {
       setClicking(false);
     };
 
@@ -41,7 +46,6 @@ const CustomCursor = () => {
       }
     };
 
-    // Initialize cursor position
     const initCursor = (e: MouseEvent) => {
       mousePos.current = { x: e.clientX, y: e.clientY };
       if (dotRef.current) {
@@ -71,7 +75,7 @@ const CustomCursor = () => {
   }, []);
 
   return (
-    <>
+    <div className="hidden md:block">
       <div
         ref={dotRef}
         className="fixed z-[10000] pointer-events-none mix-blend-difference"
@@ -99,7 +103,7 @@ const CustomCursor = () => {
           willChange: 'left, top, transform',
         }}
       />
-    </>
+    </div>
   );
 };
 

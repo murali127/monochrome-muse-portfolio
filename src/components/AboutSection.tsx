@@ -4,68 +4,131 @@ import SectionHeader from './SectionHeader';
 
 const AboutSection = () => {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '200px 0px' });
+  const inView = useInView(ref, { once: true, margin: '-100px' });
 
   const diagnostics = [
     { label: 'LOCATION', value: 'VISAKHAPATNAM, IN' },
-    { label: 'STATUS', value: 'ACTIVE' },
-    { label: 'EDUCATION', value: 'B.TECH IT' },
-    { label: 'UNIVERSITY', value: 'GVPCE(A)' },
-    { label: 'GPA', value: '8.5 / 10' },
-    { label: 'FOCUS', value: 'GEN AI + FULL-STACK' },
+    { label: 'EDUCATION', value: 'B.TECH IT (CGPA: 8.5/10)' },
+    { label: 'INSTITUTE', value: 'GVPCE (A), VISAKHAPATNAM' },
+    { label: 'CORE STACK', value: 'PYTHON • FASTAPI • REACT' },
+    { label: 'FOCUS', value: 'GENAI • RAG • VOICE AI' },
+    { label: 'KEY ROLES', value: 'FARM VAIDYA • OPEN FORGE • GDSC' },
+  ];
+
+  const focusCapabilities = [
+    'Generative AI & RAG Architectures',
+    'Real-Time Voice AI Pipelines',
+    'Python & FastAPI Backend Services',
+    'Full-Stack Web Applications',
+    'Computer Vision & Object Analytics',
   ];
 
   return (
-    <section id="about" className="relative py-32 px-6" ref={ref}>
+    <section id="about" className="relative py-24 sm:py-28 px-4 sm:px-6" ref={ref}>
       <div className="mx-auto max-w-7xl">
-        <SectionHeader label="SYSTEM_INFO" title="ABOUT" number="01" />
+        <SectionHeader label="SYSTEM_PROFILE" title="ABOUT" number="01" />
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+          {/* Left Column - Core Narrative */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="space-y-6"
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="lg:col-span-7 space-y-5 sm:space-y-6"
           >
-            <p className="font-body text-base text-muted-foreground leading-relaxed">
-              I'm a Gen AI Engineer and Full-Stack Developer pursuing B.Tech in Information Technology 
-              at Gayatri Vidya Parishad College of Engineering. I specialize in building intelligent, 
-              production-ready applications from RAG-powered chatbots to scalable full-stack dashboards.
+            <div className="font-ndot text-xs sm:text-sm tracking-[0.2em] text-foreground">
+              ENGINEERING INTELLIGENT SYSTEMS FROM CONCEPT TO PRODUCTION
+            </div>
+
+            <p className="font-mono text-xs sm:text-base text-muted-foreground leading-relaxed">
+              I am a GenAI Full-Stack Developer with a B.Tech in Information Technology from Gayatri Vidya
+              Parishad College of Engineering (Autonomous), Visakhapatnam (GPA: 8.5/10). My work centers on
+              engineering intelligent, production-ready systems that unite cutting-edge AI architectures with robust
+              full-stack infrastructure.
             </p>
-            <p className="font-body text-base text-muted-foreground leading-relaxed">
-              Currently working at Farm Vaidya AI Tech on real-time agriculture chatbots with LightRAG 
-              integration. Previously built computer vision systems at CSIR-CRRI and OCR solutions at 
-              Infosys Springboard. I turn complex AI challenges into elegant, deployable solutions.
+
+            <p className="font-mono text-xs sm:text-base text-muted-foreground leading-relaxed">
+              My hands-on experience includes developing knowledge-graph agricultural chatbots and real-time audio
+              streaming workflows as a GenAI Engineer Intern at Farm Vaidya AI Tech, architecting computer vision safety
+              scoring systems at CSIR-CRRI, and leading engineering delivery as Technical Lead at Open Forge and
+              Cybersecurity Lead at GDSC GVPCE.
             </p>
-            <div className="pt-4 flex gap-4">
-              <a href="https://github.com/murali127" target="_blank" className="glass-panel-hover px-4 py-2 font-ndot text-[9px] tracking-[0.2em] text-foreground" data-cursor-hover>
-                GITHUB →
-              </a>
-              <a href="https://www.linkedin.com/in/muralipaila/" target="_blank" className="glass-panel-hover px-4 py-2 font-ndot text-[9px] tracking-[0.2em] text-foreground" data-cursor-hover>
-                LINKEDIN →
-              </a>
-              <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" className="glass-panel-hover border-glow px-4 py-2 font-ndot text-[9px] tracking-[0.2em] text-foreground" data-cursor-hover>
-                VIEW RESUME
-              </a>
+
+            <p className="font-mono text-xs sm:text-base text-muted-foreground leading-relaxed">
+              I enjoy taking technical concepts end-to-end into working products—ranging from retrieval-augmented
+              reasoning engines and voice interfaces to responsive dashboards, high-throughput APIs, and polished
+              user applications.
+            </p>
+
+            {/* Core Capability Checklist */}
+            <div className="pt-2">
+              <div className="font-ndot text-[9px] tracking-[0.3em] text-muted-foreground mb-3">
+                PRIMARY TECHNICAL DOMAINS
+              </div>
+              <div className="grid sm:grid-cols-2 gap-2.5">
+                {focusCapabilities.map((cap) => (
+                  <div
+                    key={cap}
+                    className="flex items-center gap-2.5 p-2.5 rounded-sm border border-border/80 bg-foreground/[0.02]"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-foreground shrink-0" />
+                    <span className="font-ndot text-[10px] tracking-[0.14em] text-foreground/90">
+                      {cap}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
 
+          {/* Right Column - System Diagnostics HUD Panel */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="glass-panel border-glow p-6 space-y-4"
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="lg:col-span-5 w-full"
           >
-            <div className="font-ndot text-[10px] tracking-[0.3em] text-foreground mb-4 flex items-center gap-2">
-              <span className="h-1.5 w-1.5 bg-foreground animate-pulse" />
-              SYSTEM DIAGNOSTICS
-            </div>
-            {diagnostics.map((d, i) => (
-              <div key={d.label} className="flex items-center justify-between border-b border-border/50 pb-2">
-                <span className="font-ndot text-[9px] tracking-[0.2em] text-muted-foreground">{d.label}</span>
-                <span className="font-mono text-xs text-foreground">{d.value}</span>
+            <div className="hud-frame glass-panel p-5 sm:p-7 relative overflow-hidden">
+              <span className="hud-corner hud-tl" />
+              <span className="hud-corner hud-tr" />
+              <span className="hud-corner hud-bl" />
+              <span className="hud-corner hud-br" />
+
+              <div className="flex items-center justify-between mb-5 border-b border-border/60 pb-3">
+                <span className="font-ndot text-[9px] tracking-[0.3em] text-muted-foreground">
+                  OPERATIONAL PARAMETERS
+                </span>
+                <span className="font-ndot text-[8px] tracking-[0.2em] px-2 py-0.5 rounded border border-border text-foreground">
+                  STATUS // ACTIVE
+                </span>
               </div>
-            ))}
+
+              <div className="space-y-3.5">
+                {diagnostics.map((d) => (
+                  <div
+                    key={d.label}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/30 pb-2.5 gap-1"
+                  >
+                    <span className="font-ndot text-[9px] tracking-[0.25em] text-muted-foreground">
+                      {d.label}
+                    </span>
+                    <span className="font-ndot text-[10px] sm:text-[11px] tracking-[0.12em] text-foreground break-all sm:break-normal">
+                      {d.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
+                <span className="font-ndot text-[8px] tracking-[0.25em] text-muted-foreground">
+                  IDENTITY VERIFIED
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-foreground animate-pulse" />
+                  <span className="font-ndot text-[8px] tracking-[0.2em] text-foreground">ONLINE</span>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>

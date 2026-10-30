@@ -27,15 +27,14 @@ const ThemeToggle = () => {
       transition={{ delay: 0.5, duration: 0.3 }}
       onClick={toggleTheme}
       onMouseDown={(e) => e.stopPropagation()}
-      className="fixed bottom-8 right-8 z-[9999] glass-panel-hover p-4 rounded-full group pointer-events-auto"
-      style={{ pointerEvents: 'auto' }}
+      className="fixed bottom-5 right-5 sm:bottom-8 sm:right-8 z-[9999] glass-panel-hover p-3 sm:p-4 rounded-full group pointer-events-auto shadow-xl border border-border focus:outline-none"
       data-cursor-hover
       aria-label="Toggle theme"
     >
-      <div className="relative w-6 h-6">
+      <div className="relative w-5 h-5 sm:w-6 sm:h-6">
         {/* Sun icon for light mode */}
         <motion.svg
-          className="absolute inset-0 w-6 h-6 text-foreground"
+          className="absolute inset-0 w-full h-full text-foreground"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -52,7 +51,7 @@ const ThemeToggle = () => {
 
         {/* Moon icon for dark mode */}
         <motion.svg
-          className="absolute inset-0 w-6 h-6 text-foreground"
+          className="absolute inset-0 w-full h-full text-foreground"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
