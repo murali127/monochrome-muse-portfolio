@@ -67,7 +67,6 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'DotGothic16', monospace !important;
-
     overflow-x: hidden;
     font-size: 16px;
     line-height: 1.6;
@@ -118,30 +117,65 @@
     border-color: hsl(var(--glass-border));
     transform: translateY(-2px);
   }
+
+  /* Sci-Fi HUD Floating Navigation Panel */
+  .hud-nav-panel {
+    background: rgba(10, 10, 10, 0.85);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+  }
+  .light .hud-nav-panel {
+    background: rgba(248, 248, 248, 0.9);
+    color: #0a0a0a;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .hud-nav-cta {
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
+    border: 1px solid hsl(var(--foreground));
+    font-weight: 600;
+    box-shadow: 0 0 14px hsl(var(--foreground) / 0.18);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hud-nav-cta:hover {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--foreground));
+    box-shadow: 0 0 20px hsl(var(--foreground) / 0.35);
+  }
+
   .nav-pill {
-    background: rgba(236, 236, 236, 0.78);
-    color: #111111;
-    border: 1px solid rgba(255, 255, 255, 0.42);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
-    backdrop-filter: blur(24px) saturate(140%);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    background: rgba(10, 10, 10, 0.85);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
   }
   .light .nav-pill {
-    background: rgba(18, 18, 18, 0.78);
-    color: #f5f5f5;
-    border: 1px solid rgba(0, 0, 0, 0.18);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    background: rgba(248, 248, 248, 0.9);
+    color: #0a0a0a;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
   }
+
   .nav-cta {
-    background: #141414;
-    color: #f7f7f7;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
+    border: 1px solid hsl(var(--foreground));
+    transition: all 0.22s ease-in-out;
   }
-  .light .nav-cta {
-    background: #f7f7f7;
-    color: #111111;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+  .nav-cta:hover {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--foreground));
   }
+
   .hud-frame {
     position: relative;
   }
@@ -156,6 +190,7 @@
   .hud-tr { top: 8px; right: 8px; border-top: 1px solid hsl(var(--foreground) / 0.45); border-right: 1px solid hsl(var(--foreground) / 0.45); }
   .hud-bl { bottom: 8px; left: 8px; border-bottom: 1px solid hsl(var(--foreground) / 0.45); border-left: 1px solid hsl(var(--foreground) / 0.45); }
   .hud-br { bottom: 8px; right: 8px; border-bottom: 1px solid hsl(var(--foreground) / 0.45); border-right: 1px solid hsl(var(--foreground) / 0.45); }
+
   .skill-chip {
     border: 1px solid hsl(var(--glass-border));
     background: hsl(var(--glass));
@@ -167,6 +202,7 @@
     box-shadow: 0 0 24px hsl(var(--foreground) / 0.08);
     transform: translateY(-2px);
   }
+
   .contact-field {
     background: transparent;
     border: none;
@@ -183,6 +219,7 @@
     border-bottom-color: hsl(var(--foreground));
     box-shadow: 0 1px 0 hsl(var(--foreground));
   }
+
   .signal-bar {
     display: inline-block;
     transform-origin: bottom;
