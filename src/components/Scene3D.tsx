@@ -1,5 +1,5 @@
 import { useRef, useMemo, useState, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import landPointsData from '@/data/earthLandPoints.json';
 
@@ -58,16 +58,18 @@ const createAtmosphereFresnelMaterial = (isLight: boolean) => {
 };
 
 // ----------------------------------------------------------------------------
-// Minimal Visakhapatnam Micro-Radar Beacon
+// Minimal Visakhapatnam Micro-Radar Beacon (Ignites when orbital lock reached)
 // ----------------------------------------------------------------------------
 const MinimalVisakhapatnamBeacon = ({
   isLight,
   radius,
   globeGroupRef,
+  isIgnited,
 }: {
   isLight: boolean;
   radius: number;
   globeGroupRef: React.RefObject<THREE.Group>;
+  isIgnited: boolean;
 }) => {
   const beaconGroupRef = useRef<THREE.Group>(null);
   const ringRef = useRef<THREE.Mesh>(null);
@@ -86,6 +88,11 @@ const MinimalVisakhapatnamBeacon = ({
 
   useFrame((state) => {
     if (!beaconGroupRef.current || !globeGroupRef.current) return;
+
+    if (!isIgnited) {
+      beaconGroupRef.current.visible = false;
+      return;
+    }
 
     // 1. Backface Culling: Calculate dot product between surface normal and camera vector
     const worldPos = new THREE.Vector3();
@@ -106,7 +113,7 @@ const MinimalVisakhapatnamBeacon = ({
       const time = state.clock.elapsedTime;
 
       // 2. Single delicate expanding radar ring that softly fades out
-      const t = (time * 1.2) % 1;
+      const t = (time * 1.3) % 1;
       if (ringRef.current) {
         const scale = 1.0 + t * 2.2;
         ringRef.current.scale.set(scale, scale, 1);
@@ -118,30 +125,31 @@ const MinimalVisakhapatnamBeacon = ({
       if (coreRef.current) {
         const pulse = 1.0 + Math.sin(time * 4.5) * 0.15;
         coreRef.current.scale.set(pulse, pulse, pulse);
-        const coreMat = coreRef.current.material as THREE.MeshBasicMaterial;
-        coreMat.opacity = (isLight ? 0.9 : 1.0) * visibility;
       }
     }
   });
 
-  const primaryColor = isLight ? '#09090b' : '#ffffff';
-
   return (
-    <group position={vspPos} quaternion={orientation} ref={beaconGroupRef}>
-      {/* High-contrast micro-dot directly on coordinate surface */}
-      <mesh ref={coreRef} position={[0, 0, 0]}>
-        <sphereGeometry args={[0.012, 16, 16]} />
-        <meshBasicMaterial color={primaryColor} transparent opacity={1} />
-      </mesh>
-
-      {/* Single delicate expanding radar ring (tangent to sphere surface) */}
+    <group ref={beaconGroupRef} position={vspPos} quaternion={orientation}>
+      {/* Delicate Expanding Radar Pulse Ring */}
       <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.014, 0.018, 32]} />
+        <ringGeometry args={[0.025, 0.038, 32]} />
         <meshBasicMaterial
-          color={primaryColor}
+          color={isLight ? 0x09090b : 0xffffff}
           transparent
           opacity={0.8}
           side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Subtle Glowing Core Dot */}
+      <mesh ref={coreRef} position={[0, 0.012, 0]}>
+        <sphereGeometry args={[0.018, 16, 16]} />
+        <meshBasicMaterial
+          color={isLight ? 0x09090b : 0xffffff}
+          transparent
+          opacity={isLight ? 0.9 : 1.0}
           depthWrite={false}
         />
       </mesh>
@@ -150,160 +158,290 @@ const MinimalVisakhapatnamBeacon = ({
 };
 
 // ----------------------------------------------------------------------------
-// Organic Dot-Matrix Earth Globe (Sampled from Real Continental Coastlines)
+// Custom Shader Material for Land Points with GPU Backface Culling
 // ----------------------------------------------------------------------------
-const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
+const createOrganicPointShaderMaterial = (isLight: boolean) => {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uColor: { value: new THREE.Color(isLight ? 0x09090b : 0xffffff) },
+      uBaseSize: { value: 0.020 },
+      uOpacity: { value: isLight ? 0.82 : 0.90 },
+    },
+    vertexShader: `
+      uniform float uBaseSize;
+      varying float vFacing;
+      void main() {
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vec3 viewNormal = normalize(normalMatrix * normal);
+        vec3 viewDir = normalize(-mvPosition.xyz);
+        vFacing = dot(viewNormal, viewDir);
+        gl_PointSize = uBaseSize * (350.0 / -mvPosition.z);
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uOpacity;
+      varying float vFacing;
+      void main() {
+        if (vFacing < 0.0) discard;
+        float dist = length(gl_PointCoord - vec2(0.5));
+        if (dist > 0.5) discard;
+        float circleAlpha = smoothstep(0.5, 0.35, dist);
+        float horizonAlpha = smoothstep(0.0, 0.22, vFacing);
+        gl_FragColor = vec4(uColor, uOpacity * circleAlpha * horizonAlpha);
+      }
+    `,
+    transparent: true,
+    blending: isLight ? THREE.NormalBlending : THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+};
+
+// ----------------------------------------------------------------------------
+// Dotted Matrix Earth Globe (High-Craft Continental Coastlines)
+// ----------------------------------------------------------------------------
+const DotMatrixGlobe = ({
+  isLight,
+  isIgnited,
+}: {
+  isLight: boolean;
+  isIgnited: boolean;
+}) => {
   const globeGroupRef = useRef<THREE.Group>(null);
-  const RADIUS = 1.25;
+  const radius = 1.8;
 
-  // 1. Build Point Cloud from High-Resolution Real Continental Coastlines
-  const { geometry: dotGeometry, material: dotMaterial } = useMemo(() => {
-    const rawData = landPointsData as number[];
-    const count = rawData.length / 3;
-    const positions = new Float32Array(rawData.length);
-
-    for (let i = 0; i < count; i++) {
-      positions[i * 3] = rawData[i * 3] * RADIUS;
-      positions[i * 3 + 1] = rawData[i * 3 + 1] * RADIUS;
-      positions[i * 3 + 2] = rawData[i * 3 + 2] * RADIUS;
-    }
-
+  // Build points geometry once from true continental coastline coordinates
+  const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const rawCoords = landPointsData as number[][];
+    const positions = new Float32Array(rawCoords.length * 3);
+    const normals = new Float32Array(rawCoords.length * 3);
 
-    // Custom Shader with strict backface culling & natural distance attenuation
-    const mat = new THREE.ShaderMaterial({
-      uniforms: {
-        uColor: { value: new THREE.Color(isLight ? 0x09090b : 0xffffff) },
-        uOpacity: { value: 0.9 },
-        uSize: { value: 0.020 },
-        uScale: { value: 750.0 },
-      },
-      vertexShader: `
-        uniform float uSize;
-        uniform float uScale;
-        varying float vFacing;
+    for (let i = 0; i < rawCoords.length; i++) {
+      const [nx, ny, nz] = rawCoords[i];
+      positions[i * 3] = nx * radius;
+      positions[i * 3 + 1] = ny * radius;
+      positions[i * 3 + 2] = nz * radius;
 
-        void main() {
-          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          
-          // Compute view-space normal for backface culling
-          vec3 viewNormal = normalize(normalMatrix * normalize(position));
-          vec3 viewDir = normalize(-mvPosition.xyz);
-          vFacing = dot(viewNormal, viewDir);
-
-          // Scaled point size with sizeAttenuation
-          gl_PointSize = uSize * (uScale / -mvPosition.z);
-          gl_Position = projectionMatrix * mvPosition;
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 uColor;
-        uniform float uOpacity;
-        varying float vFacing;
-
-        void main() {
-          // Discard back hemisphere points to eliminate visual noise
-          if (vFacing < 0.0) discard;
-
-          vec2 coord = gl_PointCoord - vec2(0.5);
-          float dist = length(coord);
-          if (dist > 0.5) discard;
-          float edge = smoothstep(0.5, 0.25, dist);
-
-          // Soft horizon falloff near the perimeter
-          float horizonFade = smoothstep(0.0, 0.22, vFacing);
-
-          gl_FragColor = vec4(uColor, uOpacity * edge * horizonFade);
-        }
-      `,
-      transparent: true,
-      depthWrite: false,
-      blending: isLight ? THREE.NormalBlending : THREE.AdditiveBlending,
-    });
-
-    return { geometry: geo, material: mat };
-  }, [isLight]);
-
-  // Update theme colors cleanly
-  useEffect(() => {
-    if (dotMaterial) {
-      dotMaterial.uniforms.uColor.value.set(isLight ? 0x09090b : 0xffffff);
-      dotMaterial.blending = isLight ? THREE.NormalBlending : THREE.AdditiveBlending;
-      dotMaterial.needsUpdate = true;
+      normals[i * 3] = nx;
+      normals[i * 3 + 1] = ny;
+      normals[i * 3 + 2] = nz;
     }
-  }, [isLight, dotMaterial]);
 
-  // 2. Soft Atmospheric Rim Particle Halo (whisper density)
-  const haloGeometry = useMemo(() => {
-    const haloCount = 200;
-    const positions = new Float32Array(haloCount * 3);
-    for (let i = 0; i < haloCount; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      const r = RADIUS * (1.04 + Math.random() * 0.04);
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = r * Math.cos(phi);
-    }
-    const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
     return geo;
-  }, [RADIUS]);
+  }, [radius]);
 
-  // Softened Fresnel Atmosphere
+  const landPointMaterial = useMemo(() => createOrganicPointShaderMaterial(isLight), [isLight]);
   const atmosphereMaterial = useMemo(() => createAtmosphereFresnelMaterial(isLight), [isLight]);
 
-  // Strict Upright Vertical Y-Axis Rotation (Zero Tilt)
+  // Pure vertical upright Y-axis planetary rotation (0 tilt)
   useFrame((_state, delta) => {
-    if (globeGroupRef.current) {
-      globeGroupRef.current.rotation.x = 0;
-      globeGroupRef.current.rotation.z = 0;
-      globeGroupRef.current.rotation.y += delta * 0.15;
-    }
+    if (!globeGroupRef.current) return;
+    globeGroupRef.current.rotation.x = 0;
+    globeGroupRef.current.rotation.z = 0;
+    globeGroupRef.current.rotation.y += delta * 0.15;
   });
 
   return (
-    <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
-      {/* Globe Group - Perfectly Straight & Upright */}
-      <group ref={globeGroupRef} rotation={[0, 0, 0]}>
-        {/* Organic Real Continental Coastline Dot Matrix */}
-        <points geometry={dotGeometry} material={dotMaterial} />
+    <group ref={globeGroupRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
+      {/* 1. Organic Dot-Matrix Continents */}
+      <points geometry={geometry} material={landPointMaterial} />
 
-        {/* Soft Atmospheric Particle Halo */}
-        <points geometry={haloGeometry}>
-          <pointsMaterial
-            size={0.008}
-            color={isLight ? '#09090b' : '#ffffff'}
-            transparent
-            opacity={isLight ? 0.12 : 0.22}
-            sizeAttenuation
-            depthWrite={false}
-          />
-        </points>
-
-        {/* Minimal Visakhapatnam Beacon */}
-        <MinimalVisakhapatnamBeacon
-          isLight={isLight}
-          radius={RADIUS}
-          globeGroupRef={globeGroupRef}
-        />
-      </group>
-
-      {/* Softened Fresnel Rim Glow */}
+      {/* 2. Soft Atmospheric Fresnel Rim Glow */}
       <mesh material={atmosphereMaterial}>
-        <sphereGeometry args={[RADIUS + 0.05, 48, 48]} />
+        <sphereGeometry args={[radius * 1.025, 48, 48]} />
       </mesh>
+
+      {/* 3. Visakhapatnam Telemetry Micro-Radar Beacon */}
+      <MinimalVisakhapatnamBeacon
+        isLight={isLight}
+        radius={radius}
+        globeGroupRef={globeGroupRef}
+        isIgnited={isIgnited}
+      />
     </group>
   );
 };
 
 // ----------------------------------------------------------------------------
-// Background Telemetry Stardust
+// Deep Space Rotating Spiral Galaxy Point Cloud (Stage 1)
+// ----------------------------------------------------------------------------
+const SpiralGalaxy = ({
+  isLight,
+  cameraZ,
+}: {
+  isLight: boolean;
+  cameraZ: number;
+}) => {
+  const galaxyRef = useRef<THREE.Points>(null);
+  const count = 1800;
+
+  const { positions, colors } = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    const col = new Float32Array(count * 3);
+    const arms = 3;
+    const baseColor = new THREE.Color(isLight ? 0x09090b : 0xffffff);
+    const dimColor = new THREE.Color(isLight ? 0x555555 : 0x777777);
+
+    for (let i = 0; i < count; i++) {
+      // Concentrated core with wide outer logarithmic spiral arms
+      const r = Math.pow(Math.random(), 2.2) * 36 + 1.8;
+      const armAngle = ((i % arms) * 2 * Math.PI) / arms;
+      const spiralAngle = r * 0.32 + armAngle;
+
+      const jitterX = (Math.random() - 0.5) * (r * 0.25 + 0.6);
+      const jitterY = (Math.random() - 0.5) * (r * 0.25 + 0.6);
+      const jitterZ = (Math.random() - 0.5) * (r * 0.15 + 0.4);
+
+      pos[i * 3] = Math.cos(spiralAngle) * r + jitterX;
+      pos[i * 3 + 1] = Math.sin(spiralAngle) * r + jitterY;
+      pos[i * 3 + 2] = jitterZ - (r * 0.08);
+
+      const mix = Math.min(1, r / 30);
+      const c = baseColor.clone().lerp(dimColor, mix);
+      col[i * 3] = c.r;
+      col[i * 3 + 1] = c.g;
+      col[i * 3 + 2] = c.b;
+    }
+
+    return { positions: pos, colors: col };
+  }, [count, isLight]);
+
+  // Fade galaxy as camera moves deep into orbit
+  const opacity = useMemo(() => {
+    const fade = THREE.MathUtils.clamp((cameraZ - 6.0) / 25.0, 0, 1);
+    return (isLight ? 0.35 : 0.65) * fade;
+  }, [cameraZ, isLight]);
+
+  useFrame((_state, delta) => {
+    if (galaxyRef.current) {
+      galaxyRef.current.rotation.z += delta * 0.035;
+    }
+  });
+
+  return (
+    <points ref={galaxyRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={positions}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attach="attributes-color"
+          count={count}
+          array={colors}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.016}
+        vertexColors
+        transparent
+        opacity={opacity}
+        sizeAttenuation
+        depthWrite={false}
+      />
+    </points>
+  );
+};
+
+// ----------------------------------------------------------------------------
+// Hyperspace Motion-Blur Warp Lines (Stage 2)
+// ----------------------------------------------------------------------------
+const WarpStreaks = ({
+  warpVelocity,
+  cameraZ,
+  isLight,
+}: {
+  warpVelocity: number;
+  cameraZ: number;
+  isLight: boolean;
+}) => {
+  const lineRef = useRef<THREE.LineSegments>(null);
+  const count = 420;
+
+  // Star data: [x, y, z, baseSpeed]
+  const stars = useMemo(() => {
+    const data = [];
+    for (let i = 0; i < count; i++) {
+      const radius = 1.0 + Math.random() * 22;
+      const angle = Math.random() * Math.PI * 2;
+      data.push({
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+        z: (Math.random() - 0.5) * 60,
+        speed: 1.6 + Math.random() * 2.4,
+      });
+    }
+    return data;
+  }, [count]);
+
+  const positions = useMemo(() => new Float32Array(count * 6), [count]);
+
+  useFrame((_state, delta) => {
+    if (!lineRef.current) return;
+    const posAttr = lineRef.current.geometry.attributes.position as THREE.BufferAttribute;
+    const arr = posAttr.array as Float32Array;
+
+    const streakLen = warpVelocity * 7.5 + 0.03;
+    const speedMultiplier = warpVelocity * 40.0 + 1.2;
+
+    for (let i = 0; i < count; i++) {
+      const star = stars[i];
+
+      // Fly along Z towards camera
+      star.z += star.speed * speedMultiplier * delta;
+
+      // Recycle when passing camera plane
+      if (star.z > cameraZ + 4) {
+        star.z = cameraZ - 42 - Math.random() * 14;
+      }
+
+      // Head vertex
+      arr[i * 6] = star.x;
+      arr[i * 6 + 1] = star.y;
+      arr[i * 6 + 2] = star.z;
+
+      // Tail vertex (streaked backwards along -Z)
+      arr[i * 6 + 3] = star.x;
+      arr[i * 6 + 4] = star.y;
+      arr[i * 6 + 5] = star.z - streakLen;
+    }
+
+    posAttr.needsUpdate = true;
+  });
+
+  return (
+    <lineSegments ref={lineRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={count * 2}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <lineBasicMaterial
+        color={isLight ? 0x09090b : 0xffffff}
+        transparent
+        opacity={Math.max(0.08, warpVelocity * 0.75)}
+        depthWrite={false}
+      />
+    </lineSegments>
+  );
+};
+
+// ----------------------------------------------------------------------------
+// Background Telemetry Stardust (Ambient Space Dust once docked)
 // ----------------------------------------------------------------------------
 const CosmicDust = ({ isLight }: { isLight: boolean }) => {
   const ref = useRef<THREE.Points>(null);
-  const count = 280;
+  const count = 260;
   const color = isLight ? '#09090b' : '#ffffff';
 
   const positions = useMemo(() => {
@@ -348,12 +486,37 @@ const CosmicDust = ({ isLight }: { isLight: boolean }) => {
 };
 
 // ----------------------------------------------------------------------------
-// Centered Parallax Rig with Smooth Mouse Damping (Zero X/Z Tilt)
+// Cinematic Camera Rig & Flight Controller (Galaxy -> Warp -> Orbital Lock)
 // ----------------------------------------------------------------------------
-const CenteredParallaxRig = ({ isLight }: { isLight: boolean }) => {
+interface FlightTelemetry {
+  velocity: string;
+  distance: string;
+  isLocked: boolean;
+  warpFactor: number;
+}
+
+const CinematicCameraRig = ({
+  isLight,
+  skipWarp,
+  onWarpComplete,
+  onTelemetryUpdate,
+}: {
+  isLight: boolean;
+  skipWarp?: boolean;
+  onWarpComplete?: () => void;
+  onTelemetryUpdate?: (telemetry: FlightTelemetry) => void;
+}) => {
+  const { camera } = useThree();
   const rigRef = useRef<THREE.Group>(null);
   const mouse = useRef({ x: 0, y: 0 });
   const [isDesktop, setIsDesktop] = useState(true);
+
+  // Flight trajectory state
+  const timeRef = useRef(0);
+  const completedRef = useRef(false);
+  const [warpVelocity, setWarpVelocity] = useState(0);
+  const [currentCameraZ, setCurrentCameraZ] = useState(48.0);
+  const [isBeaconIgnited, setIsBeaconIgnited] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -374,40 +537,173 @@ const CenteredParallaxRig = ({ isLight }: { isLight: boolean }) => {
     };
   }, []);
 
+  // Initialize camera position
+  useEffect(() => {
+    // Respect reduced motion
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      camera.position.set(0, 0, 5.5);
+      completedRef.current = true;
+      setIsBeaconIgnited(true);
+      onWarpComplete?.();
+      onTelemetryUpdate?.({
+        velocity: '0.0c',
+        distance: '400 KM',
+        isLocked: true,
+        warpFactor: 0,
+      });
+    } else {
+      camera.position.set(0, 0, 48.0);
+    }
+  }, [camera, onWarpComplete, onTelemetryUpdate]);
+
   useFrame((_state, delta) => {
-    if (!rigRef.current) return;
+    // Check if skip was triggered
+    if (skipWarp && !completedRef.current) {
+      completedRef.current = true;
+      camera.position.z = 5.5;
+      setCurrentCameraZ(5.5);
+      setWarpVelocity(0);
+      setIsBeaconIgnited(true);
+      onWarpComplete?.();
+      onTelemetryUpdate?.({
+        velocity: '0.0c',
+        distance: '400 KM',
+        isLocked: true,
+        warpFactor: 0,
+      });
+      return;
+    }
 
-    // Strict upright alignment: X and Z rotations remain strictly 0
-    rigRef.current.rotation.x = 0;
-    rigRef.current.rotation.z = 0;
+    if (!completedRef.current) {
+      timeRef.current += delta;
+      const t = timeRef.current;
 
-    // Subtle horizontal parallax & gentle translation
-    const targetRotY = mouse.current.x * 0.15;
-    const targetPosX = mouse.current.x * 0.12;
-    const targetPosY = mouse.current.y * 0.08;
+      let targetZ = 48.0;
+      let factor = 0;
+      let velText = '0.0c';
+      let distText = '142,000 KM';
+      let locked = false;
 
-    rigRef.current.rotation.y = THREE.MathUtils.damp(rigRef.current.rotation.y, targetRotY, 3.0, delta);
-    rigRef.current.position.x = THREE.MathUtils.damp(rigRef.current.position.x, targetPosX, 2.5, delta);
-    rigRef.current.position.y = THREE.MathUtils.damp(rigRef.current.position.y, targetPosY, 2.5, delta);
+      // STAGE 1: Deep Galaxy & Starfield (0.0s – 1.0s)
+      if (t < 1.0) {
+        targetZ = 48.0;
+        factor = 0;
+        velText = '0.0c';
+        distText = '142,000 KM';
+      }
+      // STAGE 2: Hyperspace Warp & Camera Dive (1.0s – 2.6s)
+      else if (t < 2.6) {
+        const u = (t - 1.0) / 1.6; // 0 -> 1
+        // Smoothstep curve for warp acceleration
+        const smoothU = u * u * (3 - 2 * u);
+        targetZ = 48.0 - (48.0 - 7.5) * smoothU;
 
-    const targetScale = isDesktop ? 0.95 : 0.75;
-    const currentScale = rigRef.current.scale.x;
-    const dampedScale = THREE.MathUtils.damp(currentScale, targetScale, 3.0, delta);
-    rigRef.current.scale.set(dampedScale, dampedScale, dampedScale);
+        // Peak warp velocity of 8.4c
+        factor = Math.sin(u * Math.PI);
+        velText = (factor * 8.4).toFixed(1) + 'c';
+        distText = `${Math.round(142000 - smoothU * 130000).toLocaleString()} KM`;
+      }
+      // STAGE 3: Orbital Deceleration & Focal Lock (2.6s – 3.6s)
+      else if (t < 3.6) {
+        const v = (t - 2.6) / 1.0; // 0 -> 1
+        // Quintic deceleration curve: smoothly bleeds off momentum
+        const quintic = 1 - Math.pow(1 - v, 4);
+        targetZ = 7.5 - (7.5 - 5.5) * quintic;
+
+        factor = (1 - v) * 0.45;
+        velText = (factor * 8.4).toFixed(1) + 'c';
+        distText = `${Math.round(12000 - quintic * 11600).toLocaleString()} KM`;
+
+        if (targetZ <= 6.0 && !isBeaconIgnited) {
+          setIsBeaconIgnited(true);
+        }
+      }
+      // STAGE 4: Docked in Orbit (3.6s+)
+      else {
+        targetZ = 5.5;
+        factor = 0;
+        velText = '0.0c';
+        distText = '400 KM';
+        locked = true;
+
+        if (!isBeaconIgnited) {
+          setIsBeaconIgnited(true);
+        }
+
+        completedRef.current = true;
+        onWarpComplete?.();
+      }
+
+      // Smooth camera position damping
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetZ, 8.0, delta);
+      setCurrentCameraZ(camera.position.z);
+      setWarpVelocity(factor);
+
+      onTelemetryUpdate?.({
+        velocity: velText,
+        distance: distText,
+        isLocked: locked,
+        warpFactor: factor,
+      });
+    }
+
+    // Parallax Rig handling (Gentle mouse translation when docked)
+    if (rigRef.current) {
+      rigRef.current.rotation.x = 0;
+      rigRef.current.rotation.z = 0;
+
+      if (completedRef.current) {
+        const targetRotY = mouse.current.x * 0.15;
+        const targetPosX = mouse.current.x * 0.12;
+        const targetPosY = mouse.current.y * 0.08;
+
+        rigRef.current.rotation.y = THREE.MathUtils.damp(rigRef.current.rotation.y, targetRotY, 3.0, delta);
+        rigRef.current.position.x = THREE.MathUtils.damp(rigRef.current.position.x, targetPosX, 2.5, delta);
+        rigRef.current.position.y = THREE.MathUtils.damp(rigRef.current.position.y, targetPosY, 2.5, delta);
+      }
+
+      const targetScale = isDesktop ? 0.95 : 0.75;
+      const currentScale = rigRef.current.scale.x;
+      const dampedScale = THREE.MathUtils.damp(currentScale, targetScale, 3.0, delta);
+      rigRef.current.scale.set(dampedScale, dampedScale, dampedScale);
+    }
   });
 
   return (
-    <group ref={rigRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
-      <DotMatrixGlobe isLight={isLight} />
-      <CosmicDust isLight={isLight} />
-    </group>
+    <>
+      {/* 1. Deep Space Spiral Galaxy (Visible far back, fades on orbital approach) */}
+      <SpiralGalaxy isLight={isLight} cameraZ={currentCameraZ} />
+
+      {/* 2. Hyperspace Motion-Blur Warp Lines */}
+      <WarpStreaks
+        warpVelocity={warpVelocity}
+        cameraZ={currentCameraZ}
+        isLight={isLight}
+      />
+
+      {/* 3. Centered Dot-Matrix Earth Globe */}
+      <group ref={rigRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
+        <DotMatrixGlobe isLight={isLight} isIgnited={isBeaconIgnited} />
+        {completedRef.current && <CosmicDust isLight={isLight} />}
+      </group>
+    </>
   );
 };
 
 // ----------------------------------------------------------------------------
 // Scene3D Canvas Root - Perfectly Centered Viewport
 // ----------------------------------------------------------------------------
-const Scene3D = () => {
+interface Scene3DProps {
+  skipWarp?: boolean;
+  onWarpComplete?: () => void;
+  onTelemetryUpdate?: (telemetry: FlightTelemetry) => void;
+}
+
+const Scene3D = ({ skipWarp, onWarpComplete, onTelemetryUpdate }: Scene3DProps) => {
   const [isLight, setIsLight] = useState(false);
 
   useEffect(() => {
@@ -425,7 +721,7 @@ const Scene3D = () => {
   return (
     <div className="fixed inset-0 z-[1] pointer-events-none flex items-center justify-center overflow-hidden">
       <Canvas
-        camera={{ position: [0, 0, 5.5], fov: 46 }}
+        camera={{ position: [0, 0, 48.0], fov: 46 }}
         dpr={[1, 1.5]}
         gl={{
           alpha: true,
@@ -434,7 +730,12 @@ const Scene3D = () => {
           toneMapping: THREE.NoToneMapping,
         }}
       >
-        <CenteredParallaxRig isLight={isLight} />
+        <CinematicCameraRig
+          isLight={isLight}
+          skipWarp={skipWarp}
+          onWarpComplete={onWarpComplete}
+          onTelemetryUpdate={onTelemetryUpdate}
+        />
       </Canvas>
     </div>
   );
