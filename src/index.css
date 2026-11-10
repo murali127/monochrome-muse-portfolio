@@ -493,6 +493,35 @@
   .light .crt-grain {
     opacity: 0.35;
   }
+
+  .animate-spin-cw {
+    animation: spin-cw 22s linear infinite;
+  }
+
+  .animate-spin-ccw {
+    animation: spin-ccw 14s linear infinite;
+  }
+}
+
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-ccw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes eq-wave {
+  0%, 100% {
+    transform: scaleY(0.18);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 
 @keyframes crt-sweep {
