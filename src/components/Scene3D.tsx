@@ -115,6 +115,50 @@ const latLonToVector3 = (lat: number, lon: number, radius: number): THREE.Vector
 };
 
 // ----------------------------------------------------------------------------
+// Lat/Lon Navigation Grid Geometry (Equator, Parallels, Meridians)
+// ----------------------------------------------------------------------------
+const createLatLonGridGeometry = (radius: number) => {
+  const points: number[] = [];
+  const r = radius * 1.002;
+
+  // 1. Latitude Parallels (Equator, Tropics, Polar bounds)
+  const latitudes = [-60, -30, 0, 30, 60];
+  const lonStep = 5; // Every 5 degrees
+
+  latitudes.forEach((lat) => {
+    const phi = (90 - lat) * (Math.PI / 180);
+    for (let lon = -180; lon < 180; lon += lonStep) {
+      const theta = (lon + 180) * (Math.PI / 180);
+      points.push(
+        -(r * Math.sin(phi) * Math.cos(theta)),
+        r * Math.cos(phi),
+        r * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+  });
+
+  // 2. Longitude Meridians (Prime meridian, Pacific anti-meridian, quadrants)
+  const longitudes = [-135, -90, -45, 0, 45, 90, 135, 180];
+  const latStep = 4; // Every 4 degrees from -80 to +80
+
+  longitudes.forEach((lon) => {
+    const theta = (lon + 180) * (Math.PI / 180);
+    for (let lat = -80; lat <= 80; lat += latStep) {
+      const phi = (90 - lat) * (Math.PI / 180);
+      points.push(
+        -(r * Math.sin(phi) * Math.cos(theta)),
+        r * Math.cos(phi),
+        r * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+  });
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+  return geo;
+};
+
+// ----------------------------------------------------------------------------
 // Atmospheric Fresnel Rim Shader Material
 // ----------------------------------------------------------------------------
 const createAtmosphereFresnelMaterial = (isLight: boolean) => {
@@ -254,16 +298,16 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
   const globeGroupRef = useRef<THREE.Group>(null);
 
   const RADIUS = 1.25;
-  const POINT_COUNT = 18000;
+  const POINT_COUNT = 14000;
 
-  // Generate Fibonacci Point Cloud Sphere with Land/Ocean Sampling
+  // 1. Generate Uniform Fibonacci Point Cloud Sphere (Dual-Layer Density: Land + Ocean)
   const { geometry: dotGeometry, material: dotMaterial } = useMemo(() => {
     const positions = new Float32Array(POINT_COUNT * 3);
     const brightness = new Float32Array(POINT_COUNT);
     const sizes = new Float32Array(POINT_COUNT);
 
     for (let i = 0; i < POINT_COUNT; i++) {
-      // Golden Spiral / Fibonacci sphere distribution
+      // Golden Spiral / Fibonacci sphere distribution ensuring 100% spherical coverage
       const phi = Math.acos(1 - (2 * (i + 0.5)) / POINT_COUNT);
       const theta = Math.PI * (1 + Math.sqrt(5)) * i;
 
@@ -274,14 +318,15 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
 
       const isLand = checkIsLand(lon, lat);
 
-      // Land nodes elevated slightly & rendered larger/brighter
-      const r = isLand ? RADIUS * 1.008 : RADIUS;
+      // Land nodes are elevated slightly and render significantly larger & brighter
+      const r = isLand ? RADIUS * 1.006 : RADIUS;
       positions[i * 3] = -(r * Math.sin(phi) * Math.cos(theta));
       positions[i * 3 + 1] = r * Math.cos(phi);
       positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
 
+      // Land = 1.0 (bright, high-density), Ocean = 0.0 (subtle visible coordinate matrix)
       brightness[i] = isLand ? 1.0 : 0.0;
-      sizes[i] = isLand ? 0.022 : 0.011;
+      sizes[i] = isLand ? 0.026 : 0.012;
     }
 
     const geo = new THREE.BufferGeometry();
@@ -289,14 +334,13 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     geo.setAttribute('aBrightness', new THREE.BufferAttribute(brightness, 1));
     geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
 
-    // Antialiased Circular Point Shader Material
+    // Antialiased Circular Point Shader Material with Dual Density
     const mat = new THREE.ShaderMaterial({
       uniforms: {
         uLandColor: { value: new THREE.Color(isLight ? 0x09090b : 0xffffff) },
-        uOceanColor: { value: new THREE.Color(isLight ? 0x222328 : 0x18181c) },
-        uOpacity: { value: 1.0 },
-        uMinAlpha: { value: isLight ? 0.16 : 0.06 },
-        uMaxAlpha: { value: isLight ? 0.98 : 0.95 },
+        uOceanColor: { value: new THREE.Color(isLight ? 0x71717a : 0x666666) },
+        uLandAlpha: { value: 1.0 },
+        uOceanAlpha: { value: isLight ? 0.25 : 0.28 },
       },
       vertexShader: `
         attribute float aBrightness;
@@ -313,9 +357,8 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
       fragmentShader: `
         uniform vec3 uLandColor;
         uniform vec3 uOceanColor;
-        uniform float uOpacity;
-        uniform float uMinAlpha;
-        uniform float uMaxAlpha;
+        uniform float uLandAlpha;
+        uniform float uOceanAlpha;
         varying float vBrightness;
 
         void main() {
@@ -325,14 +368,14 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
           float edge = smoothstep(0.5, 0.22, dist);
 
           vec3 col = mix(uOceanColor, uLandColor, vBrightness);
-          float alpha = mix(uMinAlpha, uMaxAlpha, vBrightness) * uOpacity * edge;
+          float alpha = mix(uOceanAlpha, uLandAlpha, vBrightness) * edge;
 
           gl_FragColor = vec4(col, alpha);
         }
       `,
       transparent: true,
       depthWrite: false,
-      blending: isLight ? THREE.NormalBlending : THREE.AdditiveBlending,
+      blending: THREE.NormalBlending,
     });
 
     return { geometry: geo, material: mat };
@@ -342,15 +385,17 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
   useEffect(() => {
     if (dotMaterial) {
       dotMaterial.uniforms.uLandColor.value.set(isLight ? 0x09090b : 0xffffff);
-      dotMaterial.uniforms.uOceanColor.value.set(isLight ? 0x222328 : 0x18181c);
-      dotMaterial.uniforms.uMinAlpha.value = isLight ? 0.16 : 0.06;
-      dotMaterial.uniforms.uMaxAlpha.value = isLight ? 0.98 : 0.95;
-      dotMaterial.blending = isLight ? THREE.NormalBlending : THREE.AdditiveBlending;
+      dotMaterial.uniforms.uOceanColor.value.set(isLight ? 0x71717a : 0x666666);
+      dotMaterial.uniforms.uLandAlpha.value = 1.0;
+      dotMaterial.uniforms.uOceanAlpha.value = isLight ? 0.25 : 0.28;
       dotMaterial.needsUpdate = true;
     }
   }, [isLight, dotMaterial]);
 
-  // Atmospheric Rim Particle Halo
+  // 2. Subtle Navigation Grid (Equator, Parallels, Meridians) - Never disappears over oceans
+  const gridGeometry = useMemo(() => createLatLonGridGeometry(RADIUS), [RADIUS]);
+
+  // 3. Atmospheric Rim Particle Halo
   const haloGeometry = useMemo(() => {
     const haloCount = 650;
     const positions = new Float32Array(haloCount * 3);
@@ -365,7 +410,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     return geo;
-  }, []);
+  }, [RADIUS]);
 
   // Fresnel Atmosphere
   const atmosphereMaterial = useMemo(() => createAtmosphereFresnelMaterial(isLight), [isLight]);
@@ -383,18 +428,30 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
       {/* Globe Group - Perfectly Straight & Upright */}
       <group ref={globeGroupRef} rotation={[0, 0, 0]}>
-        {/* Physical Core Sphere - Gives solid architectural 3D volume & prevents backside bleed */}
+        {/* Physical Core Sphere - Gives solid architectural 3D volume & occludes backside points */}
         <mesh>
-          <sphereGeometry args={[RADIUS * 0.992, 48, 48]} />
+          <sphereGeometry args={[RADIUS * 0.990, 48, 48]} />
           <meshBasicMaterial
-            color={isLight ? '#f2f2f5' : '#050507'}
+            color={isLight ? '#f2f2f5' : '#040406'}
             transparent
-            opacity={isLight ? 0.94 : 0.96}
+            opacity={isLight ? 0.94 : 0.92}
           />
         </mesh>
 
-        {/* High-Density Points Earth */}
+        {/* High-Density Points Earth (Dual-Density Land + Ocean Grid) */}
         <points geometry={dotGeometry} material={dotMaterial} />
+
+        {/* Subtle Navigational Latitude & Longitude Coordinate Parallels */}
+        <points geometry={gridGeometry}>
+          <pointsMaterial
+            size={0.010}
+            color={isLight ? '#09090b' : '#ffffff'}
+            transparent
+            opacity={isLight ? 0.16 : 0.22}
+            sizeAttenuation
+            depthWrite={false}
+          />
+        </points>
 
         {/* Atmospheric Particle Halo */}
         <points geometry={haloGeometry}>
@@ -404,6 +461,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
             transparent
             opacity={isLight ? 0.18 : 0.38}
             sizeAttenuation
+            depthWrite={false}
           />
         </points>
 
@@ -466,6 +524,7 @@ const CosmicDust = ({ isLight }: { isLight: boolean }) => {
         transparent
         opacity={isLight ? 0.12 : 0.35}
         sizeAttenuation
+        depthWrite={false}
       />
     </points>
   );
