@@ -13,7 +13,7 @@ const SectionHeader = ({ label, title, number }: { label: string; title: string;
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
       className="mb-12 sm:mb-16 flex items-end gap-3 sm:gap-4"
     >
-      <span className="font-mono text-xs text-muted-foreground mb-1 sm:mb-2">{number}</span>
+      <span className="font-mono tabular-nums text-xs text-muted-foreground mb-1 sm:mb-2">{number}</span>
       <div>
         <div className="font-ndot text-[9px] sm:text-[10px] tracking-[0.35em] text-muted-foreground mb-1.5 sm:mb-2">
           {label}

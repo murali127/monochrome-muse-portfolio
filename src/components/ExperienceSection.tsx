@@ -94,7 +94,7 @@ const ExperienceSection = () => {
                     </div>
 
                     {/* Short Role Summary */}
-                    <p className="mt-3.5 font-mono text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    <p className="mt-3.5 font-body text-xs sm:text-sm text-muted-foreground leading-relaxed text-pretty font-normal">
                       {exp.summary}
                     </p>
 
@@ -119,7 +119,7 @@ const ExperienceSection = () => {
                                   <span className="mt-1 font-ndot text-[9px] text-muted-foreground/80 shrink-0">
                                     {String(j + 1).padStart(2, '0')}.
                                   </span>
-                                  <span className="font-mono text-xs text-muted-foreground leading-relaxed">
+                                  <span className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed text-pretty font-normal">
                                     {contribution}
                                   </span>
                                 </li>
@@ -148,7 +148,7 @@ const ExperienceSection = () => {
                                         {hl.badge}
                                       </span>
                                     </div>
-                                    <p className="font-mono text-[11px] text-muted-foreground leading-relaxed">
+                                    <p className="font-body text-xs text-muted-foreground leading-relaxed font-normal">
                                       {hl.description}
                                     </p>
                                     <div className="flex flex-wrap gap-1 pt-1">

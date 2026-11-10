@@ -65,7 +65,7 @@ const EducationSection = () => {
                 <div className="font-ndot text-[11px] sm:text-xs text-muted-foreground tracking-[0.2em] mt-2 uppercase">
                   Gayatri Vidya Parishad College of Engineering (Autonomous)
                 </div>
-                <div className="font-mono text-xs text-muted-foreground mt-1">
+                <div className="font-body text-xs sm:text-sm text-muted-foreground mt-1 font-normal">
                   Visakhapatnam, Andhra Pradesh, India
                 </div>
               </div>

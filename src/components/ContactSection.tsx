@@ -123,7 +123,7 @@ const ContactSection = () => {
                 <br />
                 <span className="text-muted-foreground">SOMETHING NEW</span>
               </h3>
-              <p className="font-mono text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              <p className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed text-pretty font-normal">
                 Available for engineering collaborations, AI systems architecture, and full-time roles. Visakhapatnam, India.
               </p>
             </div>

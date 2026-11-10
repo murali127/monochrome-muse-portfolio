@@ -31,6 +31,15 @@ const ProjectsSection = () => {
     return filteredProjects.filter((p) => !p.featured);
   }, [filteredProjects]);
 
+  // Tactile border illumination mouse proximity tracker
+  const handleCardMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+  };
+
   return (
     <section id="projects" className="relative py-24 sm:py-28 px-4 sm:px-6 overflow-hidden" ref={ref}>
       <div className="pointer-events-none absolute inset-0 opacity-20 dot-grid-bg" />
@@ -58,7 +67,7 @@ const ProjectsSection = () => {
           })}
         </div>
 
-        {/* Primary Project Grid */}
+        {/* Primary Project Grid with Tactile Border Illumination */}
         <div className="grid md:grid-cols-2 gap-6">
           <AnimatePresence mode="popLayout">
             {(activeCategory === 'all' ? featuredProjects : filteredProjects).map((project, i) => (
@@ -69,7 +78,8 @@ const ProjectsSection = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.45, delay: i * 0.05 }}
-                className="hud-frame glass-panel group relative overflow-hidden p-5 sm:p-8 flex flex-col justify-between border-glow transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_30px_hsl(var(--foreground)/0.06)]"
+                onMouseMove={handleCardMouseMove}
+                className="hud-frame glass-panel tactile-border-card group relative overflow-hidden p-5 sm:p-8 flex flex-col justify-between border border-border/80 rounded-sm hover:-translate-y-1 hover:shadow-[0_0_30px_hsl(var(--foreground)/0.06)]"
                 data-cursor-hover
               >
                 {/* HUD Tactical Corners */}
@@ -101,24 +111,24 @@ const ProjectsSection = () => {
                   <h3 className="font-ndot text-xl sm:text-2xl text-foreground text-glow mb-1 tracking-wide">
                     {project.title}
                   </h3>
-                  <div className="font-mono text-xs text-muted-foreground mb-4">
+                  <div className="font-body text-xs text-muted-foreground/80 mb-3 tracking-normal font-normal">
                     {project.tagline}
                   </div>
 
-                  {/* Description */}
-                  <p className="font-mono text-xs text-muted-foreground leading-relaxed mb-5">
+                  {/* Description - Modern Sans Space Grotesk */}
+                  <p className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed mb-5 text-pretty font-normal">
                     {project.description}
                   </p>
 
-                  {/* Highlight Contributions (if present) */}
+                  {/* Highlight Contributions */}
                   {project.whatIBuilt && project.whatIBuilt.length > 0 && (
                     <div className="mb-5 space-y-1.5 border-t border-border/40 pt-3">
                       <div className="font-ndot text-[8px] tracking-[0.25em] text-muted-foreground mb-1">
                         KEY HIGHLIGHTS
                       </div>
                       {project.whatIBuilt.slice(0, 2).map((item, idx) => (
-                        <div key={idx} className="flex items-start gap-2 text-xs font-mono text-muted-foreground">
-                          <span className="text-[9px] text-foreground shrink-0 mt-0.5">•</span>
+                        <div key={idx} className="flex items-start gap-2 text-xs sm:text-[13px] font-body text-muted-foreground">
+                          <span className="text-[10px] text-foreground shrink-0 mt-0.5">•</span>
                           <span className="line-clamp-2 leading-relaxed">{item}</span>
                         </div>
                       ))}
@@ -161,7 +171,7 @@ const ProjectsSection = () => {
                           data-cursor-hover
                         >
                           <span>DEMO</span>
-                          <span>↗</span>
+                          <span className="font-mono text-[10px]">↗</span>
                         </a>
                       )}
 
@@ -174,7 +184,7 @@ const ProjectsSection = () => {
                           data-cursor-hover
                         >
                           <span>GITHUB</span>
-                          <span>↗</span>
+                          <span className="font-mono text-[10px]">↗</span>
                         </a>
                       )}
                     </div>
@@ -185,7 +195,7 @@ const ProjectsSection = () => {
           </AnimatePresence>
         </div>
 
-        {/* Secondary Projects / Archive Collapsible (for 'all' view) */}
+        {/* Secondary Projects / Archive Collapsible */}
         {activeCategory === 'all' && secondaryProjects.length > 0 && (
           <div className="mt-16 border-t border-border pt-10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -214,14 +224,15 @@ const ProjectsSection = () => {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.4 }}
+                  transition={{ duration: 0.35, ease: 'easeInOut' }}
                   className="overflow-hidden"
                 >
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
                     {secondaryProjects.map((p, idx) => (
                       <div
                         key={p.id}
-                        className="hud-frame glass-panel p-5 flex flex-col justify-between space-y-4 hover:border-foreground/30 transition-all"
+                        onMouseMove={handleCardMouseMove}
+                        className="hud-frame glass-panel tactile-border-card p-5 flex flex-col justify-between space-y-4 hover:border-foreground/30 transition-all rounded-sm"
                       >
                         <span className="hud-corner hud-tl" />
                         <span className="hud-corner hud-tr" />
@@ -237,7 +248,7 @@ const ProjectsSection = () => {
                           <h5 className="font-ndot text-base text-foreground mb-1">
                             {p.title}
                           </h5>
-                          <p className="font-mono text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                          <p className="font-body text-xs text-muted-foreground line-clamp-3 leading-relaxed font-normal">
                             {p.description}
                           </p>
                         </div>

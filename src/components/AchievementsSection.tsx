@@ -102,7 +102,7 @@ const AchievementsSection = () => {
                 </div>
 
                 {/* Description */}
-                <p className="font-mono text-xs text-muted-foreground leading-relaxed">
+                <p className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed text-pretty font-normal">
                   {a.detail}
                 </p>
               </div>

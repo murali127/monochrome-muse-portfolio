@@ -87,7 +87,7 @@ const ProjectDetailModal = ({ project, onClose }: ProjectDetailModalProps) => {
               <h2 id="modal-project-title" className="font-ndot text-xl sm:text-3xl text-foreground text-glow tracking-wide break-words">
                 {project.title}
               </h2>
-              <p className="font-mono text-xs sm:text-sm text-muted-foreground mt-1 tracking-wide">
+              <p className="font-body text-xs sm:text-sm text-muted-foreground mt-1 font-normal">
                 {project.tagline}
               </p>
             </div>
@@ -97,7 +97,7 @@ const ProjectDetailModal = ({ project, onClose }: ProjectDetailModalProps) => {
               <div className="font-ndot text-[9px] tracking-[0.3em] text-foreground">
                 OVERVIEW
               </div>
-              <p className="font-mono text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              <p className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed text-pretty font-normal">
                 {project.description}
               </p>
             </div>
@@ -108,7 +108,7 @@ const ProjectDetailModal = ({ project, onClose }: ProjectDetailModalProps) => {
                 <div className="font-ndot text-[9px] tracking-[0.3em] text-foreground">
                   PROBLEM ADDRESSED
                 </div>
-                <p className="font-mono text-xs text-muted-foreground leading-relaxed">
+                <p className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed text-pretty font-normal">
                   {project.problemStatement}
                 </p>
               </div>
@@ -126,7 +126,7 @@ const ProjectDetailModal = ({ project, onClose }: ProjectDetailModalProps) => {
                       <span className="mt-1 font-ndot text-[8px] text-muted-foreground shrink-0">
                         {String(idx + 1).padStart(2, '0')}.
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground leading-relaxed">
+                      <span className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed text-pretty font-normal">
                         {item}
                       </span>
                     </li>
@@ -150,7 +150,7 @@ const ProjectDetailModal = ({ project, onClose }: ProjectDetailModalProps) => {
                       <span className="font-ndot text-[9px] text-foreground/80 shrink-0 mt-0.5">
                         STEP_{idx + 1}
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground leading-relaxed">
+                      <span className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed text-pretty font-normal">
                         {step}
                       </span>
                     </div>

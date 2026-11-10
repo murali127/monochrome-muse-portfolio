@@ -40,21 +40,21 @@ const AboutSection = () => {
               ENGINEERING INTELLIGENT SYSTEMS FROM CONCEPT TO PRODUCTION
             </div>
 
-            <p className="font-mono text-xs sm:text-base text-muted-foreground leading-relaxed">
+            <p className="font-body text-sm sm:text-base text-muted-foreground leading-relaxed text-pretty font-normal">
               I am a GenAI Full-Stack Developer with a B.Tech in Information Technology from Gayatri Vidya
               Parishad College of Engineering (Autonomous), Visakhapatnam (GPA: 8.5/10). My work centers on
               engineering intelligent, production-ready systems that unite cutting-edge AI architectures with robust
               full-stack infrastructure.
             </p>
 
-            <p className="font-mono text-xs sm:text-base text-muted-foreground leading-relaxed">
+            <p className="font-body text-sm sm:text-base text-muted-foreground leading-relaxed text-pretty font-normal">
               My hands-on experience includes developing knowledge-graph agricultural chatbots and real-time audio
               streaming workflows as a GenAI Engineer Intern at Farm Vaidya AI Tech, architecting computer vision safety
               scoring systems at CSIR-CRRI, and leading engineering delivery as Technical Lead at Open Forge and
               Cybersecurity Lead at GDSC GVPCE.
             </p>
 
-            <p className="font-mono text-xs sm:text-base text-muted-foreground leading-relaxed">
+            <p className="font-body text-sm sm:text-base text-muted-foreground leading-relaxed text-pretty font-normal">
               I enjoy taking technical concepts end-to-end into working products—ranging from retrieval-augmented
               reasoning engines and voice interfaces to responsive dashboards, high-throughput APIs, and polished
               user applications.
