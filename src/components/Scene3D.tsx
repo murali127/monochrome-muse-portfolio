@@ -197,9 +197,9 @@ const createOrganicPointShaderMaterial = (isLight: boolean) => {
 };
 
 // ----------------------------------------------------------------------------
-// Atmospheric Shockwave Ripple (Emits upon orbital brake)
+// Gravitational Shockwave Ring (Single ultra-thin phosphor ripple on arrival)
 // ----------------------------------------------------------------------------
-const AtmosphericShockwave = ({
+const GravitationalShockwave = ({
   isTriggered,
   isLight,
 }: {
@@ -211,7 +211,6 @@ const AtmosphericShockwave = ({
 
   useFrame((state) => {
     if (!ringRef.current) return;
-
     if (!isTriggered) {
       ringRef.current.visible = false;
       return;
@@ -222,7 +221,7 @@ const AtmosphericShockwave = ({
     }
 
     const elapsed = state.clock.elapsedTime - startTimeRef.current;
-    const duration = 0.85;
+    const duration = 1.1;
 
     if (elapsed > duration) {
       ringRef.current.visible = false;
@@ -231,17 +230,18 @@ const AtmosphericShockwave = ({
 
     ringRef.current.visible = true;
     const progress = elapsed / duration;
-    // Rapid initial blast with smooth expansion
-    const scale = 1.0 + Math.sin((progress * Math.PI) / 2) * 3.4;
+    // Smooth, graceful radial expansion
+    const scale = 1.0 + Math.sin((progress * Math.PI) / 2) * 2.8;
     ringRef.current.scale.set(scale, scale, 1);
 
     const mat = ringRef.current.material as THREE.MeshBasicMaterial;
-    mat.opacity = Math.pow(1 - progress, 2) * (isLight ? 0.8 : 0.95);
+    mat.opacity = Math.pow(1 - progress, 2) * (isLight ? 0.65 : 0.85);
   });
 
   return (
     <mesh ref={ringRef} position={[0, 0, 0]}>
-      <ringGeometry args={[1.82, 1.96, 64]} />
+      {/* Ultra-thin hairline ring */}
+      <ringGeometry args={[1.81, 1.86, 64]} />
       <meshBasicMaterial
         color={isLight ? 0x09090b : 0xffffff}
         transparent
@@ -254,7 +254,7 @@ const AtmosphericShockwave = ({
 };
 
 // ----------------------------------------------------------------------------
-// Initial Distant Core Beacon (Intense star in deep space before Earth expands)
+// Initial Distant Core Beacon (Subtle star pinprick in wide galactic view)
 // ----------------------------------------------------------------------------
 const EarthCoreBeacon = ({
   cameraZ,
@@ -265,14 +265,13 @@ const EarthCoreBeacon = ({
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
 
-  // Intense star beacon in the distance, fading when camera approaches
   const opacity = useMemo(() => {
-    return THREE.MathUtils.clamp((cameraZ - 12.0) / 35.0, 0, 1) * (isLight ? 0.7 : 0.9);
+    return THREE.MathUtils.clamp((cameraZ - 14.0) / 35.0, 0, 1) * (isLight ? 0.5 : 0.8);
   }, [cameraZ, isLight]);
 
   useFrame((state) => {
     if (!meshRef.current) return;
-    const pulse = 1.0 + Math.sin(state.clock.elapsedTime * 6.0) * 0.2;
+    const pulse = 1.0 + Math.sin(state.clock.elapsedTime * 4.5) * 0.15;
     meshRef.current.scale.set(pulse, pulse, pulse);
   });
 
@@ -280,7 +279,7 @@ const EarthCoreBeacon = ({
 
   return (
     <mesh ref={meshRef} position={[0, 0, 0]}>
-      <sphereGeometry args={[0.35, 16, 16]} />
+      <sphereGeometry args={[0.28, 16, 16]} />
       <meshBasicMaterial
         color={isLight ? 0x09090b : 0xffffff}
         transparent
@@ -292,7 +291,7 @@ const EarthCoreBeacon = ({
 };
 
 // ----------------------------------------------------------------------------
-// Layer 3: The Dot-Matrix Earth Core (Foreground Target, Z: 0)
+// Dot-Matrix Earth Core (Foreground Target, Z: 0)
 // ----------------------------------------------------------------------------
 const DotMatrixGlobe = ({
   isLight,
@@ -358,8 +357,7 @@ const DotMatrixGlobe = ({
 };
 
 // ----------------------------------------------------------------------------
-// Layer 1: The Spiral Galaxy Vortex (Deep Background, Z: -50 to -150)
-// 2-arm logarithmic spiral galaxy with ~12,000 monochromatic stars
+// Layer 1: Spiral Galaxy Vortex (Deep Background, Z: -45 to -110)
 // ----------------------------------------------------------------------------
 const SpiralGalaxyVortex = ({
   isLight,
@@ -369,7 +367,7 @@ const SpiralGalaxyVortex = ({
   cameraZ: number;
 }) => {
   const galaxyRef = useRef<THREE.Points>(null);
-  const count = 12000;
+  const count = 9000;
 
   const { positions, colors } = useMemo(() => {
     const pos = new Float32Array(count * 3);
@@ -379,22 +377,20 @@ const SpiralGalaxyVortex = ({
     const dimColor = new THREE.Color(isLight ? 0x666666 : 0x888888);
 
     for (let i = 0; i < count; i++) {
-      // Logarithmic spiral distribution
-      const r = Math.pow(Math.random(), 2.4) * 65 + 1.2;
+      const r = Math.pow(Math.random(), 2.2) * 55 + 1.2;
       const armAngle = ((i % arms) * 2 * Math.PI) / arms;
       const spiralAngle = r * 0.28 + armAngle;
 
-      const spread = r * 0.22 + 0.5;
+      const spread = r * 0.20 + 0.4;
       const jitterX = (Math.random() - 0.5) * spread;
       const jitterY = (Math.random() - 0.5) * spread;
-      const jitterZ = (Math.random() - 0.5) * (r * 0.12 + 0.8);
+      const jitterZ = (Math.random() - 0.5) * (r * 0.10 + 0.6);
 
       pos[i * 3] = Math.cos(spiralAngle) * r + jitterX;
       pos[i * 3 + 1] = Math.sin(spiralAngle) * r + jitterY;
-      // Positioned deep in background between -45 and -110
-      pos[i * 3 + 2] = -45.0 - (r * 0.6) + jitterZ;
+      pos[i * 3 + 2] = -45.0 - (r * 0.5) + jitterZ;
 
-      const mix = Math.min(1, r / 45);
+      const mix = Math.min(1, r / 40);
       const c = baseColor.clone().lerp(dimColor, mix);
       col[i * 3] = c.r;
       col[i * 3 + 1] = c.g;
@@ -406,13 +402,13 @@ const SpiralGalaxyVortex = ({
 
   // Deep scale establishes early, gently dims as camera approaches Earth
   const opacity = useMemo(() => {
-    const fade = THREE.MathUtils.clamp((cameraZ - 5.5) / 25.0, 0, 1);
-    return (isLight ? 0.35 : 0.65) * Math.max(0.08, fade);
+    const fade = THREE.MathUtils.clamp((cameraZ - 5.5) / 22.0, 0, 1);
+    return (isLight ? 0.3 : 0.6) * Math.max(0.06, fade);
   }, [cameraZ, isLight]);
 
   useFrame((_state, delta) => {
     if (galaxyRef.current) {
-      galaxyRef.current.rotation.z += delta * 0.04;
+      galaxyRef.current.rotation.z += delta * 0.035;
     }
   });
 
@@ -433,7 +429,7 @@ const SpiralGalaxyVortex = ({
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.015}
+        size={0.014}
         vertexColors
         transparent
         opacity={opacity}
@@ -445,95 +441,65 @@ const SpiralGalaxyVortex = ({
 };
 
 // ----------------------------------------------------------------------------
-// Layer 2: Relativistic Warp Streaks (Midground, Z: -20 to +90)
-// 1,500 particles stretching into elongated light streaks rushing past peripheral vision
+// Layer 2: Deep 3D Celestial Starfield (3,000 Sharp Floating Points, Motion Parallax)
+// Replaces 2D line streaks with real volumetric depth
 // ----------------------------------------------------------------------------
-const RelativisticWarpStreaks = ({
-  warpVelocity,
-  cameraZ,
+const VolumetricCelestialField = ({
   isLight,
 }: {
-  warpVelocity: number;
-  cameraZ: number;
   isLight: boolean;
 }) => {
-  const lineRef = useRef<THREE.LineSegments>(null);
-  const count = 1500;
+  const pointsRef = useRef<THREE.Points>(null);
+  const count = 3000;
 
-  // Star corridor data
-  const stars = useMemo(() => {
-    const data = [];
+  const positions = useMemo(() => {
+    const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      const radius = 1.2 + Math.random() * 26;
+      // Distributed in 3D volume around the flight path
+      const r = 2.5 + Math.pow(Math.random(), 1.6) * 36;
       const angle = Math.random() * Math.PI * 2;
-      data.push({
-        x: Math.cos(angle) * radius,
-        y: Math.sin(angle) * radius,
-        z: Math.random() * 110 - 20,
-        speed: 1.8 + Math.random() * 2.6,
-      });
+      pos[i * 3] = Math.cos(angle) * r;
+      pos[i * 3 + 1] = (Math.sin(angle) * r) * 0.75 + (Math.random() - 0.5) * 6;
+      pos[i * 3 + 2] = -35 + Math.random() * 120;
     }
-    return data;
+    return pos;
   }, [count]);
 
-  const positions = useMemo(() => new Float32Array(count * 6), [count]);
+  const mat = useMemo(() => {
+    return new THREE.PointsMaterial({
+      size: 0.014,
+      color: isLight ? 0x09090b : 0xffffff,
+      transparent: true,
+      opacity: isLight ? 0.35 : 0.7,
+      sizeAttenuation: true,
+      depthWrite: false,
+    });
+  }, [isLight]);
 
-  useFrame((_state, delta) => {
-    if (!lineRef.current) return;
-    const posAttr = lineRef.current.geometry.attributes.position as THREE.BufferAttribute;
-    const arr = posAttr.array as Float32Array;
-
-    // Relativistic streak elongation along Z
-    const streakLen = warpVelocity * 14.0 + 0.04;
-    const speedMultiplier = warpVelocity * 55.0 + 1.2;
-
-    for (let i = 0; i < count; i++) {
-      const star = stars[i];
-
-      // Fly backwards past camera
-      star.z += star.speed * speedMultiplier * delta;
-
-      // Wrap around when past camera
-      if (star.z > cameraZ + 5) {
-        star.z = cameraZ - 65 - Math.random() * 25;
-      }
-
-      // Head vertex
-      arr[i * 6] = star.x;
-      arr[i * 6 + 1] = star.y;
-      arr[i * 6 + 2] = star.z;
-
-      // Tail vertex (streaked backwards along -Z)
-      arr[i * 6 + 3] = star.x;
-      arr[i * 6 + 4] = star.y;
-      arr[i * 6 + 5] = star.z - streakLen;
+  // Subtle natural celestial drift
+  useFrame((state) => {
+    if (pointsRef.current) {
+      pointsRef.current.rotation.y = state.clock.elapsedTime * 0.006;
     }
-
-    posAttr.needsUpdate = true;
   });
 
   return (
-    <lineSegments ref={lineRef}>
+    <points ref={pointsRef}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={count * 2}
+          count={count}
           array={positions}
           itemSize={3}
         />
       </bufferGeometry>
-      <lineBasicMaterial
-        color={isLight ? 0x09090b : 0xffffff}
-        transparent
-        opacity={Math.max(0.12, warpVelocity * 0.85)}
-        depthWrite={false}
-      />
-    </lineSegments>
+      <primitive object={mat} attach="material" />
+    </points>
   );
 };
 
 // ----------------------------------------------------------------------------
-// Background Ambient Telemetry Stardust once docked
+// Ambient Stardust once docked
 // ----------------------------------------------------------------------------
 const CosmicDust = ({ isLight }: { isLight: boolean }) => {
   const ref = useRef<THREE.Points>(null);
@@ -582,7 +548,8 @@ const CosmicDust = ({ isLight }: { isLight: boolean }) => {
 };
 
 // ----------------------------------------------------------------------------
-// Cinematic Camera Flight Choreographer (Spiral Slingshot & Dolly Zoom)
+// High-Craft Curved Orbital Approach & Volumetric Deceleration
+// Starts at [0, 18, 70] -> Smooth Curved Descent -> Snap Shockwave -> Orbital Lock
 // ----------------------------------------------------------------------------
 interface FlightTelemetry {
   velocity: string;
@@ -610,8 +577,8 @@ const CinematicCameraRig = ({
   // Flight trajectory state
   const timeRef = useRef(0);
   const completedRef = useRef(false);
-  const [warpVelocity, setWarpVelocity] = useState(0);
-  const [currentCameraZ, setCurrentCameraZ] = useState(90.0);
+  const handoffTriggeredRef = useRef(false);
+  const [currentCameraZ, setCurrentCameraZ] = useState(70.0);
   const [isBeaconIgnited, setIsBeaconIgnited] = useState(false);
   const [isShockwaveTriggered, setIsShockwaveTriggered] = useState(false);
 
@@ -634,7 +601,7 @@ const CinematicCameraRig = ({
     };
   }, []);
 
-  // Initial setup: starts way back at [0, 12, 90] with 12deg pitch downward
+  // Initialize camera: Wide galactic view at [0, 18, 70] looking down at galaxy core
   useEffect(() => {
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
@@ -649,6 +616,7 @@ const CinematicCameraRig = ({
       persCam.updateProjectionMatrix();
 
       completedRef.current = true;
+      handoffTriggeredRef.current = true;
       setIsBeaconIgnited(true);
       onWarpComplete?.();
       onTelemetryUpdate?.({
@@ -658,9 +626,9 @@ const CinematicCameraRig = ({
         warpFactor: 0,
       });
     } else {
-      camera.position.set(0, 12, 90);
+      camera.position.set(0, 18, 70);
       camera.lookAt(0, 0, 0);
-      persCam.fov = 45;
+      persCam.fov = 48;
       persCam.updateProjectionMatrix();
     }
   }, [camera, onWarpComplete, onTelemetryUpdate]);
@@ -678,12 +646,15 @@ const CinematicCameraRig = ({
       camera.lookAt(0, 0, 0);
 
       setCurrentCameraZ(camera.position.z);
-      setWarpVelocity(0);
       setIsBeaconIgnited(true);
+
+      if (!handoffTriggeredRef.current) {
+        handoffTriggeredRef.current = true;
+        onWarpComplete?.();
+      }
 
       if (Math.abs(camera.position.z - 5.5) < 0.05) {
         completedRef.current = true;
-        onWarpComplete?.();
         onTelemetryUpdate?.({
           velocity: '0.0c',
           distance: '400 KM',
@@ -699,86 +670,66 @@ const CinematicCameraRig = ({
       const t = timeRef.current;
 
       let targetX = 0;
-      let targetY = 12.0;
-      let targetZ = 90.0;
-      let targetFov = 45.0;
+      let targetY = 18.0;
+      let targetZ = 70.0;
+      let targetFov = 48.0;
       let factor = 0;
       let velText = '0.0c';
       let distText = '142,000 KM';
       let locked = false;
 
-      // =======================================================================
-      // PHASE 1: Deep Silence & Spiral Rotation (0.0s – 1.0s)
-      // Camera starts far back at [0, 12, 90], 12deg pitch downward
-      // =======================================================================
-      if (t < 1.0) {
+      // -----------------------------------------------------------------------
+      // STAGE 1: Opening Poise & Spiral Rotation (0.0s – 0.6s)
+      // Camera perched at [0, 18, 70], taking in the wide galactic panorama
+      // -----------------------------------------------------------------------
+      if (t < 0.6) {
         targetX = 0;
-        targetY = 12.0;
-        targetZ = 90.0;
-        targetFov = 45.0;
+        targetY = 18.0;
+        targetZ = 70.0;
+        targetFov = 48.0;
         factor = 0;
         velText = '0.0c';
         distText = '142,000 KM';
       }
-      // =======================================================================
-      // PHASE 2: Gravitational Slingshot & Lens Distortion (1.0s – 2.4s)
-      // Camera corkscrews into vortex, plunges Z: 90 -> 12, FOV 45 -> 85
-      // =======================================================================
-      else if (t < 2.4) {
-        const u = (t - 1.0) / 1.4; // 0 -> 1
-        const accel = u * u; // Exponential acceleration curve
+      // -----------------------------------------------------------------------
+      // STAGE 2: Curved Orbital Approach & Natural Deceleration (0.6s – 3.0s)
+      // Descends from y: 18 -> 0 while closing from z: 70 -> 5.5 with quartic ease-out
+      // -----------------------------------------------------------------------
+      else if (t < 3.0) {
+        const u = (t - 0.6) / 2.4; // 0 -> 1
+        // Silky smooth quartic ease-out curve
+        const ease = 1 - Math.pow(1 - u, 4);
 
-        // Corkscrew spiral trajectory descending towards ecliptic plane
-        targetX = Math.sin(u * Math.PI * 1.5) * 4.2 * (1 - u);
-        targetY = 12.0 * Math.cos((u * Math.PI) / 2);
-        targetZ = 90.0 - (90.0 - 10.0) * accel;
+        // Gentle lateral curve and descent to ecliptic plane
+        targetX = Math.sin(u * Math.PI) * 1.8 * (1 - u);
+        targetY = 18.0 * (1 - ease);
+        targetZ = 70.0 - (70.0 - 5.5) * ease;
 
-        // Dynamic FOV Expansion (Dolly Zoom / Vertigo Tunnel-Vision stretch)
-        factor = Math.sin(u * Math.PI);
-        targetFov = 45.0 + factor * 40.0; // Expands up to 85deg
+        // Stable FOV: subtle shift from 48 -> 45 (zero fisheye distortion)
+        targetFov = 48.0 - (48.0 - 45.0) * ease;
 
-        // Procedural micro-shake during maximum warp velocity
-        const shakeMag = factor * 0.12;
-        targetX += Math.sin(t * 60.0) * shakeMag;
-        targetY += Math.cos(t * 75.0) * (shakeMag * 0.7);
+        factor = Math.sin(u * Math.PI) * 0.8;
+        velText = (factor * 6.2).toFixed(1) + 'c';
+        distText = `${Math.round(142000 - ease * 141600).toLocaleString()} KM`;
 
-        velText = (factor * 8.4).toFixed(1) + 'c';
-        distText = `${Math.round(142000 - accel * 132000).toLocaleString()} KM`;
-      }
-      // =======================================================================
-      // PHASE 3: The Orbital Brake & Atmospheric Shockwave (2.4s – 3.4s)
-      // Camera aggressively brakes: Z -> 5.5, FOV 85 -> 45, Shockwave ripple fires
-      // =======================================================================
-      else if (t < 3.4) {
-        const v = (t - 2.4) / 1.0; // 0 -> 1
-        const quintic = 1 - Math.pow(1 - v, 4); // Aggressive deceleration curve
-
-        targetX = THREE.MathUtils.damp(camera.position.x, 0, 10.0, delta);
-        targetY = THREE.MathUtils.damp(camera.position.y, 0, 10.0, delta);
-        targetZ = 10.0 - (10.0 - 5.5) * quintic;
-
-        // Snap FOV back from 85 -> 45 for perspective compression impact
-        const fovSnap = 1 - Math.pow(1 - v, 3);
-        targetFov = 85.0 - (85.0 - 45.0) * fovSnap;
-
-        factor = (1 - v) * 0.35;
-        velText = (factor * 8.4).toFixed(1) + 'c';
-        distText = `${Math.round(10000 - quintic * 9600).toLocaleString()} KM`;
-
-        // Trigger shockwave ripple upon hitting orbital speed
-        if (!isShockwaveTriggered) {
+        // Trigger gravitational shockwave ripple and beacon as camera enters orbital distance
+        if (targetZ <= 8.5 && !isShockwaveTriggered) {
           setIsShockwaveTriggered(true);
         }
-
-        // Ignite Visakhapatnam telemetry beacon as camera enters orbit
-        if (targetZ <= 6.2 && !isBeaconIgnited) {
+        if (targetZ <= 6.5 && !isBeaconIgnited) {
           setIsBeaconIgnited(true);
         }
+
+        // Seamless State Handoff: Trigger Hero UI fade-in during the final 15% deceleration phase
+        if (u >= 0.85 && !handoffTriggeredRef.current) {
+          handoffTriggeredRef.current = true;
+          onWarpComplete?.();
+        }
       }
-      // =======================================================================
-      // PHASE 4: Lock-On & System Handoff (3.4s – 4.0s)
-      // Earth settles upright, beacon pulses, handoff to Hero section
-      // =======================================================================
+      // -----------------------------------------------------------------------
+      // STAGE 3: Final Orbital Docking (3.0s+)
+      // Camera locked at [0, 0, 5.5], zero tilt, steady upright rotation
+      // -----------------------------------------------------------------------
       else {
         targetX = 0;
         targetY = 0;
@@ -795,25 +746,25 @@ const CinematicCameraRig = ({
         if (!isShockwaveTriggered) {
           setIsShockwaveTriggered(true);
         }
-
-        if (t >= 3.8 && !completedRef.current) {
-          completedRef.current = true;
+        if (!handoffTriggeredRef.current) {
+          handoffTriggeredRef.current = true;
           onWarpComplete?.();
         }
+
+        completedRef.current = true;
       }
 
-      // Smooth position damping
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetX, 10.0, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetY, 10.0, delta);
-      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetZ, 8.5, delta);
+      // Smooth delta-time damping
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetX, 7.0, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetY, 7.0, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetZ, 7.0, delta);
       camera.lookAt(0, 0, 0);
 
-      // Apply dynamic FOV with projection matrix update
-      persCam.fov = THREE.MathUtils.damp(persCam.fov, targetFov, 9.0, delta);
+      // Stable FOV update
+      persCam.fov = THREE.MathUtils.damp(persCam.fov, targetFov, 8.0, delta);
       persCam.updateProjectionMatrix();
 
       setCurrentCameraZ(camera.position.z);
-      setWarpVelocity(factor);
 
       onTelemetryUpdate?.({
         velocity: velText,
@@ -847,23 +798,19 @@ const CinematicCameraRig = ({
 
   return (
     <>
-      {/* Layer 1: The Spiral Galaxy Vortex (Deep Background, Z: -50 to -150) */}
+      {/* Layer 1: Deep Space Spiral Galaxy Vortex */}
       <SpiralGalaxyVortex isLight={isLight} cameraZ={currentCameraZ} />
 
-      {/* Layer 2: Relativistic Warp Streaks (Midground, Z: -20 to +90) */}
-      <RelativisticWarpStreaks
-        warpVelocity={warpVelocity}
-        cameraZ={currentCameraZ}
-        isLight={isLight}
-      />
+      {/* Layer 2: Deep 3D Celestial Starfield (Real volumetric points with natural motion parallax) */}
+      <VolumetricCelestialField isLight={isLight} />
 
-      {/* Atmospheric Shockwave Ripple (Ignites on orbital brake) */}
-      <AtmosphericShockwave
+      {/* Layer 3: Gravitational Shockwave Ring (Single ultra-thin phosphor ripple on arrival) */}
+      <GravitationalShockwave
         isTriggered={isShockwaveTriggered}
         isLight={isLight}
       />
 
-      {/* Layer 3: The Dot-Matrix Earth Core (Foreground Target, Z: 0) */}
+      {/* Layer 4: Centered Dot-Matrix Earth Globe Core */}
       <group ref={rigRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
         <DotMatrixGlobe
           isLight={isLight}
@@ -903,7 +850,7 @@ const Scene3D = ({ skipWarp, onWarpComplete, onTelemetryUpdate }: Scene3DProps) 
   return (
     <div className="fixed inset-0 z-[1] pointer-events-none flex items-center justify-center overflow-hidden">
       <Canvas
-        camera={{ position: [0, 12, 90.0], fov: 45 }}
+        camera={{ position: [0, 18, 70.0], fov: 48 }}
         dpr={[1, 1.5]}
         gl={{
           alpha: true,
