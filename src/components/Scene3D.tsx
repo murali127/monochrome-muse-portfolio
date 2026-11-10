@@ -1062,6 +1062,7 @@ const CinematicCameraRig = ({
   const timeRef = useRef(0);
   const completedRef = useRef(false);
   const handoffTriggeredRef = useRef(false);
+  const lastTelemetryTime = useRef(0);
 
   const [currentCameraZ, setCurrentCameraZ] = useState(200.0);
   const [earthScale, setEarthScale] = useState(0.0);
@@ -1320,17 +1321,21 @@ const CinematicCameraRig = ({
       camera.position.z = THREE.MathUtils.damp(camera.position.z, targetZ, 7.5, delta);
       camera.lookAt(0, 0, 0);
 
-      setCurrentCameraZ(camera.position.z);
+      const now = performance.now();
+      if (now - lastTelemetryTime.current > 85 || completedRef.current) {
+        lastTelemetryTime.current = now;
+        setCurrentCameraZ(camera.position.z);
 
-      onTelemetryUpdate?.({
-        velocity: velText,
-        distance: distText,
-        isLocked: locked,
-        warpFactor: factor,
-        stageName,
-        targetTag,
-        sectorText,
-      });
+        onTelemetryUpdate?.({
+          velocity: velText,
+          distance: distText,
+          isLocked: locked,
+          warpFactor: factor,
+          stageName,
+          targetTag,
+          sectorText,
+        });
+      }
     }
 
     // Parallax Rig handling (Gentle mouse translation when docked)
@@ -1358,29 +1363,37 @@ const CinematicCameraRig = ({
   return (
     <>
       {/* Stage 1 & 2: Deep Cosmos Multi-Galaxy Cluster Field */}
-      <MultiGalaxyClusterField isLight={isLight} cameraZ={currentCameraZ} />
+      {!completedRef.current && (
+        <MultiGalaxyClusterField isLight={isLight} cameraZ={currentCameraZ} />
+      )}
 
       {/* Ambient Depth: Volumetric 3D Celestial Starfield */}
       <VolumetricCelestialField isLight={isLight} />
 
       {/* Stage 3 & 4: Relative Solar System Rig (Sun & Planets offset, revolving around Earth) */}
-      <RelativeSolarSystemRig
-        isLight={isLight}
-        outerBodiesOpacity={solarRigOpacity}
-      />
+      {!completedRef.current && (
+        <RelativeSolarSystemRig
+          isLight={isLight}
+          outerBodiesOpacity={solarRigOpacity}
+        />
+      )}
 
       {/* Target Acquisition HUD Reticle (Anchored above Earth at [0, 0, 0], fades out before docking) */}
-      <EarthTargetReticle
-        isLocked={isEarthLocked}
-        cameraZ={currentCameraZ}
-      />
+      {!completedRef.current && (
+        <EarthTargetReticle
+          isLocked={isEarthLocked}
+          cameraZ={currentCameraZ}
+        />
+      )}
 
       {/* Stage 5: Gravitational Shockwave Ripple upon orbital arrival */}
-      <GravitationalShockwave
-        isTriggered={isShockwaveTriggered}
-        isLight={isLight}
-        radius={1.55}
-      />
+      {!completedRef.current && (
+        <GravitationalShockwave
+          isTriggered={isShockwaveTriggered}
+          isLight={isLight}
+          radius={1.55}
+        />
+      )}
 
       {/* Unified Single Earth: Permanently anchored at [0, 0, 0] */}
       <group ref={rigRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
@@ -1423,11 +1436,13 @@ const Scene3D = ({ skipWarp, onWarpComplete, onTelemetryUpdate }: Scene3DProps) 
     <div className="fixed inset-0 z-[1] pointer-events-none flex items-center justify-center overflow-hidden">
       <Canvas
         camera={{ position: [0, 20, 200.0], fov: 46 }}
-        dpr={[1, 1.5]}
+        dpr={[1, 1.25]}
         gl={{
           alpha: true,
-          antialias: true,
+          antialias: false,
           powerPreference: 'high-performance',
+          stencil: false,
+          depth: true,
           toneMapping: THREE.NoToneMapping,
         }}
       >

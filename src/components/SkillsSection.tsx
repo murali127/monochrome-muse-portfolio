@@ -1,365 +1,197 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import SectionHeader from './SectionHeader';
 import { skillsData, SkillCategory } from '@/data/skills';
 import { playTactileClick } from '@/utils/audioFeedback';
 
-const HudCorners = () => (
-  <>
-    <span className="hud-corner hud-tl" />
-    <span className="hud-corner hud-tr" />
-    <span className="hud-corner hud-bl" />
-    <span className="hud-corner hud-br" />
-  </>
-);
+interface SkillTelemetry {
+  spec: string;
+  latency: string;
+  throughput: string;
+  reliability: string;
+}
 
-const skillBenchmarks: Record<string, { spec: string; benchmark: string }> = {
-  'Python': { spec: 'SYS.PY312 // CPYTHON', benchmark: 'LATENCY: 1.2ms // CONCURRENCY: OPTIMIZED' },
-  'Java': { spec: 'SYS.JVM21 // OPENJDK', benchmark: 'GC PAUSE: <1.0ms // JIT TIER-4 ENGAGED' },
-  'JavaScript': { spec: 'SYS.V8_TURBO', benchmark: 'EVENT LOOP: ZERO-LAG // JIT OPTIMIZED' },
-  'TypeScript': { spec: 'SYS.TS_STRICT', benchmark: 'ZERO RUNTIME OVERHEAD // AST VERIFIED' },
-  'C': { spec: 'SYS.POSIX_C11', benchmark: 'DIRECT MEMORY POINTERS // HEAP OPT' },
-  'C++': { spec: 'SYS.CPP20_SIMD', benchmark: 'ZERO-COST ABSTRACTIONS // SIMD ACCEL' },
-  'Generative AI': { spec: 'SYS.NEURAL_GEN', benchmark: 'AGENTIC LOOPS // MULTI-MODAL REASONING' },
-  'Retrieval-Augmented Generation (RAG)': { spec: 'SYS.RAG_HYBRID', benchmark: 'RECALL@5: 94.2% // HYBRID DENSE + SPARSE' },
-  'LightRAG': { spec: 'SYS.LIGHTRAG_2', benchmark: 'DUAL GRAPH RETRIEVAL // GRAPH HOPS: 2' },
-  'LLM Integration': { spec: 'SYS.LLM_ORCH', benchmark: 'STREAMING TOKENS // TTFT: <280ms' },
-  'Computer Vision': { spec: 'SYS.CV_CORE', benchmark: '30 FPS REAL-TIME // 1080P INFERENCE' },
-  'YOLOX': { spec: 'SYS.YOLOX_DET', benchmark: 'ANCHOR-FREE DETECTOR // 42.4 mAP' },
-  'ByteTrack': { spec: 'SYS.BYTE_TRACK', benchmark: 'MULTI-OBJECT TRACKING // ZERO MISSED HITS' },
-  'TensorFlow': { spec: 'SYS.TF_GRAPH', benchmark: 'XLA COMPILED // TENSOR CORES ACTIVE' },
-  'OpenCV': { spec: 'SYS.CV_MATRIX', benchmark: 'HARDWARE ACCELERATED // MATRIX OPS' },
-  'FastAPI': { spec: 'SYS.ASGI_FAST', benchmark: 'THROUGHPUT: 18.4K REQ/S // P99: 14.8ms' },
-  'Node.js': { spec: 'SYS.NODE_LTS', benchmark: 'ASYNC I/O // LIBUV EVENT POOL' },
-  'Express.js': { spec: 'SYS.EXPRESS_ROUT', benchmark: 'MINIMALIST ROUTING // LOW MEMORY FOOTPRINT' },
-  'Django': { spec: 'SYS.DJANGO_ORM', benchmark: 'ORM OPTIMIZED // SECURE SESSION CACHE' },
-  'NestJS': { spec: 'SYS.NEST_ARCH', benchmark: 'ENTERPRISE DI // MODULAR CONTROLLERS' },
-  'React': { spec: 'SYS.REACT_FIBER', benchmark: 'CONCURRENT RECONCILER // 60 FPS PIPELINE' },
-  'Next.js': { spec: 'SYS.NEXT_EDGE', benchmark: 'EDGE SSR // HYBRID STATIC GENERATION' },
-  'HTML': { spec: 'SYS.SEMANTIC_DOM', benchmark: 'W3C COMPLIANT // ZERO A11Y DEFECTS' },
-  'CSS': { spec: 'SYS.GPU_RENDER', benchmark: 'GPU COMPOSITOR LAYERS // ZERO REFLOW' },
-  'Tailwind CSS': { spec: 'SYS.JIT_CSS', benchmark: 'JIT COMPILER // SUB-10KB COMPILED CSS' },
-  'MongoDB': { spec: 'SYS.MONGO_WIRE', benchmark: 'DOCUMENT INDEXES // WIREDTIGER CACHE' },
-  'PostgreSQL': { spec: 'SYS.PG_RELATIONAL', benchmark: 'ACID WAL LOGGING // CONNECTION POOL' },
-  'MySQL': { spec: 'SYS.MYSQL_INNODB', benchmark: 'INNODB BUFFER POOL // CLUSTERED INDEX' },
-  'SQLite': { spec: 'SYS.SQLITE_MEM', benchmark: 'ZERO-CONFIG IN-MEMORY // ACID ATOMIC' },
-  'Pipecat': { spec: 'SYS.PIPECAT_RTC', benchmark: 'FRAMEWORK PIPELINES // WEBRTC INTEGRATED' },
-  'Agora AI': { spec: 'SYS.AGORA_SDRTN', benchmark: 'SUB-400ms REAL-TIME VOICE // JITTER: 2ms' },
-  'Sarvam STT': { spec: 'SYS.SARVAM_INDIC', benchmark: 'INDIC MULTILINGUAL STT // WER: 8.2%' },
-  'Docker': { spec: 'SYS.OCI_CONTAINER', benchmark: 'CONTAINER DAEMON // MULTI-STAGE BUILDS' },
-  'AWS': { spec: 'SYS.CLOUD_INFRA', benchmark: 'SERVERLESS ECS // SECURE IAM BOUNDARIES' },
+const skillTelemetryData: Record<string, SkillTelemetry> = {
+  'Python': { spec: 'SYS.PY312 // CPYTHON', latency: '1.2ms', throughput: 'OPTIMIZED', reliability: '99.99%' },
+  'Java': { spec: 'SYS.JVM21 // LTS', latency: '<1.0ms GC', throughput: 'TIER-4 JIT', reliability: '99.98%' },
+  'JavaScript': { spec: 'SYS.V8_TURBO', latency: '0.8ms', throughput: 'ASYNC IO', reliability: '99.95%' },
+  'TypeScript': { spec: 'SYS.TS_STRICT', latency: '0.0ms RUNTIME', throughput: 'AST VERIFIED', reliability: '100%' },
+  'C': { spec: 'SYS.POSIX_C11', latency: '<0.2ms', throughput: 'DIRECT MEMORY', reliability: '99.99%' },
+  'C++': { spec: 'SYS.CPP20_SIMD', latency: '<0.3ms', throughput: 'SIMD VECTOR', reliability: '99.99%' },
+  'Generative AI': { spec: 'SYS.NEURAL_GEN', latency: '<550ms TTFT', throughput: 'AGENTIC LOOPS', reliability: '99.92%' },
+  'Retrieval-Augmented Generation (RAG)': { spec: 'SYS.RAG_HYBRID', latency: '18ms VECTOR', throughput: 'RECALL@5: 94.2%', reliability: '99.94%' },
+  'LightRAG': { spec: 'SYS.LIGHTRAG_2', latency: '24ms GRAPH', throughput: 'DUAL GRAPH HOPS', reliability: '99.95%' },
+  'LLM Integration': { spec: 'SYS.LLM_STREAM', latency: '<280ms STREAM', throughput: '128K CTX', reliability: '99.90%' },
+  'Computer Vision': { spec: 'SYS.CV_CORE', latency: '31.2ms (32 FPS)', throughput: '1080P REALTIME', reliability: '99.88%' },
+  'YOLOX': { spec: 'SYS.YOLOX_DET', latency: '14.2ms INFER', throughput: '42.4 mAP', reliability: '99.91%' },
+  'ByteTrack': { spec: 'SYS.BYTE_TRACK', latency: '3.1ms ASSOC', throughput: '0 MISSED HITS', reliability: '99.97%' },
+  'TensorFlow': { spec: 'SYS.TF_GRAPH', latency: 'GPU TENSOR', throughput: 'XLA COMPILED', reliability: '99.95%' },
+  'OpenCV': { spec: 'SYS.CV_MATRIX', latency: '4.8ms FRAME', throughput: 'GPU ACCEL', reliability: '99.96%' },
+  'FastAPI': { spec: 'SYS.ASGI_FAST', latency: '14.8ms P99', throughput: '18.4K REQ/SEC', reliability: '99.99%' },
+  'Node.js': { spec: 'SYS.NODE_LTS', latency: '1.4ms', throughput: 'UV EVENT POOL', reliability: '99.97%' },
+  'Express.js': { spec: 'SYS.EXPRESS_ROUT', latency: '2.1ms', throughput: 'FAST ROUTING', reliability: '99.96%' },
+  'Django': { spec: 'SYS.DJANGO_ORM', latency: '18ms P95', throughput: 'ORM CACHED', reliability: '99.98%' },
+  'NestJS': { spec: 'SYS.NEST_ARCH', latency: '3.4ms', throughput: 'MODULAR DI', reliability: '99.97%' },
+  'React': { spec: 'SYS.REACT_FIBER', latency: '16.6ms (60 FPS)', throughput: 'CONCURRENT UI', reliability: '100%' },
+  'Next.js': { spec: 'SYS.NEXT_EDGE', latency: '42ms TTFB', throughput: 'EDGE SSR', reliability: '99.99%' },
+  'HTML': { spec: 'SYS.SEMANTIC_DOM', latency: '0ms REFLOW', throughput: 'W3C COMPLIANT', reliability: '100%' },
+  'CSS': { spec: 'SYS.GPU_RENDER', latency: '0ms COMPOSIT', throughput: 'GPU HARDWARE', reliability: '100%' },
+  'Tailwind CSS': { spec: 'SYS.JIT_CSS', latency: 'SUB-10KB CSS', throughput: 'JIT PURGED', reliability: '100%' },
+  'MongoDB': { spec: 'SYS.MONGO_WIRE', latency: '2.4ms QUERY', throughput: 'WIREDTIGER', reliability: '99.99%' },
+  'PostgreSQL': { spec: 'SYS.PG_RELATIONAL', latency: '1.8ms ACID', throughput: 'WAL PIPELINE', reliability: '99.99%' },
+  'MySQL': { spec: 'SYS.MYSQL_INNODB', latency: '2.2ms', throughput: 'INNODB BUFFER', reliability: '99.98%' },
+  'SQLite': { spec: 'SYS.SQLITE_MEM', latency: '0.2ms IN-MEM', throughput: 'ZERO-OVERHEAD', reliability: '100%' },
+  'Pipecat': { spec: 'SYS.PIPECAT_RTC', latency: '<400ms E2E', throughput: 'WEBRTC AUDIO', reliability: '99.94%' },
+  'Agora AI': { spec: 'SYS.AGORA_SDRTN', latency: '180ms RTN', throughput: '2.1ms JITTER', reliability: '99.99%' },
+  'Sarvam STT': { spec: 'SYS.SARVAM_INDIC', latency: '<220ms TRANS', throughput: '8.2% WER', reliability: '99.92%' },
+  'Docker': { spec: 'SYS.OCI_CONTAINER', latency: 'ALPINE BASE', throughput: 'MULTI-STAGE', reliability: '99.99%' },
+  'AWS': { spec: 'SYS.CLOUD_INFRA', latency: 'MULTI-AZ', throughput: 'ECS CLUSTER', reliability: '99.99%' },
+};
+
+const defaultTelemetry: SkillTelemetry = {
+  spec: 'PATCH_BAY // ALL_SYSTEMS_ACTIVE',
+  latency: '1.2ms AVG',
+  throughput: '14.8 GB/s',
+  reliability: '99.98%',
 };
 
 const SkillsSection = () => {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-100px' });
-  const [active, setActive] = useState(0);
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
 
-  const current: SkillCategory = skillsData[active] || skillsData[0];
+  const activeTelem = hoveredSkill
+    ? skillTelemetryData[hoveredSkill] || defaultTelemetry
+    : defaultTelemetry;
 
-  // Dynamic telemetry metrics
-  const [telemetry, setTelemetry] = useState({
-    freq: '1420.405',
-    throughput: '14.8',
-    packets: '52,840',
-    cycle: 840,
-    voltage: '3.31V',
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTelemetry({
-        freq: (1420.4 + Math.random() * 0.02).toFixed(3),
-        throughput: (14.2 + Math.random() * 0.8).toFixed(1),
-        packets: `${Math.floor(52800 + Math.random() * 150).toLocaleString()}`,
-        cycle: Math.floor(820 + Math.random() * 40),
-        voltage: (3.30 + Math.random() * 0.03).toFixed(2) + 'V',
-      });
-    }, 1800);
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleCategorySelect = (index: number) => {
-    setActive(index);
-    playTactileClick('toggle');
-  };
-
-  const handleSkillHover = (skillName: string) => {
-    setHoveredSkill(skillName);
+  const handleSkillHover = (skill: string) => {
+    setHoveredSkill(skill);
     playTactileClick('subtle');
   };
 
-  const activeBenchmark = hoveredSkill
-    ? skillBenchmarks[hoveredSkill] || { spec: 'SYS.GENERIC', benchmark: 'REGISTER: SYNCHRONIZED // 100% PARITY' }
-    : { spec: `${current.code} // READY`, benchmark: 'STANDBY: HOVER CHIPS TO ENGAGE TELEMETRY' };
-
   return (
     <section id="skills" className="relative py-24 sm:py-28 px-4 sm:px-6 overflow-hidden" ref={ref}>
-      <div className="pointer-events-none absolute inset-0 opacity-40 grid-lines-bg" />
-      <div className="mx-auto max-w-7xl relative">
-        <SectionHeader label="CAPABILITIES // CONTROL_DECK" title="SKILLS" number="03" />
+      <div className="mx-auto max-w-7xl">
+        <SectionHeader label="CAPABILITIES // COMMAND_MATRIX" title="SKILLS" number="03" />
 
-        <div className="grid lg:grid-cols-[310px_1fr] gap-6 items-start">
-          
-          {/* LEFT: Modular Patch-Bay Command Switchboard */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            className="hud-frame glass-panel p-3.5 space-y-2 h-fit border border-border/80 rounded-sm"
-          >
-            <HudCorners />
-            <div className="font-ndot text-[8px] tracking-[0.35em] text-muted-foreground px-3 py-2 flex items-center justify-between border-b border-border/40 mb-1">
-              <span>PATCH-BAY CHANNELS</span>
-              <span className="text-[7.5px] text-foreground font-mono">06 ACTIVE</span>
+        {/* Live Hardware Telemetry Banner & Dynamic Mini-Oscilloscope Wave */}
+        <div className="mb-12 pb-5 border-b border-border/80 flex flex-wrap items-center justify-between gap-4 font-ndot text-[8px] tracking-[0.25em]">
+          <div className="flex items-center gap-3">
+            <span className="h-2 w-2 rounded-full bg-foreground phosphor-led" />
+            <span className="text-foreground uppercase font-semibold">
+              HARDWARE_COMMAND_PATCH_BAY // REALTIME_TELEMETRY
+            </span>
+          </div>
+
+          {/* Mini-Oscilloscope Waveform */}
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground hidden sm:inline">OSCILLOSCOPE:</span>
+            <div className="w-28 sm:w-40 h-5 flex items-center overflow-hidden border border-border/60 bg-foreground/[0.02] px-1 rounded-xs">
+              <svg className="w-full h-full text-foreground" viewBox="0 0 100 20" preserveAspectRatio="none">
+                <path
+                  d={`M 0,10 Q 15,${hoveredSkill ? 1 : 6} 30,10 T 60,${hoveredSkill ? 19 : 14} T 90,10 T 100,10`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  className="transition-all duration-300"
+                />
+              </svg>
             </div>
+          </div>
 
-            {skillsData.map((cat, i) => {
-              const isSelected = active === i;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => handleCategorySelect(i)}
-                  className={`w-full text-left px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xs transition-all duration-200 focus:outline-none relative group ${
-                    isSelected
-                      ? 'bg-foreground text-background font-medium shadow-[0_0_15px_rgba(255,255,255,0.15)]'
-                      : 'hover:bg-foreground/5 text-muted-foreground hover:text-foreground border border-transparent hover:border-border/60'
-                  }`}
-                  data-cursor-hover
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {/* Hardware Channel Phosphor LED */}
+          {/* Active Live Metric Indicators */}
+          <div className="flex items-center gap-4 font-mono text-[9px] text-foreground/90">
+            <span>SPEC: <strong className="text-foreground">{activeTelem.spec}</strong></span>
+            <span className="hidden md:inline">•</span>
+            <span>LATENCY: <strong className="text-foreground">{activeTelem.latency}</strong></span>
+            <span className="hidden md:inline">•</span>
+            <span>THROUGHPUT: <strong className="text-foreground">{activeTelem.throughput}</strong></span>
+            <span className="hidden md:inline">•</span>
+            <span>UPTIME: <strong className="text-foreground">{activeTelem.reliability}</strong></span>
+          </div>
+        </div>
+
+        {/* OPEN MATRIX PATCH-BAY (No Boxed Cards) */}
+        <div className="divide-y divide-border/60">
+          {skillsData.map((sector: SkillCategory, sIdx: number) => (
+            <motion.div
+              key={sector.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.45, delay: sIdx * 0.06 }}
+              className="py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start group hover:bg-foreground/[0.015] transition-colors"
+            >
+              {/* Left Column: Sector Code, Title & Architecture Role */}
+              <div className="lg:col-span-4 space-y-1.5">
+                <div className="flex items-center gap-2 font-mono text-[8.5px] text-muted-foreground tracking-widest">
+                  <span className="h-1.5 w-1.5 rounded-full bg-foreground/60 group-hover:bg-foreground transition-colors" />
+                  <span>SECTOR // {sector.code}</span>
+                  <span>•</span>
+                  <span>{String(sector.skills.length).padStart(2, '0')} CHANNELS</span>
+                </div>
+
+                <h3 className="font-ndot text-lg sm:text-xl text-foreground text-glow tracking-wider">
+                  {sector.title}
+                </h3>
+
+                <p className="font-body text-xs text-muted-foreground leading-relaxed text-pretty font-normal">
+                  {sector.description}
+                </p>
+              </div>
+
+              {/* Right Column: High-Contrast Typographic Array */}
+              <div className="lg:col-span-8 flex flex-wrap items-center gap-2.5 sm:gap-3">
+                {sector.skills.map((skill: string, kIdx: number) => {
+                  const isHovered = hoveredSkill === skill;
+                  return (
+                    <div
+                      key={skill}
+                      onMouseEnter={() => handleSkillHover(skill)}
+                      onMouseLeave={() => setHoveredSkill(null)}
+                      className={`px-3.5 py-2 rounded-xs border font-ndot transition-all duration-200 cursor-pointer flex items-center gap-2 select-none ${
+                        isHovered
+                          ? 'border-foreground bg-foreground text-background shadow-[0_0_16px_rgba(255,255,255,0.2)]'
+                          : 'border-border/70 bg-transparent text-foreground hover:border-foreground/80 hover:bg-foreground/5'
+                      }`}
+                      data-cursor-hover
+                    >
                       <span
-                        className={`h-2 w-2 rounded-full transition-all ${
-                          isSelected
-                            ? 'bg-background shadow-[0_0_8px_rgba(0,0,0,0.8)]'
-                            : 'bg-muted-foreground/40 group-hover:bg-foreground'
+                        className={`font-mono text-[8px] ${
+                          isHovered ? 'text-background/80 font-bold' : 'text-foreground/40'
+                        }`}
+                      >
+                        0{kIdx + 1}
+                      </span>
+
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full transition-all ${
+                          isHovered ? 'bg-background scale-125' : 'bg-foreground/70'
                         }`}
                       />
-                      <span className="font-ndot text-[9px] sm:text-[10px] tracking-[0.18em]">
-                        {cat.title}
+
+                      <span className="text-[11px] sm:text-xs tracking-[0.15em] font-semibold">
+                        {skill}
                       </span>
                     </div>
-
-                    <span
-                      className={`font-ndot text-[8px] tracking-[0.2em] font-mono ${
-                        isSelected ? 'opacity-90' : 'opacity-40'
-                      }`}
-                    >
-                      {cat.code}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-
-            {/* Quick Diagnostic Footer inside selector */}
-            <div className="pt-3 px-3 border-t border-border/30 flex items-center justify-between font-ndot text-[7.5px] tracking-[0.2em] text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground phosphor-led" />
-                SYS_BUS: DUAL-CHANNEL
-              </span>
-              <span className="font-mono text-foreground">{telemetry.voltage}</span>
-            </div>
-          </motion.div>
-
-          {/* RIGHT: High-Craft Avionics Flight Console */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            className="hud-frame glass-panel p-5 sm:p-8 min-h-[480px] relative overflow-hidden flex flex-col justify-between border border-border/80 rounded-sm shadow-2xl"
-          >
-            <HudCorners />
-            {/* Animated Laser Scanning Beam */}
-            <div className="absolute inset-x-0 top-0 h-px overflow-hidden">
-              <div className="h-px w-1/3 bg-foreground/60 animate-[beam_3s_linear_infinite]" />
-            </div>
-
-            <div>
-              {/* Tactical Top Bar & Dynamic Audio/RF Waveform */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 pb-3 mb-5 font-ndot text-[8px] tracking-[0.25em] text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-foreground phosphor-led" />
-                  <span className="text-foreground">{current.code} // FLIGHT_CONSOLE_ONLINE</span>
-                </div>
-
-                {/* Live Real-Time SVG Waveform Header */}
-                <div className="flex items-center gap-2">
-                  <span className="font-ndot text-[7px] text-muted-foreground hidden sm:inline">OSCILLOSCOPE:</span>
-                  <div className="w-24 sm:w-32 h-4 flex items-center overflow-hidden border border-border/40 rounded-xs bg-foreground/[0.02] px-1">
-                    <svg className="w-full h-full text-foreground/80" viewBox="0 0 100 20" preserveAspectRatio="none">
-                      <path
-                        d={`M 0,10 Q 15,${hoveredSkill ? 2 : 5} 30,10 T 60,${hoveredSkill ? 18 : 14} T 90,10 T 100,10`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.2"
-                        className="transition-all duration-300"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 text-foreground/75 font-mono text-[8.5px]">
-                  <span>RF: {telemetry.freq} MHz</span>
-                  <span className="hidden sm:inline">•</span>
-                  <span>THROUGHPUT: {telemetry.throughput} GB/s</span>
-                </div>
+                  );
+                })}
               </div>
-
-              {/* Header Title & Description */}
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
-                <div>
-                  <h3 className="font-ndot text-2xl sm:text-3xl lg:text-4xl text-foreground text-glow tracking-wider">
-                    {current.title}
-                  </h3>
-                  <p className="font-body text-xs sm:text-sm text-muted-foreground mt-2 max-w-xl leading-relaxed text-pretty font-normal">
-                    {current.description}
-                  </p>
-                </div>
-                <div className="flex items-baseline gap-2 self-start sm:self-auto shrink-0">
-                  <span className="font-ndot text-[9px] tracking-[0.25em] text-muted-foreground">REGISTERS:</span>
-                  <span className="font-ndot text-3xl sm:text-5xl text-foreground/25 leading-none font-mono">
-                    {String(current.skills.length).padStart(2, '0')}
-                  </span>
-                </div>
-              </div>
-
-              {/* Tactical Avionics Skill Modules with Live Benchmarks */}
-              <div className="py-2">
-                <div className="font-ndot text-[8px] tracking-[0.3em] text-muted-foreground mb-3 flex items-center justify-between">
-                  <span>ENGAGED REGISTERS & HARDWARE INTERFACES</span>
-                  <span className="font-mono text-foreground/70">PARITY: 100% OK</span>
-                </div>
-
-                <div className="flex flex-wrap gap-2 sm:gap-2.5">
-                  {current.skills.map((skill, i) => {
-                    const isHovered = hoveredSkill === skill;
-                    return (
-                      <motion.div
-                        key={skill}
-                        initial={{ opacity: 0, scale: 0.94 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: i * 0.03 }}
-                        onMouseEnter={() => handleSkillHover(skill)}
-                        onMouseLeave={() => setHoveredSkill(null)}
-                        className={`group/chip px-3 sm:px-3.5 py-2 rounded-xs border transition-all flex items-center gap-2.5 cursor-pointer ${
-                          isHovered
-                            ? 'border-foreground bg-foreground text-background shadow-[0_0_15px_rgba(255,255,255,0.15)]'
-                            : 'border-border/80 bg-background/60 hover:border-foreground/80 hover:bg-foreground/5 text-foreground'
-                        }`}
-                        data-cursor-hover
-                      >
-                        <span
-                          className={`font-mono text-[8px] ${
-                            isHovered ? 'text-background/80 font-bold' : 'text-foreground/40 group-hover/chip:text-foreground'
-                          }`}
-                        >
-                          [{String(i + 1).padStart(2, '0')}]
-                        </span>
-                        
-                        {/* Phosphor Status LED */}
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full transition-all ${
-                            isHovered
-                              ? 'bg-background scale-125'
-                              : 'bg-foreground/75 group-hover/chip:scale-125'
-                          }`}
-                        />
-                        
-                        <span
-                          className={`font-ndot text-[10px] sm:text-[11px] tracking-[0.16em] ${
-                            isHovered ? 'text-background font-semibold' : 'text-foreground'
-                          }`}
-                        >
-                          {skill}
-                        </span>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Dynamic Live Micro-Benchmark & Telemetry Drawer */}
-              <div className="mt-5 p-3 rounded-xs border border-border/70 bg-foreground/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-foreground phosphor-led shrink-0" />
-                  <span className="font-mono text-[9px] text-muted-foreground uppercase">
-                    {activeBenchmark.spec}
-                  </span>
-                </div>
-                <div className="font-mono text-[10px] text-foreground font-medium tracking-wide">
-                  {activeBenchmark.benchmark}
-                </div>
-              </div>
-
-              {/* Dynamic Signal Spectrum / Oscilloscope Readout */}
-              <div className="mt-5 pt-4 border-t border-border/40">
-                <div className="flex items-center justify-between font-ndot text-[7.5px] sm:text-[8px] tracking-[0.25em] text-muted-foreground mb-2">
-                  <span>REAL-TIME SPECTRAL DENSITY // SIGNAL ARRAY</span>
-                  <span className="font-mono">{telemetry.packets} PKTS PROCESSED</span>
-                </div>
-                <div className="flex items-end gap-1 h-6 sm:h-8 overflow-hidden bg-foreground/[0.02] p-1 border border-border/40 rounded-xs">
-                  {Array.from({ length: 36 }).map((_, barIdx) => {
-                    const isSpike = hoveredSkill && (barIdx % 3 === 0);
-                    return (
-                      <span
-                        key={barIdx}
-                        className="signal-bar flex-1 bg-foreground/60 transition-all duration-300"
-                        style={{
-                          height: `${isSpike ? 85 : 20 + ((barIdx * 11 + active * 7) % 75)}%`,
-                          animationDelay: `${(barIdx % 6) * 0.12}s`,
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* High-Density Terminal Telemetry Footer */}
-            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 border-t border-border/60 pt-4 sm:pt-5 font-ndot">
-              <div>
-                <div className="text-[7px] sm:text-[8px] tracking-[0.25em] text-muted-foreground mb-0.5">
-                  UPLINK_STATUS
-                </div>
-                <div className="text-[9px] sm:text-[10px] tracking-wider text-foreground font-semibold flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-foreground phosphor-led" />
-                  SYNCHRONIZED
-                </div>
-              </div>
-
-              <div>
-                <div className="text-[7px] sm:text-[8px] tracking-[0.25em] text-muted-foreground mb-0.5">
-                  FREQUENCY_CYCLE
-                </div>
-                <div className="text-[9px] sm:text-[10px] tracking-wider text-foreground font-semibold font-mono">
-                  {telemetry.cycle} Hz // L2_CLOCK
-                </div>
-              </div>
-
-              <div>
-                <div className="text-[7px] sm:text-[8px] tracking-[0.25em] text-muted-foreground mb-0.5">
-                  MEMORY_PARITY
-                </div>
-                <div className="text-[9px] sm:text-[10px] tracking-wider text-foreground font-semibold font-mono">
-                  0x00_VERIFIED
-                </div>
-              </div>
-
-              <div>
-                <div className="text-[7px] sm:text-[8px] tracking-[0.25em] text-muted-foreground mb-0.5">
-                  SECURITY_GATE
-                </div>
-                <div className="text-[9px] sm:text-[10px] tracking-wider text-foreground font-semibold flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
-                  AIR_GAPPED
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
+            </motion.div>
+          ))}
         </div>
+
+        {/* Bottom Hardware Bus Footer */}
+        <div className="mt-10 pt-5 border-t border-border/60 flex flex-wrap items-center justify-between gap-4 font-ndot text-[8px] tracking-[0.25em] text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
+            <span>BUS_INTERFACE: DUAL_CHANNEL_SPI // PARITY: 100% OK</span>
+          </div>
+
+          <div className="font-mono text-[8.5px] text-foreground/80">
+            TOTAL_ENGAGED_REGISTERS: 34 MODULES // ZERO CONFLICTS
+          </div>
+        </div>
+
       </div>
     </section>
   );

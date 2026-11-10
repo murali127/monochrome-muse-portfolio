@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import SectionHeader from './SectionHeader';
+import { playTactileClick } from '@/utils/audioFeedback';
 
 const HudCorners = () => (
   <>
@@ -79,7 +80,8 @@ const EducationSection = () => {
                   {coursework.map((course) => (
                     <span
                       key={course}
-                      className="px-3 py-1.5 font-ndot text-[9px] sm:text-[10px] tracking-[0.16em] text-foreground/90 border border-border/80 bg-background/60 rounded-sm"
+                      onMouseEnter={() => playTactileClick('subtle')}
+                      className="px-3 py-1.5 font-ndot text-[9px] sm:text-[10px] tracking-[0.16em] text-foreground/90 border border-border/80 bg-background/60 hover:bg-foreground/5 hover:border-foreground/60 transition-colors rounded-xs cursor-default"
                       data-cursor-hover
                     >
                       {course}

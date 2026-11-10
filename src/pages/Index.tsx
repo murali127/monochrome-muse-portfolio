@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomCursor from '@/components/CustomCursor';
-import ParticleField from '@/components/ParticleField';
 import Scene3D from '@/components/Scene3D';
 import BootLoader, { TelemetryData } from '@/components/BootLoader';
 import Navbar from '@/components/Navbar';
@@ -42,7 +41,6 @@ const Index = () => {
       <CustomCursor />
 
       {/* Cinematic 3D Scene: Spiral Galaxy -> Hyperspace Dive -> Dot-Matrix Earth */}
-      <ParticleField />
       <Scene3D
         skipWarp={skipRequested}
         onWarpComplete={handleWarpComplete}

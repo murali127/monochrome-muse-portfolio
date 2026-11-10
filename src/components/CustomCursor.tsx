@@ -5,68 +5,59 @@ const CustomCursor = () => {
   const ringRef = useRef<HTMLDivElement>(null);
   const [clicking, setClicking] = useState(false);
   const [hovering, setHovering] = useState(false);
-  const mousePos = useRef({ x: 0, y: 0 });
+  const rafId = useRef<number | null>(null);
+  const targetPos = useRef({ x: -100, y: -100 });
 
   useEffect(() => {
-    // Check if pointer is fine (mouse/trackpad), not touch
+    if (typeof window === 'undefined') return;
     if (window.matchMedia('(pointer: coarse)').matches) {
       return;
     }
 
-    const moveCursor = (e: MouseEvent) => {
-      mousePos.current = { x: e.clientX, y: e.clientY };
-      
-      if (dotRef.current) {
-        dotRef.current.style.left = `${e.clientX}px`;
-        dotRef.current.style.top = `${e.clientY}px`;
-      }
-      if (ringRef.current) {
-        ringRef.current.style.left = `${e.clientX}px`;
-        ringRef.current.style.top = `${e.clientY}px`;
+    const onMouseMove = (e: MouseEvent) => {
+      targetPos.current.x = e.clientX;
+      targetPos.current.y = e.clientY;
+
+      if (!rafId.current) {
+        rafId.current = requestAnimationFrame(() => {
+          const { x, y } = targetPos.current;
+          if (dotRef.current) {
+            dotRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+          }
+          if (ringRef.current) {
+            ringRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+          }
+          rafId.current = null;
+        });
       }
     };
 
-    const handleMouseDown = () => {
-      setClicking(true);
-    };
-    const handleMouseUp = () => {
-      setClicking(false);
-    };
+    const handleMouseDown = () => setClicking(true);
+    const handleMouseUp = () => setClicking(false);
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest('a, button, [role="button"], input, textarea, [data-cursor-hover]')) {
+      if (target?.closest('a, button, [role="button"], input, textarea, [data-cursor-hover]')) {
         setHovering(true);
       }
     };
+
     const handleMouseOut = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest('a, button, [role="button"], input, textarea, [data-cursor-hover]')) {
+      if (target?.closest('a, button, [role="button"], input, textarea, [data-cursor-hover]')) {
         setHovering(false);
       }
     };
 
-    const initCursor = (e: MouseEvent) => {
-      mousePos.current = { x: e.clientX, y: e.clientY };
-      if (dotRef.current) {
-        dotRef.current.style.left = `${e.clientX}px`;
-        dotRef.current.style.top = `${e.clientY}px`;
-      }
-      if (ringRef.current) {
-        ringRef.current.style.left = `${e.clientX}px`;
-        ringRef.current.style.top = `${e.clientY}px`;
-      }
-    };
-
-    window.addEventListener('mousemove', moveCursor);
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('mouseover', handleMouseOver);
-    document.addEventListener('mouseout', handleMouseOut);
-    document.addEventListener('mouseenter', initCursor, { once: true });
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('mousedown', handleMouseDown, { passive: true });
+    window.addEventListener('mouseup', handleMouseUp, { passive: true });
+    document.addEventListener('mouseover', handleMouseOver, { passive: true });
+    document.addEventListener('mouseout', handleMouseOut, { passive: true });
 
     return () => {
-      window.removeEventListener('mousemove', moveCursor);
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+      window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('mouseover', handleMouseOver);
@@ -78,29 +69,27 @@ const CustomCursor = () => {
     <div className="hidden md:block">
       <div
         ref={dotRef}
-        className="fixed z-[10000] pointer-events-none mix-blend-difference"
+        className="fixed top-0 left-0 z-[10000] pointer-events-none mix-blend-difference"
         style={{
           width: hovering ? 12 : 8,
           height: hovering ? 12 : 8,
           borderRadius: '50%',
           background: 'white',
           transition: 'width 0.2s, height 0.2s',
-          transform: 'translate(-50%, -50%)',
-          willChange: 'left, top',
+          willChange: 'transform',
         }}
       />
       <div
         ref={ringRef}
-        className="fixed z-[10000] pointer-events-none mix-blend-difference"
+        className="fixed top-0 left-0 z-[10000] pointer-events-none mix-blend-difference"
         style={{
-          width: hovering ? 60 : 40,
-          height: hovering ? 60 : 40,
+          width: hovering ? 54 : 36,
+          height: hovering ? 54 : 36,
           borderRadius: '50%',
           border: '1px solid rgba(255,255,255,0.5)',
-          borderColor: clicking || hovering ? 'white' : 'rgba(255,255,255,0.5)',
-          transition: 'all 0.15s ease-out',
-          transform: clicking ? 'translate(-50%, -50%) scale(0.8)' : 'translate(-50%, -50%)',
-          willChange: 'left, top, transform',
+          borderColor: clicking || hovering ? 'white' : 'rgba(255,255,255,0.4)',
+          transition: 'width 0.2s, height 0.2s, border-color 0.2s',
+          willChange: 'transform',
         }}
       />
     </div>

@@ -3,27 +3,35 @@ import { motion, useInView } from 'framer-motion';
 import SectionHeader from './SectionHeader';
 import { playTactileClick } from '@/utils/audioFeedback';
 
-const channels = [
+interface QuickChannel {
+  id: string;
+  label: string;
+  value: string;
+  href: string;
+  copyableText: string;
+}
+
+const channels: QuickChannel[] = [
   {
+    id: 'email',
     label: 'PRIMARY_LINK',
-    name: 'EMAIL_DISPATCH',
     value: 'muralijay360@gmail.com',
     href: 'mailto:muralijay360@gmail.com',
-    protocol: 'SMTP / TLS 1.3',
+    copyableText: 'muralijay360@gmail.com',
   },
   {
-    label: 'SOURCE_REPO',
-    name: 'GITHUB_ORGANIZATION',
+    id: 'github',
+    label: 'SOURCE_TRACE',
     value: 'github.com/murali127',
     href: 'https://github.com/murali127',
-    protocol: 'HTTPS / GIT_SSH',
+    copyableText: 'https://github.com/murali127',
   },
   {
+    id: 'linkedin',
     label: 'NETWORK_IDENTITY',
-    name: 'LINKEDIN_PROFILE',
     value: 'linkedin.com/in/muralipaila',
     href: 'https://www.linkedin.com/in/muralipaila/',
-    protocol: 'OIDC / VERIFIED',
+    copyableText: 'https://www.linkedin.com/in/muralipaila/',
   },
 ];
 
@@ -33,10 +41,11 @@ const ContactSection = () => {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-100px' });
   const [stage, setStage] = useState<TransmissionStage>('IDLE');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', message: '' });
 
-  // Compute live byte count formatted as Hex
-  const totalBytes = (form.name.length + form.email.length + form.message.length);
+  // Compute live byte count formatted in Hex
+  const totalBytes = form.name.length + form.email.length + form.message.length;
   const hexBytes = `0x${totalBytes.toString(16).padStart(4, '0').toUpperCase()}`;
 
   const handleSubmit = (e: FormEvent) => {
@@ -46,17 +55,14 @@ const ContactSection = () => {
     playTactileClick('shutter');
     setStage('ENCRYPTING');
 
-    // Step 1: Encrypting SHA-256
     setTimeout(() => {
       setStage('LOCKING_UPLINK');
       playTactileClick('subtle');
 
-      // Step 2: Locking satellite uplink
       setTimeout(() => {
         setStage('TRANSMITTED');
         playTactileClick('toggle');
 
-        // Step 3: Trigger Mailto dispatch
         const subject = encodeURIComponent(`[TACTICAL_DISPATCH] Inquiry from ${form.name || 'Operative'}`);
         const body = encodeURIComponent(
           `TRANSMISSION_PAYLOAD:\n-----------------------------\n${form.message}\n-----------------------------\nCALLSIGN: ${form.name}\nRETURN_FREQUENCY: ${form.email}\nTIMESTAMP: ${new Date().toISOString()}`
@@ -64,246 +70,209 @@ const ContactSection = () => {
 
         setTimeout(() => {
           window.location.href = `mailto:muralijay360@gmail.com?subject=${subject}&body=${body}`;
-        }, 600);
+        }, 500);
       }, 700);
     }, 600);
   };
 
-  const handleInputChange = (field: 'name' | 'email' | 'message', val: string) => {
-    setForm((f) => ({ ...f, [field]: val }));
+  const handleCopy = (ch: QuickChannel) => {
+    navigator.clipboard.writeText(ch.copyableText);
+    setCopiedId(ch.id);
+    playTactileClick('toggle');
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
     <section id="contact" className="relative py-24 sm:py-28 px-4 sm:px-6 overflow-hidden" ref={ref}>
-      <div className="pointer-events-none absolute inset-0 opacity-30 grid-lines-bg" />
-      <div className="mx-auto max-w-7xl relative">
-        <SectionHeader label="ESTABLISH_CONNECTION // UPLINK" title="CONTACT" number="07" />
+      <div className="mx-auto max-w-7xl">
+        <SectionHeader label="ESTABLISH_CONNECTION // DIRECT_UPLINK" title="CONTACT" number="07" />
 
-        <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-6 items-stretch">
+        {/* OPEN BRUTALIST DIRECT UPLINK CONSOLE (Zero Box Envelopes) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start mt-4">
           
-          {/* LEFT: Military-Spec Encrypted Transmission Console */}
-          <motion.form
-            onSubmit={handleSubmit}
+          {/* Left Column: Direct Underline-Only Transmission Form */}
+          <motion.div
             initial={{ opacity: 0, y: 25 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="hud-frame glass-panel p-6 sm:p-10 border border-border/80 rounded-sm space-y-6 sm:space-y-7 relative flex flex-col justify-between"
+            className="lg:col-span-7 space-y-8"
           >
-            <span className="hud-corner hud-tl" />
-            <span className="hud-corner hud-tr" />
-            <span className="hud-corner hud-bl" />
-            <span className="hud-corner hud-br" />
-
             <div>
-              {/* Header Status Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3 mb-6 font-ndot text-[8px] tracking-[0.25em] text-muted-foreground">
-                <div className="flex items-center gap-2 text-foreground">
-                  <span className="h-2 w-2 rounded-full bg-foreground phosphor-led" />
-                  <span>SECURE_ENCLAVE // UPLINK_TERMINAL</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-foreground/80">CARRIER: LOCKED</span>
-                  <span>•</span>
-                  <span className="font-mono text-foreground">SIG: 99.4%</span>
-                </div>
+              <div className="font-ndot text-[8.5px] tracking-[0.3em] text-muted-foreground mb-2 flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-foreground phosphor-led" />
+                <span>TERMINAL_CARRIER // DIRECT_COMM_LINK</span>
               </div>
+              <h3 className="font-ndot text-3xl sm:text-5xl lg:text-6xl text-foreground text-glow tracking-wider uppercase font-bold leading-none">
+                INITIATE_TRANSMISSION
+              </h3>
+              <p className="font-body text-xs sm:text-sm text-muted-foreground mt-3 leading-relaxed text-pretty font-normal">
+                Direct encrypted transmission channel. Type your payload below to dispatch through secure SMTP relays.
+              </p>
+            </div>
 
-              {/* Console Headline */}
-              <div className="mb-6">
-                <h3 className="font-ndot text-2xl sm:text-3xl text-foreground text-glow tracking-wide">
-                  TRANSMIT ENCRYPTED PAYLOAD
-                </h3>
-                <p className="font-body text-xs sm:text-sm text-muted-foreground mt-1 font-normal">
-                  Direct encrypted gateway to Murali Paila. Messages are encoded and transmitted through secure SMTP channels.
-                </p>
-              </div>
-
-              {/* CHANNEL 01: CALLSIGN */}
-              <div className="space-y-1.5 mb-5">
-                <div className="flex items-center justify-between font-ndot text-[8.5px] tracking-[0.25em] text-muted-foreground">
-                  <span>CHANNEL_01 // CALLSIGN [IDENTITY]</span>
+            <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+              
+              {/* [01] CALLSIGN - Minimal Underline Only */}
+              <div className="space-y-1">
+                <label className="font-ndot text-[8px] tracking-[0.25em] text-muted-foreground uppercase flex items-center justify-between">
+                  <span>[01] CALLSIGN // YOUR_NAME</span>
                   <span className="font-mono text-[8px]">{form.name.length} CHR</span>
-                </div>
+                </label>
                 <input
                   required
                   value={form.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="contact-field font-mono text-xs sm:text-sm"
-                  placeholder="Enter full name or organizational callsign"
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Enter your name or organization callsign..."
+                  className="w-full bg-transparent border-b border-border/80 focus:border-foreground py-2.5 font-mono text-sm sm:text-base text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors rounded-none"
                   data-cursor-hover
                 />
               </div>
 
-              {/* CHANNEL 02: FREQUENCY */}
-              <div className="space-y-1.5 mb-5">
-                <div className="flex items-center justify-between font-ndot text-[8.5px] tracking-[0.25em] text-muted-foreground">
-                  <span>CHANNEL_02 // RETURN_FREQUENCY [EMAIL]</span>
-                  <span className="font-mono text-[8px]">VALIDATED_INPUT</span>
-                </div>
+              {/* [02] FREQUENCY - Minimal Underline Only */}
+              <div className="space-y-1">
+                <label className="font-ndot text-[8px] tracking-[0.25em] text-muted-foreground uppercase flex items-center justify-between">
+                  <span>[02] RETURN_FREQUENCY // YOUR_EMAIL</span>
+                  <span className="font-mono text-[8px]">VALIDATED_STATION</span>
+                </label>
                 <input
                   required
                   type="email"
                   value={form.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="contact-field font-mono text-xs sm:text-sm"
-                  placeholder="name@organization.domain"
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="name@organization.com"
+                  className="w-full bg-transparent border-b border-border/80 focus:border-foreground py-2.5 font-mono text-sm sm:text-base text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors rounded-none"
                   data-cursor-hover
                 />
               </div>
 
-              {/* PAYLOAD: ENCRYPTED MESSAGE */}
-              <div className="space-y-1.5 mb-6">
-                <div className="flex items-center justify-between font-ndot text-[8.5px] tracking-[0.25em] text-muted-foreground">
-                  <span>PAYLOAD // ENCRYPTED_MESSAGE</span>
-                  <span className="font-mono text-[8px] text-foreground font-semibold">
+              {/* [03] PAYLOAD - Minimal Underline Only */}
+              <div className="space-y-1">
+                <label className="font-ndot text-[8px] tracking-[0.25em] text-muted-foreground uppercase flex items-center justify-between">
+                  <span>[03] PAYLOAD // ENCRYPTED_MESSAGE</span>
+                  <span className="font-mono text-[8.5px] text-foreground font-semibold">
                     {hexBytes} BYTES
                   </span>
-                </div>
+                </label>
                 <textarea
                   required
-                  rows={4}
+                  rows={3}
                   value={form.message}
-                  onChange={(e) => handleInputChange('message', e.target.value)}
-                  className="contact-field resize-none font-mono text-xs sm:text-sm"
-                  placeholder="Specify system objectives, project proposals, or engineering collaboration brief..."
+                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  placeholder="Detail your inquiry, project scope, or engineering collaboration brief..."
+                  className="w-full bg-transparent border-b border-border/80 focus:border-foreground py-2.5 font-mono text-sm sm:text-base text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors rounded-none resize-none"
                   data-cursor-hover
                 />
               </div>
 
-              {/* 3-Step Transmission Telemetry Bar */}
-              <div className="p-3 rounded-xs border border-border/70 bg-foreground/[0.02] space-y-2 mb-6">
-                <div className="flex items-center justify-between font-ndot text-[7.5px] sm:text-[8px] tracking-[0.2em] text-muted-foreground">
-                  <span>TRANSMISSION_SEQUENCE:</span>
-                  <span className="font-mono text-foreground font-semibold">
-                    {stage === 'IDLE' && 'READY // AWAITING_EXEC'}
-                    {stage === 'ENCRYPTING' && 'STEP 1/3: SHA-256 ENCRYPTION'}
-                    {stage === 'LOCKING_UPLINK' && 'STEP 2/3: LOCKING SATELLITE UPLINK'}
-                    {stage === 'TRANSMITTED' && 'STEP 3/3: TRANSMITTED [200 OK]'}
-                  </span>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="h-1.5 w-full bg-border/40 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-foreground transition-all duration-500 ease-out"
-                    style={{
-                      width:
-                        stage === 'IDLE'
-                          ? '0%'
-                          : stage === 'ENCRYPTING'
-                          ? '35%'
-                          : stage === 'LOCKING_UPLINK'
-                          ? '75%'
-                          : '100%',
-                    }}
-                  />
-                </div>
+              {/* Transmission Progress State */}
+              <div className="pt-2 flex items-center justify-between font-ndot text-[8px] tracking-[0.22em] text-muted-foreground">
+                <span>STATUS:</span>
+                <span className="font-mono text-foreground font-semibold">
+                  {stage === 'IDLE' && 'STANDBY // READY_FOR_DISPATCH'}
+                  {stage === 'ENCRYPTING' && 'STEP 1/3: ENCRYPTING (SHA-256)...'}
+                  {stage === 'LOCKING_UPLINK' && 'STEP 2/3: LOCKING SATELLITE UPLINK...'}
+                  {stage === 'TRANSMITTED' && 'STEP 3/3: TRANSMITTED [200 OK]'}
+                </span>
               </div>
-            </div>
 
-            {/* Submit Execution Button */}
-            <button
-              type="submit"
-              disabled={stage !== 'IDLE'}
-              className="nav-cta w-full py-3.5 rounded-xs font-ndot text-[10px] sm:text-[11px] tracking-[0.28em] focus:outline-none flex items-center justify-center gap-2 shadow-lg disabled:opacity-70"
-              data-cursor-hover
-            >
-              {stage === 'IDLE' && (
-                <>
-                  <span>EXECUTE_TRANSMISSION</span>
-                  <span className="font-mono">[200 OK]</span>
-                </>
-              )}
-              {stage === 'ENCRYPTING' && (
-                <>
-                  <span className="h-2 w-2 rounded-full bg-background animate-ping" />
-                  <span>ENCRYPTING_PAYLOAD (SHA-256)...</span>
-                </>
-              )}
-              {stage === 'LOCKING_UPLINK' && (
-                <>
-                  <span className="h-2 w-2 rounded-full bg-background animate-ping" />
-                  <span>LOCKING_SATELLITE_UPLINK...</span>
-                </>
-              )}
-              {stage === 'TRANSMITTED' && (
-                <>
-                  <span>TRANSMITTED [200 OK] // DISPATCHED</span>
-                </>
-              )}
-            </button>
-          </motion.form>
+              {/* Minimal Execute Button */}
+              <button
+                type="submit"
+                disabled={stage !== 'IDLE'}
+                className="nav-cta w-full py-4 rounded-xs font-ndot text-[10px] sm:text-[11px] tracking-[0.28em] focus:outline-none flex items-center justify-center gap-3 transition-transform"
+                data-cursor-hover
+              >
+                {stage === 'IDLE' && (
+                  <>
+                    <span>EXECUTE_TRANSMISSION</span>
+                    <span className="font-mono">[200 OK]</span>
+                  </>
+                )}
+                {stage === 'ENCRYPTING' && (
+                  <>
+                    <span className="h-2 w-2 rounded-full bg-background animate-ping" />
+                    <span>ENCRYPTING (SHA-256)...</span>
+                  </>
+                )}
+                {stage === 'LOCKING_UPLINK' && (
+                  <>
+                    <span className="h-2 w-2 rounded-full bg-background animate-ping" />
+                    <span>LOCKING SATELLITE UPLINK...</span>
+                  </>
+                )}
+                {stage === 'TRANSMITTED' && (
+                  <>
+                    <span>TRANSMISSION_DISPATCHED [200 OK]</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </motion.div>
 
-          {/* RIGHT: High-Density Node Map & Communication Relays */}
+          {/* Right Column: Direct Quick-Action Channels with 1-Click Copy */}
           <motion.div
             initial={{ opacity: 0, y: 25 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="hud-frame glass-panel p-6 sm:p-8 border border-border/80 rounded-sm flex flex-col justify-between"
+            className="lg:col-span-5 space-y-6 pt-4 lg:pt-8"
           >
-            <span className="hud-corner hud-tl" />
-            <span className="hud-corner hud-tr" />
-            <span className="hud-corner hud-bl" />
-            <span className="hud-corner hud-br" />
+            <div className="font-ndot text-[8px] tracking-[0.3em] text-muted-foreground uppercase border-b border-border/60 pb-3">
+              DIRECT CHANNELS // 1-CLICK DISPATCH
+            </div>
 
-            <div>
-              <div className="font-ndot text-[8px] tracking-[0.35em] text-muted-foreground mb-3 flex items-center justify-between border-b border-border/60 pb-3">
-                <span>COMMUNICATION RELAYS</span>
-                <span className="font-mono text-foreground">3 CHANNELS</span>
-              </div>
+            <div className="space-y-4">
+              {channels.map((ch) => {
+                const isCopied = copiedId === ch.id;
 
-              <h3 className="font-ndot text-2xl sm:text-3xl text-foreground mb-3">
-                LET'S CREATE
-                <br />
-                <span className="text-muted-foreground">SOMETHING NEW</span>
-              </h3>
-
-              <p className="font-body text-xs sm:text-sm text-muted-foreground leading-relaxed text-pretty font-normal mb-8">
-                Available for engineering collaborations, GenAI & Voice AI systems architecture, and full-time technical roles. Based in Visakhapatnam, India.
-              </p>
-
-              {/* Channels List */}
-              <div className="space-y-4">
-                {channels.map((channel) => (
-                  <a
-                    key={channel.label}
-                    href={channel.href}
-                    target={channel.href.startsWith('http') ? '_blank' : undefined}
-                    rel="noreferrer"
-                    onClick={() => playTactileClick('toggle')}
-                    className="p-3.5 rounded-xs border border-border/70 bg-foreground/[0.02] hover:bg-foreground/[0.05] hover:border-foreground/60 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 group"
-                    data-cursor-hover
+                return (
+                  <div
+                    key={ch.id}
+                    className="p-4 border border-border/70 rounded-xs hover:border-foreground/60 transition-colors flex items-center justify-between gap-4 group"
                   >
-                    <div>
+                    <div className="space-y-0.5">
                       <div className="font-ndot text-[7.5px] tracking-[0.25em] text-muted-foreground group-hover:text-foreground transition-colors">
-                        {channel.label} // {channel.protocol}
+                        {ch.label}
                       </div>
-                      <div className="font-ndot text-xs sm:text-sm text-foreground tracking-wide mt-0.5">
-                        {channel.name}
-                      </div>
+                      <a
+                        href={ch.href}
+                        target={ch.href.startsWith('http') ? '_blank' : undefined}
+                        rel="noreferrer"
+                        className="font-mono text-xs sm:text-sm text-foreground hover:underline block"
+                        data-cursor-hover
+                      >
+                        {ch.value}
+                      </a>
                     </div>
 
-                    <div className="font-mono text-[10px] text-muted-foreground group-hover:text-foreground transition-colors flex items-center gap-1.5 sm:text-right">
-                      <span>{channel.value}</span>
-                      <span className="text-xs group-hover:translate-x-0.5 transition-transform">↗</span>
-                    </div>
-                  </a>
-                ))}
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(ch)}
+                      className="px-2.5 py-1 rounded-xs border border-border/80 hover:border-foreground bg-foreground/[0.03] font-ndot text-[8px] tracking-[0.2em] text-foreground transition-colors shrink-0"
+                      data-cursor-hover
+                    >
+                      {isCopied ? 'COPIED!' : 'COPY'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Geodetic Telemetry Block */}
+            <div className="pt-4 border-t border-border/60 space-y-2 font-mono text-[9px] text-muted-foreground">
+              <div className="flex justify-between items-center">
+                <span className="font-ndot text-[7.5px] tracking-wider">GEO_COORDINATES:</span>
+                <span className="text-foreground">17.6868° N, 83.2185° E [VIZAG]</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-ndot text-[7.5px] tracking-wider">PRIMARY_ROLE:</span>
+                <span className="text-foreground">GENAI FULL-STACK DEVELOPER</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-ndot text-[7.5px] tracking-wider">ENCRYPTION:</span>
+                <span className="text-foreground">TLS 1.3 / SHA-256</span>
               </div>
             </div>
 
-            {/* Geodetic Telemetry Coordinates */}
-            <div className="mt-8 pt-5 border-t border-border/60 space-y-2">
-              <div className="flex items-center justify-between font-ndot text-[8px] tracking-[0.25em] text-muted-foreground">
-                <span>BASE_STATION_COORDINATES</span>
-                <span className="font-mono text-foreground">17.6868° N, 83.2185° E</span>
-              </div>
-              <div className="flex items-center justify-between font-ndot text-[8px] tracking-[0.25em] text-muted-foreground">
-                <span>ENCRYPTION_STANDARD</span>
-                <span className="font-mono text-foreground">TLS 1.3 / AES-256-GCM</span>
-              </div>
-            </div>
           </motion.div>
 
         </div>
