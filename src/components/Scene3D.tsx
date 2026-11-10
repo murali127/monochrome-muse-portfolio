@@ -308,6 +308,7 @@ const GravitationalShockwave = ({
 
 // ----------------------------------------------------------------------------
 // Stage 4 & 5: Dot-Matrix Earth Core (Z: 0, Centered, Strictly 0 Axial Tilt)
+// Rendered ONLY when isHeroGlobeActive is true (Mutual Exclusion with Mini Earth)
 // ----------------------------------------------------------------------------
 const DotMatrixGlobe = ({
   isLight,
@@ -352,14 +353,11 @@ const DotMatrixGlobe = ({
     });
   }, [isLight]);
 
-  // Scale choreography: Earth scales up rapidly as camera descends into final approach (Z: 22 -> 5.5)
+  // Smooth continuous scaling from handoff threshold (Z: 14 -> 5.5)
   const currentScale = useMemo(() => {
-    if (cameraZ > 24.0) return 0.0;
-    if (cameraZ > 5.5) {
-      const p = (24.0 - cameraZ) / (24.0 - 5.5);
-      return 0.15 + 0.85 * (1 - Math.pow(1 - p, 3));
-    }
-    return 1.0;
+    if (cameraZ > 14.0) return 0.45;
+    const p = (14.0 - cameraZ) / (14.0 - 5.5);
+    return 0.45 + 0.55 * (1 - Math.pow(1 - p, 3));
   }, [cameraZ]);
 
   // Strict 0 Axial Tilt: Vertical upright planetary rotation on Y-axis
@@ -369,10 +367,6 @@ const DotMatrixGlobe = ({
     globeGroupRef.current.rotation.z = 0;
     globeGroupRef.current.rotation.y += delta * 0.15;
   });
-
-  if (currentScale <= 0.001) {
-    return null;
-  }
 
   return (
     <group ref={globeGroupRef} scale={[currentScale, currentScale, currentScale]} position={[0, 0, 0]}>
@@ -538,14 +532,12 @@ const MultiGalaxyClusterField = ({
     return { pos, col, count: totalCount };
   }, [isLight]);
 
-  // Target Milky Way fades out as camera reaches solar overview (Z: 140 -> 75)
   const targetOpacity = useMemo(() => {
     if (cameraZ > 140.0) return isLight ? 0.45 : 0.85;
     const fade = THREE.MathUtils.clamp((cameraZ - 75.0) / (140.0 - 75.0), 0, 1);
     return (isLight ? 0.45 : 0.85) * Math.pow(fade, 1.4);
   }, [cameraZ, isLight]);
 
-  // Distant non-target galaxies fade to 0 in Stage 2 (Z: 170 -> 100)
   const distantOpacity = useMemo(() => {
     if (cameraZ > 170.0) return isLight ? 0.35 : 0.7;
     const fade = THREE.MathUtils.clamp((cameraZ - 100.0) / (170.0 - 100.0), 0, 1);
@@ -596,7 +588,6 @@ const MultiGalaxyClusterField = ({
         {cameraZ > 145.0 && (
           <Html center position={[0, 9.5, 0]} distanceFactor={65}>
             <div className="font-ndot tracking-widest text-foreground bg-background/95 border-2 border-foreground/80 px-4 py-3 shadow-[0_0_30px_rgba(255,255,255,0.18)] dark:shadow-[0_0_30px_rgba(255,255,255,0.25)] select-none pointer-events-none rounded-none min-w-[320px] sm:min-w-[390px]">
-              {/* Tactical Bracket Header */}
               <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-foreground/30">
                 <div className="flex items-center gap-2 text-foreground font-bold text-[12px] sm:text-[14px]">
                   <span className="w-2.5 h-2.5 rounded-full bg-foreground animate-ping" />
@@ -607,12 +598,10 @@ const MultiGalaxyClusterField = ({
                 </span>
               </div>
 
-              {/* Bold Title */}
               <div className="text-[14px] sm:text-[16px] font-bold text-foreground tracking-wider leading-tight">
                 MILKY WAY GALAXY // SECTOR 08
               </div>
 
-              {/* High-Contrast Coordinates Footer */}
               <div className="text-[11px] sm:text-[12px] text-muted-foreground font-mono mt-1.5 tracking-wider flex items-center justify-between">
                 <span>COORDINATES: RA 17h 45.6m | DEC -29° 00'</span>
                 <span className="text-foreground/80 font-ndot text-[10px]">└──────┘</span>
@@ -655,24 +644,23 @@ const MultiGalaxyClusterField = ({
 
 // ----------------------------------------------------------------------------
 // Stage 3 & 4: Full Solar System Overview & Planetary Orbital Dance
-// Sun at [0, 0, 0] + Orbit Tracks + Revolving Planets (Mercury, Venus, Earth, Mars, Jupiter, Saturn)
-// Followed by Target Lock on Earth's 3rd orbit and smooth center handoff
+// Single Entity Morph: Mini Earth renders ONLY until isHeroGlobeActive is true
 // ----------------------------------------------------------------------------
 const FullSolarSystemOverview = ({
   isLight,
   cameraZ,
   earthWorldPosRef,
   isEarthLocked,
+  isHeroGlobeActive,
 }: {
   isLight: boolean;
   cameraZ: number;
   earthWorldPosRef: React.MutableRefObject<THREE.Vector3>;
   isEarthLocked: boolean;
+  isHeroGlobeActive: boolean;
 }) => {
-  // Active when camera enters Solar System overview (Z: 75 -> 5.5)
-  const isSystemActive = cameraZ < 75.0;
+  const isSystemActive = cameraZ < 75.0 && !isHeroGlobeActive;
 
-  // Planetary mesh refs to animate revolutions
   const mercuryRef = useRef<THREE.Group>(null);
   const venusRef = useRef<THREE.Group>(null);
   const earthNodeRef = useRef<THREE.Group>(null);
@@ -681,13 +669,20 @@ const FullSolarSystemOverview = ({
   const saturnRef = useRef<THREE.Group>(null);
   const solarGroupRef = useRef<THREE.Group>(null);
 
-  // Fade out other planets and Sun as camera locks onto Earth (Z: 25 -> 7.0)
+  // Fade out other planets and Sun as camera locks onto Earth (Z: 26 -> 14)
   const outerBodiesOpacity = useMemo(() => {
-    if (cameraZ > 24.0) return 1.0;
-    return THREE.MathUtils.clamp((cameraZ - 7.0) / (24.0 - 7.0), 0, 1);
+    if (cameraZ > 26.0) return 1.0;
+    if (cameraZ <= 14.0) return 0.0;
+    return THREE.MathUtils.clamp((cameraZ - 14.0) / (26.0 - 14.0), 0, 1);
   }, [cameraZ]);
 
-  // Radii of planets' orbits
+  // Target Box fades cleanly as camera approaches close range (Z: 26 -> 14)
+  const targetBoxOpacity = useMemo(() => {
+    if (cameraZ <= 14.0) return 0;
+    if (cameraZ >= 26.0) return 1;
+    return (cameraZ - 14.0) / (26.0 - 14.0);
+  }, [cameraZ]);
+
   const rMercury = 4.8;
   const rVenus = 7.6;
   const rEarth = 11.5;
@@ -695,7 +690,6 @@ const FullSolarSystemOverview = ({
   const rJupiter = 23.5;
   const rSaturn = 31.0;
 
-  // Dashed orbital tracks
   const trackMercury = useMemo(() => generateDottedOrbit(rMercury, 180), [rMercury]);
   const trackVenus = useMemo(() => generateDottedOrbit(rVenus, 240), [rVenus]);
   const trackEarth = useMemo(() => generateDottedOrbit(rEarth, 340), [rEarth]);
@@ -703,7 +697,6 @@ const FullSolarSystemOverview = ({
   const trackJupiter = useMemo(() => generateDottedOrbit(rJupiter, 540), [rJupiter]);
   const trackSaturn = useMemo(() => generateDottedOrbit(rSaturn, 660), [rSaturn]);
 
-  // Planet point spheres
   const mercuryPts = useMemo(() => generateFibonacciSphere(120, 0.32), []);
   const venusPts = useMemo(() => generateFibonacciSphere(180, 0.46), []);
   const earthNodePts = useMemo(() => generateFibonacciSphere(260, 0.54), []);
@@ -712,7 +705,6 @@ const FullSolarSystemOverview = ({
   const saturnPts = useMemo(() => generateFibonacciSphere(420, 0.95), []);
   const saturnRings = useMemo(() => generateRingPoints(550, 1.35, 2.2), []);
 
-  // Sun Core & Corona Points at [0, 0, 0]
   const sunCoronaPoints = useMemo(() => {
     const count = 480;
     const pos = new Float32Array(count * 3);
@@ -743,12 +735,11 @@ const FullSolarSystemOverview = ({
       size: 0.016,
       color: isLight ? 0x09090b : 0xffffff,
       transparent: true,
-      // Fades out as the full dot-matrix Earth globe scales in
-      opacity: cameraZ > 14.0 ? (isLight ? 0.85 : 1.0) : Math.max(0, (cameraZ - 6.0) / 8.0),
+      opacity: isLight ? 0.85 : 1.0,
       sizeAttenuation: true,
       depthWrite: false,
     });
-  }, [isLight, cameraZ]);
+  }, [isLight]);
 
   const orbitMat = useMemo(() => {
     return new THREE.PointsMaterial({
@@ -772,11 +763,9 @@ const FullSolarSystemOverview = ({
     });
   }, [isLight, outerBodiesOpacity]);
 
-  // Animate planetary revolutions along their orbital paths
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
 
-    // Smooth orbital angular speeds
     const angMerc = t * 1.6;
     const angVenus = t * 1.15;
     const angEarth = t * 0.85;
@@ -806,7 +795,6 @@ const FullSolarSystemOverview = ({
       saturnRef.current.position.set(Math.cos(angSat) * rSaturn, 0, Math.sin(angSat) * rSaturn);
     }
 
-    // During Earth Lock, smooth translation centering Earth to [0, 0, 0]
     if (solarGroupRef.current) {
       if (isEarthLocked && earthNodeRef.current) {
         const targetOffsetX = -earthNodeRef.current.position.x;
@@ -849,7 +837,6 @@ const FullSolarSystemOverview = ({
             />
           </mesh>
 
-          {/* Sun Telemetry Badge */}
           {cameraZ > 35.0 && (
             <Html center position={[0, 3.2, 0]} distanceFactor={36}>
               <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
@@ -904,30 +891,35 @@ const FullSolarSystemOverview = ({
         </group>
       )}
 
-      {/* Earth (Terra) - 3rd Orbit */}
-      <group ref={earthNodeRef}>
-        <points>
-          <bufferGeometry>
-            <bufferAttribute attach="attributes-position" count={260} array={earthNodePts} itemSize={3} />
-          </bufferGeometry>
-          <primitive object={earthNodeMat} attach="material" />
-        </points>
+      {/* Earth (Terra) - Miniature Node (Strictly Mutually Exclusive with DotMatrixGlobe) */}
+      {!isHeroGlobeActive && (
+        <group ref={earthNodeRef}>
+          <points>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" count={260} array={earthNodePts} itemSize={3} />
+            </bufferGeometry>
+            <primitive object={earthNodeMat} attach="material" />
+          </points>
 
-        {/* High-Visibility Target Identification Reticle when Locked on Earth */}
-        {isEarthLocked && cameraZ > 12.0 && (
-          <Html center position={[0, 1.8, 0]} distanceFactor={28}>
-            <div className="font-ndot tracking-widest text-foreground bg-background/95 border-2 border-foreground px-3 py-2 shadow-2xl pointer-events-none select-none whitespace-nowrap flex flex-col gap-0.5 rounded-none min-w-[280px]">
-              <div className="flex items-center gap-1.5 text-foreground font-bold text-[12px] sm:text-[14px]">
-                <span className="w-2.5 h-2.5 rounded-full bg-foreground animate-ping" />
-                <span>TARGET IDENTIFIED: TERRA (EARTH)</span>
+          {/* High-Visibility Target Identification Reticle (Fades cleanly before docking) */}
+          {isEarthLocked && targetBoxOpacity > 0.01 && (
+            <Html center position={[0, 1.8, 0]} distanceFactor={28}>
+              <div
+                style={{ opacity: targetBoxOpacity }}
+                className="font-ndot tracking-widest text-foreground bg-background/95 border-2 border-foreground px-3 py-2 shadow-2xl pointer-events-none select-none whitespace-nowrap flex flex-col gap-0.5 rounded-none min-w-[280px] transition-opacity duration-150"
+              >
+                <div className="flex items-center gap-1.5 text-foreground font-bold text-[12px] sm:text-[14px]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-foreground animate-ping" />
+                  <span>TARGET IDENTIFIED: TERRA (EARTH)</span>
+                </div>
+                <div className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
+                  ORBIT_03 // HABITABLE ZONE // 1.000 AU
+                </div>
               </div>
-              <div className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
-                ORBIT_03 // HABITABLE ZONE // 1.000 AU
-              </div>
-            </div>
-          </Html>
-        )}
-      </group>
+            </Html>
+          )}
+        </group>
+      )}
 
       {/* Mars */}
       {outerBodiesOpacity > 0.01 && (
@@ -973,7 +965,6 @@ const FullSolarSystemOverview = ({
             <primitive object={pointMat} attach="material" />
           </points>
 
-          {/* Saturn Rings tilted at 26.7 deg */}
           <points rotation={[0.465, 0.2, 0]}>
             <bufferGeometry>
               <bufferAttribute attach="attributes-position" count={550} array={saturnRings} itemSize={3} />
@@ -1104,8 +1095,8 @@ const CosmicDust = ({ isLight }: { isLight: boolean }) => {
 // Stage 1: Deep Cosmos & Galaxy Cluster (Z: 220 -> 150)
 // Stage 2: Entering Milky Way Galaxy (Z: 150 -> 75)
 // Stage 3: Full Solar System Overview (Angled overhead [0, 35, 60], tilted ~30°)
-// Stage 4: Target Acquisition & Lock on Earth (Overhead plunge Z: 60 -> 5.5)
-// Stage 5: Visakhapatnam Beacon & Hero Reveal (Z: 5.5, Y: 0)
+// Stage 4: Target Acquisition & Single Entity Morph Lock on Earth (Z: 60 -> 5.5)
+// Stage 5: Visakhapatnam Beacon Ignition & Hero Reveal (Z: 5.5, Y: 0)
 // ----------------------------------------------------------------------------
 const CinematicCameraRig = ({
   isLight,
@@ -1123,7 +1114,6 @@ const CinematicCameraRig = ({
   const mouse = useRef({ x: 0, y: 0 });
   const [isDesktop, setIsDesktop] = useState(true);
 
-  // Flight trajectory state
   const timeRef = useRef(0);
   const completedRef = useRef(false);
   const handoffTriggeredRef = useRef(false);
@@ -1131,7 +1121,10 @@ const CinematicCameraRig = ({
   const [isBeaconIgnited, setIsBeaconIgnited] = useState(false);
   const [isShockwaveTriggered, setIsShockwaveTriggered] = useState(false);
   const [isEarthLocked, setIsEarthLocked] = useState(false);
+  const [isHeroGlobeActive, setIsHeroGlobeActive] = useState(false);
+
   const earthWorldPosRef = useRef<THREE.Vector3>(new THREE.Vector3(11.5, 0, 0));
+  const currentLookAt = useRef(new THREE.Vector3(0, 0, 0));
 
   useEffect(() => {
     const handleResize = () => {
@@ -1152,7 +1145,6 @@ const CinematicCameraRig = ({
     };
   }, []);
 
-  // Initialize camera: Deep Cosmos at [0, 22, 220]
   useEffect(() => {
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
@@ -1170,6 +1162,7 @@ const CinematicCameraRig = ({
       handoffTriggeredRef.current = true;
       setIsBeaconIgnited(true);
       setIsEarthLocked(true);
+      setIsHeroGlobeActive(true);
       onWarpComplete?.();
       onTelemetryUpdate?.({
         velocity: '0.0c',
@@ -1193,6 +1186,7 @@ const CinematicCameraRig = ({
 
     // Failsafe & Skip handling: Smooth lerp to [0, 0, 5.5] within 300ms
     if (skipWarp && !completedRef.current) {
+      currentLookAt.current.set(0, 0, 0);
       camera.position.x = THREE.MathUtils.damp(camera.position.x, 0, 14.0, delta);
       camera.position.y = THREE.MathUtils.damp(camera.position.y, 0, 14.0, delta);
       camera.position.z = THREE.MathUtils.damp(camera.position.z, 5.5, 14.0, delta);
@@ -1201,8 +1195,8 @@ const CinematicCameraRig = ({
       camera.lookAt(0, 0, 0);
 
       setCurrentCameraZ(camera.position.z);
-      setIsBeaconIgnited(true);
       setIsEarthLocked(true);
+      setIsHeroGlobeActive(true);
 
       if (!handoffTriggeredRef.current) {
         handoffTriggeredRef.current = true;
@@ -1210,6 +1204,7 @@ const CinematicCameraRig = ({
       }
 
       if (Math.abs(camera.position.z - 5.5) < 0.05) {
+        setIsBeaconIgnited(true);
         completedRef.current = true;
         onTelemetryUpdate?.({
           velocity: '0.0c',
@@ -1231,6 +1226,9 @@ const CinematicCameraRig = ({
       let targetX = 0;
       let targetY = 22.0;
       let targetZ = 220.0;
+      let targetLookAtX = 0;
+      let targetLookAtY = 0;
+      let targetLookAtZ = 0;
       let factor = 0;
       let velText = '0.0c';
       let distText = '54M LY';
@@ -1241,7 +1239,6 @@ const CinematicCameraRig = ({
 
       // =======================================================================
       // STAGE 1: Deep Cosmos & Galaxy Cluster (0.0s – 1.1s)
-      // Camera Z: 220 -> 150 | Earth hidden | High-visibility HUD galaxy reticle
       // =======================================================================
       if (t < 1.1) {
         const u = t / 1.1;
@@ -1257,7 +1254,6 @@ const CinematicCameraRig = ({
       }
       // =======================================================================
       // STAGE 2: Entering Milky Way Galaxy (1.1s – 2.0s)
-      // Camera Z: 150 -> 75 | Punching through galactic core toward solar system
       // =======================================================================
       else if (t < 2.0) {
         const u = (t - 1.1) / 0.9;
@@ -1275,12 +1271,11 @@ const CinematicCameraRig = ({
         sectorText = 'APPROACH_VECTOR: GALACTIC_DISK_INSERTION';
       }
       // =======================================================================
-      // STAGE 3: Full Solar System Overview (The Grand System View) (2.0s – 3.4s)
+      // STAGE 3: Full Solar System Overview (The Grand System View) (2.0s – 3.3s)
       // Camera descends to angled overhead vantage [0, 35, 60] tilted down ~30°
-      // Full planetary dance revolving around the central illuminated Sun
       // =======================================================================
-      else if (t < 3.4) {
-        const u = (t - 2.0) / 1.4;
+      else if (t < 3.3) {
+        const u = (t - 2.0) / 1.3;
         const ease = 1 - Math.pow(1 - u, 3);
 
         targetX = 0;
@@ -1294,17 +1289,15 @@ const CinematicCameraRig = ({
         targetTag = 'SOL SYSTEM // HELIOCENTRIC ORBITAL GRID';
         sectorText = 'SOLAR_DISC_OVERVIEW // REVOLVING_PLANETARY_SYSTEM';
 
-        if (isEarthLocked) {
-          setIsEarthLocked(false);
-        }
+        if (isEarthLocked) setIsEarthLocked(false);
+        if (isHeroGlobeActive) setIsHeroGlobeActive(false);
       }
       // =======================================================================
-      // STAGE 4: Target Acquisition & Lock on Earth (3.4s – 4.6s)
-      // Reticle sweeps and locks onto 3rd orbit (Earth)
-      // Camera plunges from overhead [0, 35, 60] straight down to [0, 0, 5.5]
+      // STAGE 4: Target Acquisition & Single Entity Morph Lock on Earth (3.3s – 4.5s)
+      // Camera dives from overhead [0, 35, 60] straight down to [0, 0, 5.5]
       // =======================================================================
-      else if (t < 4.6) {
-        const u = (t - 3.4) / 1.2;
+      else if (t < 4.5) {
+        const u = (t - 3.3) / 1.2;
         const quintic = 1 - Math.pow(1 - u, 4);
 
         if (!isEarthLocked) {
@@ -1315,6 +1308,10 @@ const CinematicCameraRig = ({
         targetY = 35.0 * (1 - quintic);
         targetZ = 60.0 - (60.0 - 5.5) * quintic;
 
+        // Smooth camera lookAt convergence onto Earth
+        targetLookAtX = THREE.MathUtils.lerp(earthWorldPosRef.current.x * 0.4, 0, quintic);
+        targetLookAtZ = THREE.MathUtils.lerp(earthWorldPosRef.current.z * 0.4, 0, quintic);
+
         factor = (1 - u) * 0.5;
         velText = ((1 - u) * 1.8).toFixed(1) + 'c';
         distText = `${Math.round(42000 - quintic * 41600).toLocaleString()} KM`;
@@ -1322,27 +1319,28 @@ const CinematicCameraRig = ({
         targetTag = 'TARGET IDENTIFIED: TERRA (EARTH) // HABITABLE ZONE';
         sectorText = 'APPROACH_VECTOR: TERRA_ATMOSPHERIC_INSERTION';
 
-        if (targetZ <= 7.0 && !isShockwaveTriggered) {
-          setIsShockwaveTriggered(true);
-        }
-        if (!isBeaconIgnited) {
-          setIsBeaconIgnited(true);
+        // Precise Single-Entity Swap Threshold (Z < 14):
+        // Microsecond swap: Mini Earth is hidden, Hero DotMatrixGlobe mounts
+        if (targetZ <= 14.0 && !isHeroGlobeActive) {
+          setIsHeroGlobeActive(true);
         }
 
-        // Trigger Hero UI fade-in during arrival
-        if (u >= 0.70 && !handoffTriggeredRef.current) {
+        if (u >= 0.75 && !handoffTriggeredRef.current) {
           handoffTriggeredRef.current = true;
           onWarpComplete?.();
         }
       }
       // =======================================================================
-      // STAGE 5: Visakhapatnam Beacon & Hero Reveal (t >= 4.6s)
-      // Camera resting at [0, 0, 5.5], zero tilt | Beacon active at 17.6868° N, 83.2185° E
+      // STAGE 5: Visakhapatnam Beacon Ignition & Hero Reveal (t >= 4.5s)
+      // Camera docked at [0, 0, 5.5] | Beacon ignites ONLY after docking
       // =======================================================================
       else {
         targetX = 0;
         targetY = 0;
         targetZ = 5.5;
+        targetLookAtX = 0;
+        targetLookAtY = 0;
+        targetLookAtZ = 0;
         factor = 0;
         velText = '0.0c';
         distText = '400 KM';
@@ -1351,6 +1349,11 @@ const CinematicCameraRig = ({
         targetTag = 'NODE: VISAKHAPATNAM [17.6868° N, 83.2185° E]';
         sectorText = 'ORBIT_STABLE // NODE: VISAKHAPATNAM [ACTIVE]';
 
+        if (!isHeroGlobeActive) {
+          setIsHeroGlobeActive(true);
+        }
+
+        // Radar ping & shockwave trigger ONLY after camera docks at 5.5
         if (!isBeaconIgnited) {
           setIsBeaconIgnited(true);
         }
@@ -1365,11 +1368,15 @@ const CinematicCameraRig = ({
         completedRef.current = true;
       }
 
-      // Smooth delta-time damping
+      // Continuous smooth camera motion
       camera.position.x = THREE.MathUtils.damp(camera.position.x, targetX, 7.0, delta);
       camera.position.y = THREE.MathUtils.damp(camera.position.y, targetY, 7.0, delta);
       camera.position.z = THREE.MathUtils.damp(camera.position.z, targetZ, 7.0, delta);
-      camera.lookAt(0, 0, 0);
+
+      currentLookAt.current.x = THREE.MathUtils.damp(currentLookAt.current.x, targetLookAtX, 8.0, delta);
+      currentLookAt.current.y = THREE.MathUtils.damp(currentLookAt.current.y, targetLookAtY, 8.0, delta);
+      currentLookAt.current.z = THREE.MathUtils.damp(currentLookAt.current.z, targetLookAtZ, 8.0, delta);
+      camera.lookAt(currentLookAt.current);
 
       setCurrentCameraZ(camera.position.z);
 
@@ -1420,24 +1427,27 @@ const CinematicCameraRig = ({
         cameraZ={currentCameraZ}
         earthWorldPosRef={earthWorldPosRef}
         isEarthLocked={isEarthLocked}
+        isHeroGlobeActive={isHeroGlobeActive}
       />
 
-      {/* Stage 4: Gravitational Shockwave Ripple upon orbital arrival */}
+      {/* Stage 5: Gravitational Shockwave Ripple upon orbital arrival */}
       <GravitationalShockwave
         isTriggered={isShockwaveTriggered}
         isLight={isLight}
         radius={1.55}
       />
 
-      {/* Stage 4 & 5: Centered Dot-Matrix Earth Globe Core (Strict 0 Axial Tilt) */}
-      <group ref={rigRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
-        <DotMatrixGlobe
-          isLight={isLight}
-          isIgnited={isBeaconIgnited}
-          cameraZ={currentCameraZ}
-        />
-        {completedRef.current && <CosmicDust isLight={isLight} />}
-      </group>
+      {/* Stage 4 & 5: Centered Dot-Matrix Earth Globe Core (Strictly mutually exclusive with Mini Earth) */}
+      {isHeroGlobeActive && (
+        <group ref={rigRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
+          <DotMatrixGlobe
+            isLight={isLight}
+            isIgnited={isBeaconIgnited}
+            cameraZ={currentCameraZ}
+          />
+          {completedRef.current && <CosmicDust isLight={isLight} />}
+        </group>
+      )}
     </>
   );
 };
