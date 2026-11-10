@@ -14,6 +14,15 @@ interface BootLoaderProps {
 }
 
 const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
+  // Lock body scroll while cinematic warp is in flight
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   // Listen for Escape or Space to skip immediately
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
