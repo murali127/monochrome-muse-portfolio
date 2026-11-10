@@ -120,8 +120,8 @@ const latLonToVector3 = (lat: number, lon: number, radius: number): THREE.Vector
 const createAtmosphereFresnelMaterial = (isLight: boolean) => {
   return new THREE.ShaderMaterial({
     uniforms: {
-      uColor: { value: new THREE.Color(isLight ? 0x050508 : 0xffffff) },
-      uPower: { value: 3.5 },
+      uColor: { value: new THREE.Color(isLight ? 0x09090b : 0xffffff) },
+      uPower: { value: isLight ? 2.5 : 3.5 },
       uIntensity: { value: isLight ? 0.38 : 0.65 },
     },
     vertexShader: `
@@ -209,7 +209,7 @@ const MinimalVisakhapatnamBeacon = ({
         const scale = 1.0 + t * 2.6;
         ringRef.current.scale.set(scale, scale, 1);
         const ringMat = ringRef.current.material as THREE.MeshBasicMaterial;
-        ringMat.opacity = Math.pow(1 - t, 1.4) * (isLight ? 0.75 : 0.9) * visibility;
+        ringMat.opacity = Math.pow(1 - t, 1.4) * (isLight ? 0.85 : 0.9) * visibility;
       }
 
       // 3. Small glowing core dot pulse
@@ -217,28 +217,28 @@ const MinimalVisakhapatnamBeacon = ({
         const pulse = 1.0 + Math.sin(time * 4.5) * 0.15;
         coreRef.current.scale.set(pulse, pulse, pulse);
         const coreMat = coreRef.current.material as THREE.MeshBasicMaterial;
-        coreMat.opacity = (isLight ? 0.9 : 1.0) * visibility;
+        coreMat.opacity = (isLight ? 0.95 : 1.0) * visibility;
       }
     }
   });
 
-  const primaryColor = isLight ? '#000000' : '#ffffff';
+  const primaryColor = isLight ? '#09090b' : '#ffffff';
 
   return (
     <group position={vspPos} quaternion={orientation} ref={beaconGroupRef}>
       {/* High-contrast core dot directly on coordinate surface */}
       <mesh ref={coreRef} position={[0, 0, 0]}>
-        <sphereGeometry args={[0.015, 16, 16]} />
+        <sphereGeometry args={[0.016, 16, 16]} />
         <meshBasicMaterial color={primaryColor} transparent opacity={1} />
       </mesh>
 
       {/* Single delicate expanding radar ring (tangent to sphere surface) */}
       <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.018, 0.023, 32]} />
+        <ringGeometry args={[0.018, 0.024, 32]} />
         <meshBasicMaterial
           color={primaryColor}
           transparent
-          opacity={0.8}
+          opacity={0.85}
           side={THREE.DoubleSide}
           depthWrite={false}
         />
@@ -292,9 +292,11 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     // Antialiased Circular Point Shader Material
     const mat = new THREE.ShaderMaterial({
       uniforms: {
-        uLandColor: { value: new THREE.Color(isLight ? 0x0a0a0c : 0xffffff) },
-        uOceanColor: { value: new THREE.Color(isLight ? 0xd5d7dd : 0x18181c) },
+        uLandColor: { value: new THREE.Color(isLight ? 0x09090b : 0xffffff) },
+        uOceanColor: { value: new THREE.Color(isLight ? 0x222328 : 0x18181c) },
         uOpacity: { value: 1.0 },
+        uMinAlpha: { value: isLight ? 0.16 : 0.06 },
+        uMaxAlpha: { value: isLight ? 0.98 : 0.95 },
       },
       vertexShader: `
         attribute float aBrightness;
@@ -312,6 +314,8 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
         uniform vec3 uLandColor;
         uniform vec3 uOceanColor;
         uniform float uOpacity;
+        uniform float uMinAlpha;
+        uniform float uMaxAlpha;
         varying float vBrightness;
 
         void main() {
@@ -321,7 +325,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
           float edge = smoothstep(0.5, 0.22, dist);
 
           vec3 col = mix(uOceanColor, uLandColor, vBrightness);
-          float alpha = mix(0.06, 0.95, vBrightness) * uOpacity * edge;
+          float alpha = mix(uMinAlpha, uMaxAlpha, vBrightness) * uOpacity * edge;
 
           gl_FragColor = vec4(col, alpha);
         }
@@ -337,8 +341,10 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
   // Update shader uniforms smoothly on theme toggle
   useEffect(() => {
     if (dotMaterial) {
-      dotMaterial.uniforms.uLandColor.value.set(isLight ? 0x0a0a0c : 0xffffff);
-      dotMaterial.uniforms.uOceanColor.value.set(isLight ? 0xd5d7dd : 0x18181c);
+      dotMaterial.uniforms.uLandColor.value.set(isLight ? 0x09090b : 0xffffff);
+      dotMaterial.uniforms.uOceanColor.value.set(isLight ? 0x222328 : 0x18181c);
+      dotMaterial.uniforms.uMinAlpha.value = isLight ? 0.16 : 0.06;
+      dotMaterial.uniforms.uMaxAlpha.value = isLight ? 0.98 : 0.95;
       dotMaterial.blending = isLight ? THREE.NormalBlending : THREE.AdditiveBlending;
       dotMaterial.needsUpdate = true;
     }
@@ -377,6 +383,16 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
       {/* Globe Group - Perfectly Straight & Upright */}
       <group ref={globeGroupRef} rotation={[0, 0, 0]}>
+        {/* Physical Core Sphere - Gives solid architectural 3D volume & prevents backside bleed */}
+        <mesh>
+          <sphereGeometry args={[RADIUS * 0.992, 48, 48]} />
+          <meshBasicMaterial
+            color={isLight ? '#f2f2f5' : '#050507'}
+            transparent
+            opacity={isLight ? 0.94 : 0.96}
+          />
+        </mesh>
+
         {/* High-Density Points Earth */}
         <points geometry={dotGeometry} material={dotMaterial} />
 
@@ -384,9 +400,9 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
         <points geometry={haloGeometry}>
           <pointsMaterial
             size={0.014}
-            color={isLight ? '#0a0a0c' : '#ffffff'}
+            color={isLight ? '#09090b' : '#ffffff'}
             transparent
-            opacity={isLight ? 0.22 : 0.4}
+            opacity={isLight ? 0.18 : 0.38}
             sizeAttenuation
           />
         </points>
@@ -399,7 +415,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
         />
       </group>
 
-      {/* Atmospheric Fresnel Rim Glow */}
+      {/* Atmospheric Fresnel Rim Glow / Ambient Rim Shadow */}
       <mesh material={atmosphereMaterial}>
         <sphereGeometry args={[RADIUS + 0.08, 48, 48]} />
       </mesh>
@@ -413,7 +429,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
 const CosmicDust = ({ isLight }: { isLight: boolean }) => {
   const ref = useRef<THREE.Points>(null);
   const count = 350;
-  const color = isLight ? '#0a0a0a' : '#ffffff';
+  const color = isLight ? '#09090b' : '#ffffff';
 
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3);
@@ -448,7 +464,7 @@ const CosmicDust = ({ isLight }: { isLight: boolean }) => {
         size={0.016}
         color={color}
         transparent
-        opacity={isLight ? 0.18 : 0.35}
+        opacity={isLight ? 0.12 : 0.35}
         sizeAttenuation
       />
     </points>
