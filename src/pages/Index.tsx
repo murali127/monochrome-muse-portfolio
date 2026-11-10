@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import CustomCursor from '@/components/CustomCursor';
 import ParticleField from '@/components/ParticleField';
 import Scene3D from '@/components/Scene3D';
@@ -39,10 +40,12 @@ const Index = () => {
         <ContactSection />
       </main>
 
-      {/* Terminal BIOS Boot Sequence Overlay */}
-      {!bootCompleted && (
-        <BootLoader onComplete={() => setBootCompleted(true)} />
-      )}
+      {/* Terminal BIOS Boot Sequence with graceful Framer Motion handoff */}
+      <AnimatePresence mode="wait">
+        {!bootCompleted && (
+          <BootLoader key="bootloader-screen" onComplete={() => setBootCompleted(true)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
