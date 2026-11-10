@@ -1,9 +1,51 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, useInView } from 'framer-motion';
 import profilePhoto from '@/assets/murali-photo.png';
 import { playTactileClick } from '@/utils/audioFeedback';
 
-interface MagneticButtonProps {
+// ----------------------------------------------------------------------------
+// Cybernetic Glyphs for Tactical Decode Effect
+// ----------------------------------------------------------------------------
+const CYBER_GLYPHS = '01_XF94#*&$%+-/[]<>';
+
+function useCyberDecode(finalText: string, trigger: boolean) {
+  const [displayText, setDisplayText] = useState(finalText);
+
+  const decode = useCallback(() => {
+    let iteration = 0;
+    playTactileClick('subtle');
+    const interval = setInterval(() => {
+      setDisplayText(
+        finalText
+          .split('')
+          .map((char, index) => {
+            if (char === ' ' || char === '\n') return char;
+            if (index < iteration) return finalText[index];
+            return CYBER_GLYPHS[Math.floor(Math.random() * CYBER_GLYPHS.length)];
+          })
+          .join('')
+      );
+      if (iteration >= finalText.length) {
+        clearInterval(interval);
+      }
+      iteration += 1;
+    }, 32);
+    return () => clearInterval(interval);
+  }, [finalText]);
+
+  useEffect(() => {
+    if (trigger) {
+      decode();
+    }
+  }, [trigger, decode]);
+
+  return { displayText, triggerDecode: decode };
+}
+
+// ----------------------------------------------------------------------------
+// Magnetic Tactile Button Component
+// ----------------------------------------------------------------------------
+interface MagneticCTAProps {
   children: React.ReactNode;
   className?: string;
   href?: string;
@@ -20,7 +62,7 @@ const MagneticCTA = ({
   target,
   rel,
   onClick,
-}: MagneticButtonProps) => {
+}: MagneticCTAProps) => {
   const ref = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
 
@@ -65,9 +107,19 @@ const MagneticCTA = ({
   );
 };
 
+// ----------------------------------------------------------------------------
+// Main Hero Section
+// ----------------------------------------------------------------------------
 const HeroSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
+
+  // Cybernetic Decryption for Headline
+  const { displayText: firstName, triggerDecode: decodeFirstName } = useCyberDecode('MURALI', isInView);
+  const { displayText: lastName, triggerDecode: decodeLastName } = useCyberDecode('PAILA', isInView);
+
+  // Active Focus Pill Hover State
+  const [activeFocusPill, setActiveFocusPill] = useState<number | null>(null);
 
   // Real-time live clock: UTC & IST (Visakhapatnam)
   const [clock, setClock] = useState({ utc: '--:--:--', ist: '--:--:--' });
@@ -95,7 +147,7 @@ const HeroSection = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Targeting HUD Box reticle coordinates on mouse hover
+  // 3D Hologram Tilt & HUD Reticle Tracking
   const hudBoxRef = useRef<HTMLDivElement>(null);
   const [hudCoords, setHudCoords] = useState({
     azimuth: 184.2,
@@ -105,13 +157,31 @@ const HeroSection = () => {
     reticleY: 50,
   });
 
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+
   const handleHudMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!hudBoxRef.current) return;
     const rect = hudBoxRef.current.getBoundingClientRect();
-    const relX = ((e.clientX - rect.left) / rect.width) * 100;
-    const relY = ((e.clientY - rect.top) / rect.height) * 100;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const relX = (x / rect.width) * 100;
+    const relY = (y / rect.height) * 100;
+
     const az = (180 + ((relX - 50) / 50) * 18.5).toFixed(1);
     const el = (42 + ((50 - relY) / 50) * 12.0).toFixed(1);
+
+    // Smooth 3D perspective tilt
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotX = ((centerY - y) / centerY) * 8; // Max 8 degrees tilt
+    const rotY = ((x - centerX) / centerX) * 8;
+
+    setTilt({
+      rotateX: rotX,
+      rotateY: rotY,
+      glareX: relX,
+      glareY: relY,
+    });
 
     setHudCoords({
       azimuth: parseFloat(az),
@@ -123,6 +193,7 @@ const HeroSection = () => {
   };
 
   const handleHudMouseLeave = () => {
+    setTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
     setHudCoords((prev) => ({
       ...prev,
       isLocked: false,
@@ -131,7 +202,7 @@ const HeroSection = () => {
 
   const techStack = [
     'PYTHON',
-    'REACT',
+    'REACT 19',
     'FASTAPI',
     'LIGHTRAG',
     'PIPECAT',
@@ -146,10 +217,22 @@ const HeroSection = () => {
   ];
 
   const focusAreas = [
-    'GEN AI & RAG',
-    'VOICE AI PIPELINES',
-    'FULL-STACK SYSTEMS',
-    'BACKEND APIS',
+    {
+      name: 'GEN AI & RAG',
+      telemetry: 'LIGHTRAG // HYBRID GRAPH',
+    },
+    {
+      name: 'VOICE AI PIPELINES',
+      telemetry: 'PIPECAT + AGORA RTC // <450ms',
+    },
+    {
+      name: 'FULL-STACK SYSTEMS',
+      telemetry: 'REACT 19 + TAILWIND // 60 FPS',
+    },
+    {
+      name: 'BACKEND APIS',
+      telemetry: 'FASTAPI ASYNC // P99: 14.8ms',
+    },
   ];
 
   return (
@@ -161,34 +244,70 @@ const HeroSection = () => {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 w-full pt-24 sm:pt-28 pb-12 sm:pb-16">
         {/* Asymmetrical High-Contrast Grid Layout */}
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
           {/* Left Column: Hero Narrative & Controls (7 Cols) */}
           <div className="lg:col-span-7 space-y-5 sm:space-y-6">
-            {/* Telemetry Status Badge */}
+            
+            {/* Telemetry Status Badge with Live Signal Wave */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.25, duration: 0.5 }}
-              className="inline-flex items-center gap-2.5 glass-panel px-3.5 py-1.5 rounded-full border border-foreground/15 shadow-[0_0_20px_rgba(255,255,255,0.04)]"
+              className="inline-flex items-center gap-3 glass-panel px-3.5 py-1.5 rounded-full border border-foreground/15 shadow-[0_0_20px_rgba(255,255,255,0.04)]"
             >
-              <span className="h-2 w-2 rounded-full bg-foreground animate-pulse" />
-              <span className="font-ndot text-[8px] sm:text-[9.5px] tracking-[0.25em] text-foreground">
-                SYS.01 // ORBITAL_NOMINAL // GENAI DEVELOPER
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-foreground" />
+                </span>
+                <span className="font-ndot text-[8px] sm:text-[9.5px] tracking-[0.25em] text-foreground">
+                  SYS.01 // ORBITAL_NOMINAL // GENAI ARCHITECT
+                </span>
+              </div>
+
+              {/* Micro Signal Spectrum */}
+              <div className="hidden sm:flex items-center gap-0.5 h-2.5 pl-2 border-l border-border/80">
+                {[60, 100, 40, 80, 50].map((h, i) => (
+                  <span
+                    key={i}
+                    className="w-[2px] bg-foreground/60 rounded-full animate-pulse"
+                    style={{
+                      height: `${h}%`,
+                      animationDelay: `${i * 0.12}s`,
+                      animationDuration: '0.9s',
+                    }}
+                  />
+                ))}
+              </div>
             </motion.div>
 
-            {/* Display Headline: Clean, crisp Nothing OS typography */}
-            <motion.h1
+            {/* Display Headline: Interactive Cyber Decryption on Hover */}
+            <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.4, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-              className="font-ndot text-5xl sm:text-7xl lg:text-8xl leading-[0.95] sm:leading-[0.88] tracking-tight text-foreground text-glow break-words text-balance"
+              className="cursor-pointer select-none group inline-block"
+              onMouseEnter={() => {
+                decodeFirstName();
+                decodeLastName();
+              }}
             >
-              MURALI
-              <br />
-              <span className="text-muted-foreground/85">PAILA</span>
-            </motion.h1>
+              <h1 className="font-ndot text-5xl sm:text-7xl lg:text-8xl leading-[0.95] sm:leading-[0.88] tracking-tight text-foreground text-glow break-words text-balance transition-all">
+                <span className="inline-block hover:text-white transition-colors">
+                  {firstName}
+                </span>
+                <br />
+                <span className="text-muted-foreground/85 inline-block group-hover:text-foreground transition-colors">
+                  {lastName}
+                </span>
+              </h1>
+              <div className="flex items-center gap-2 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span className="font-mono text-[8px] tracking-[0.3em] text-muted-foreground">
+                  [RE-DECODE IDENTIFIER // CLICK / HOVER]
+                </span>
+              </div>
+            </motion.div>
 
             {/* Body Copy - High-Legibility Modern Sans (Space Grotesk) */}
             <motion.p
@@ -202,21 +321,41 @@ const HeroSection = () => {
               real-time Voice AI pipelines, and high-performance backend systems.
             </motion.p>
 
-            {/* Core Focus Pills */}
+            {/* Futuristic Interactive Capability Telemetry Badges */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.75, duration: 0.5 }}
               className="flex flex-wrap gap-2 pt-1"
             >
-              {focusAreas.map((area) => (
-                <span
-                  key={area}
-                  className="rounded-xs border border-border/80 bg-foreground/[0.03] px-2.5 sm:px-3 py-1 font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] text-foreground/80 hover:border-foreground/50 transition-colors"
-                >
-                  {area}
-                </span>
-              ))}
+              {focusAreas.map((area, idx) => {
+                const isActive = activeFocusPill === idx;
+                return (
+                  <button
+                    key={area.name}
+                    type="button"
+                    onMouseEnter={() => {
+                      setActiveFocusPill(idx);
+                      playTactileClick('subtle');
+                    }}
+                    onMouseLeave={() => setActiveFocusPill(null)}
+                    onClick={() => {
+                      setActiveFocusPill(isActive ? null : idx);
+                      playTactileClick('toggle');
+                    }}
+                    className={`relative group rounded-xs border px-3 py-1.5 font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] transition-all duration-200 text-left ${
+                      isActive
+                        ? 'border-foreground bg-foreground/10 text-foreground shadow-[0_0_15px_rgba(255,255,255,0.08)]'
+                        : 'border-border/80 bg-foreground/[0.02] text-foreground/80 hover:border-foreground/50 hover:bg-foreground/[0.05]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className={`h-1 w-1 rounded-full ${isActive ? 'bg-foreground animate-ping' : 'bg-muted-foreground'}`} />
+                      <span>{isActive ? area.telemetry : area.name}</span>
+                    </div>
+                  </button>
+                );
+              })}
             </motion.div>
 
             {/* Fluid Magnetic CTA Buttons */}
@@ -270,31 +409,37 @@ const HeroSection = () => {
               <div className="flex items-center gap-3">
                 <span>VISAKHAPATNAM [17.68° N, 83.21° E]</span>
                 <span className="text-foreground/40">•</span>
-                <span className="text-foreground/90">ORBIT_STATUS: STABLE</span>
+                <span className="text-foreground/90">ORBIT_STATUS: NOMINAL</span>
               </div>
             </motion.div>
           </div>
 
-          {/* Right Column: Complete Image with HUD Reticle that activates ONLY on Hover (5 Cols) */}
+          {/* Right Column: Holographic Volumetric Pod with 3D Tilt & Comms Wave (5 Cols) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.92 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ delay: 0.5, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-5 relative flex justify-center mt-2 lg:mt-0"
+            style={{ perspective: 1000 }}
           >
-            <div
+            <motion.div
               ref={hudBoxRef}
               onMouseMove={handleHudMouseMove}
               onMouseLeave={handleHudMouseLeave}
-              className="relative p-3 sm:p-4 glass-panel border border-border/80 rounded-sm shadow-2xl group cursor-crosshair max-w-[340px] sm:max-w-[380px] w-full"
+              animate={{
+                rotateX: tilt.rotateX,
+                rotateY: tilt.rotateY,
+              }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25, mass: 0.5 }}
+              className="relative p-3 sm:p-4 glass-panel border border-border/80 rounded-sm shadow-2xl group cursor-crosshair max-w-[340px] sm:max-w-[380px] w-full transition-shadow duration-300 hover:shadow-[0_0_35px_rgba(255,255,255,0.08)]"
             >
-              {/* Tactical Reticle Corner Brackets */}
-              <div className="absolute -top-2.5 -left-2.5 w-5 h-5 border-t-2 border-l-2 border-foreground/60 transition-all duration-300 group-hover:scale-110" />
-              <div className="absolute -top-2.5 -right-2.5 w-5 h-5 border-t-2 border-r-2 border-foreground/60 transition-all duration-300 group-hover:scale-110" />
-              <div className="absolute -bottom-2.5 -left-2.5 w-5 h-5 border-b-2 border-l-2 border-foreground/60 transition-all duration-300 group-hover:scale-110" />
-              <div className="absolute -bottom-2.5 -right-2.5 w-5 h-5 border-b-2 border-r-2 border-foreground/60 transition-all duration-300 group-hover:scale-110" />
+              {/* Tactical Reticle Precision Corner Brackets */}
+              <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-foreground/70 transition-all duration-300 group-hover:scale-110" />
+              <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-foreground/70 transition-all duration-300 group-hover:scale-110" />
+              <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-foreground/70 transition-all duration-300 group-hover:scale-110" />
+              <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-foreground/70 transition-all duration-300 group-hover:scale-110" />
 
-              {/* HUD Header Telemetry Strip */}
+              {/* Holographic Header Bar */}
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/60 font-ndot text-[8px] tracking-[0.25em] text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <span className={`h-1.5 w-1.5 rounded-full ${hudCoords.isLocked ? 'bg-foreground' : 'bg-muted-foreground'} animate-pulse`} />
@@ -303,24 +448,26 @@ const HeroSection = () => {
                 <span>FOCAL_ZONE // 01</span>
               </div>
 
-              {/* Complete Profile Image Viewport (Preserves Full Image Aspect Ratio 788:1080) */}
-              <div className="relative w-full aspect-[788/1080] overflow-hidden rounded-xs border border-border bg-muted/40 dark:bg-black transition-colors duration-300">
-                {/* Tech grid texture for transparent portrait in light & dark mode */}
+              {/* Profile Image Viewport (Preserves Full Image Aspect Ratio 788:1080) */}
+              <div className="relative w-full aspect-[788/1080] overflow-hidden rounded-xs border border-border/70 bg-gradient-to-b from-transparent via-background/40 to-background/90 transition-colors duration-300">
+                {/* Tech grid texture backdrop */}
                 <div className="absolute inset-0 dot-grid-bg opacity-30 pointer-events-none" />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-foreground/5 pointer-events-none" />
 
-                {/* Complete Developer Image (Full fidelity, zero cut-off) */}
+                {/* Complete Developer Image */}
                 <img
                   src={profilePhoto}
                   alt="Murali Paila - GenAI Full-Stack Developer"
-                  className="relative z-[1] w-full h-full object-contain grayscale contrast-125 transition-transform duration-700 group-hover:scale-[1.02]"
+                  className="relative z-[1] w-full h-full object-contain grayscale contrast-125 transition-all duration-500 group-hover:contrast-130 group-hover:scale-[1.01]"
                   loading="eager"
                 />
 
                 {/* CRT Scanline Overlay */}
                 <div className="absolute inset-0 scanline pointer-events-none z-[2]" />
 
-                {/* Tactical Reticle Crosshairs Follower: ONLY VISIBLE ON HOVER (Zero Chin Ring When Idle) */}
+                {/* Periodic Hologram Laser Scan Sweep */}
+                <div className="absolute inset-x-0 h-16 bg-gradient-to-b from-transparent via-foreground/[0.08] to-transparent pointer-events-none animate-scan z-[2]" />
+
+                {/* Tactical Reticle Crosshairs Follower: ONLY VISIBLE ON HOVER */}
                 {hudCoords.isLocked && (
                   <div
                     className="absolute pointer-events-none transition-all duration-75 -translate-x-1/2 -translate-y-1/2 z-[3]"
@@ -329,25 +476,40 @@ const HeroSection = () => {
                       top: `${hudCoords.reticleY}%`,
                     }}
                   >
-                    <div className="w-10 h-10 border border-foreground/70 rounded-full flex items-center justify-center animate-pulse">
+                    <div className="w-10 h-10 border border-foreground/80 rounded-full flex items-center justify-center animate-pulse">
                       <div className="w-2 h-2 rounded-full bg-foreground" />
                     </div>
-                    <div className="absolute top-1/2 -left-3 w-2 h-px bg-foreground/70" />
-                    <div className="absolute top-1/2 -right-3 w-2 h-px bg-foreground/70" />
-                    <div className="absolute left-1/2 -top-3 h-2 w-px bg-foreground/70" />
-                    <div className="absolute left-1/2 -bottom-3 h-2 w-px bg-foreground/70" />
+                    <div className="absolute top-1/2 -left-3 w-2 h-px bg-foreground/80" />
+                    <div className="absolute top-1/2 -right-3 w-2 h-px bg-foreground/80" />
+                    <div className="absolute left-1/2 -top-3 h-2 w-px bg-foreground/80" />
+                    <div className="absolute left-1/2 -bottom-3 h-2 w-px bg-foreground/80" />
 
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap font-ndot text-[6.5px] tracking-[0.2em] px-1.5 py-0.5 rounded-xs bg-background/90 border border-border text-foreground shadow-lg">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap font-ndot text-[6.5px] tracking-[0.2em] px-1.5 py-0.5 rounded-xs bg-background/95 border border-border text-foreground shadow-lg backdrop-blur-md">
                       TARGET_LOCK // MURALI_PAILA
                     </div>
                   </div>
                 )}
 
-                {/* Floating On-Screen Telemetry Overlay */}
-                <div className="absolute bottom-2 left-2 right-2 p-2 glass-panel rounded-xs text-[7px] sm:text-[8px] font-ndot tracking-[0.2em] text-foreground/90 flex justify-between items-center border border-border/80 pointer-events-none backdrop-blur-sm z-[3]">
+                {/* Live Neural / Comms Waveform Overlay */}
+                <div className="absolute bottom-2 left-2 right-2 p-2 glass-panel rounded-xs text-[7px] sm:text-[8px] font-ndot tracking-[0.2em] text-foreground/90 flex justify-between items-center border border-border/80 pointer-events-none backdrop-blur-md z-[3]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground">NEURAL:</span>
+                    <div className="flex items-center gap-0.5 h-2">
+                      {[50, 90, 70, 100, 60, 40, 85].map((h, i) => (
+                        <span
+                          key={i}
+                          className="w-[2px] bg-foreground/80 rounded-full animate-pulse"
+                          style={{
+                            height: `${h}%`,
+                            animationDelay: `${i * 0.1}s`,
+                            animationDuration: '0.8s',
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
                   <span>AZ: {hudCoords.azimuth}°</span>
                   <span>EL: {hudCoords.elevation}°</span>
-                  <span>RANGE: 384,400 KM</span>
                 </div>
               </div>
 
@@ -356,7 +518,7 @@ const HeroSection = () => {
                 <span>SUBJECT: MURALI_PAILA</span>
                 <span className="text-foreground/80">CLASS: PRODUCTION_ENGINEER</span>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
 
@@ -371,7 +533,7 @@ const HeroSection = () => {
             {[...techStack, ...techStack].map((tech, i) => (
               <span
                 key={i}
-                className="mx-6 sm:mx-8 font-ndot text-[9px] sm:text-[10px] tracking-[0.3em] text-muted-foreground whitespace-nowrap"
+                className="mx-6 sm:mx-8 font-ndot text-[9px] sm:text-[10px] tracking-[0.3em] text-muted-foreground whitespace-nowrap hover:text-foreground transition-colors"
               >
                 {tech}
               </span>
