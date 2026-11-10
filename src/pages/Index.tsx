@@ -20,9 +20,12 @@ const Index = () => {
   const [skipRequested, setSkipRequested] = useState(false);
   const [telemetry, setTelemetry] = useState<TelemetryData>({
     velocity: '0.0c',
-    distance: '142,000 KM',
+    distance: '54M LY',
     isLocked: false,
     warpFactor: 0,
+    stageName: 'DEEP_SPACE // VIRGO_SUPERCLUSTER',
+    targetTag: 'DEEP_SPACE // VIRGO_SUPERCLUSTER -> TARGET_LOCKED: MILKY_WAY_GALAXY',
+    sectorText: 'SECTOR_00 // MULTI_GALAXY_CLUSTER [ACQUIRING]',
   });
 
   const handleWarpComplete = useCallback(() => {

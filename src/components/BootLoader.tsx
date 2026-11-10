@@ -6,6 +6,9 @@ export interface TelemetryData {
   distance: string;
   isLocked: boolean;
   warpFactor?: number;
+  stageName?: string;
+  targetTag?: string;
+  sectorText?: string;
 }
 
 interface BootLoaderProps {
@@ -58,13 +61,14 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-foreground" />
           </span>
           <span>
-            {telemetry.isLocked
-              ? 'ORBITAL_INSERTION // TERRA_LOCK'
-              : warpSpeedNum > 4.0
-              ? 'GALACTIC_INSERTION // PIERCING_CORE'
-              : isDistanceInLightYears
-              ? 'DEEP_COSMOS // MULTI_GALAXY_CLUSTER'
-              : 'STELLAR_TRANSIT // CELESTIAL_CORRIDOR'}
+            {telemetry.stageName ||
+              (telemetry.isLocked
+                ? 'ORBIT_STABLE // NODE: VISAKHAPATNAM [ACTIVE]'
+                : warpSpeedNum > 4.0
+                ? 'GALACTIC_INSERTION // PIERCING_CORE'
+                : isDistanceInLightYears
+                ? 'DEEP_SPACE // VIRGO_SUPERCLUSTER'
+                : 'STELLAR_TRANSIT // CELESTIAL_CORRIDOR')}
           </span>
         </div>
 
@@ -89,9 +93,10 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
         <div className="relative w-48 h-48 sm:w-56 sm:h-56 border border-foreground/35 rounded-full flex items-center justify-center">
           <div className="w-2.5 h-2.5 rounded-full border border-foreground" />
           <div className="absolute -top-3.5 font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] text-foreground bg-background/85 px-2 border border-foreground/20">
-            {isDistanceInLightYears
-              ? 'SECTOR_08 // MILKY_WAY_GALAXY [TARGET_LOCKED]'
-              : 'TARGET_LOCKED // TERRA [SOL-3]'}
+            {telemetry.targetTag ||
+              (isDistanceInLightYears
+                ? 'DEEP_SPACE // VIRGO_SUPERCLUSTER -> TARGET_LOCKED: MILKY_WAY_GALAXY'
+                : 'TARGET_ORBIT: TERRA // THIRD_SOL_ORBIT')}
           </div>
           <div className="absolute top-1/2 left-0 w-3 h-[1px] bg-foreground/60" />
           <div className="absolute top-1/2 right-0 w-3 h-[1px] bg-foreground/60" />
@@ -110,13 +115,14 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
               }`}
             />
             <span className="font-ndot text-foreground text-glow text-[10px] sm:text-[11px]">
-              {telemetry.isLocked
-                ? 'APPROACH_VECTOR: LOCKED // ORBIT_400KM'
-                : warpSpeedNum > 4.0
-                ? 'APPROACH_VECTOR: GALACTIC_INSERTION // RELATIVISTIC_STRETCH'
-                : isDistanceInLightYears
-                ? 'APPROACH_VECTOR: ACQUIRING_GALAXY_TARGET'
-                : 'APPROACH_VECTOR: STELLAR_SYSTEM_TRANSIT [MARS/SATURN]'}
+              {telemetry.sectorText ||
+                (telemetry.isLocked
+                  ? 'ORBIT_STABLE // NODE: VISAKHAPATNAM [ACTIVE]'
+                  : warpSpeedNum > 4.0
+                  ? 'APPROACH_VECTOR: GALACTIC_DISK_INSERTION'
+                  : isDistanceInLightYears
+                  ? 'SECTOR_00 // MULTI_GALAXY_CLUSTER [ACQUIRING]'
+                  : 'APPROACH_VECTOR: SOLAR_SYSTEM [MARS // JUPITER]')}
             </span>
           </div>
           <div className="font-ndot tracking-widest text-muted-foreground">
