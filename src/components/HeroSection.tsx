@@ -211,31 +211,31 @@ const HeroSection = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-foreground" />
                 </span>
-                <span className="font-mono text-[8px] sm:text-[9.5px] tracking-[0.25em] text-foreground font-medium uppercase">
+                <span className="font-ndot text-[8px] sm:text-[9.5px] tracking-[0.25em] text-foreground">
                   SYS.01 // ORBITAL_NOMINAL // GENAI ARCHITECT
                 </span>
               </div>
             </motion.div>
 
-            {/* Display Headline: Architectural Space Grotesk Typography */}
+            {/* Display Headline: Signature Nothing OS Dot-Matrix Typography */}
             <motion.div
               initial={{ opacity: 0, y: 35 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.4, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
             >
-              <h1 className="font-sans font-bold text-5xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[0.92] tracking-tight text-foreground text-balance">
+              <h1 className="font-ndot text-5xl sm:text-7xl lg:text-8xl leading-[0.95] sm:leading-[0.88] tracking-tight text-foreground text-glow break-words text-balance">
                 MURALI
                 <br />
-                <span className="text-muted-foreground/80 font-normal">PAILA</span>
+                <span className="text-muted-foreground/85">PAILA</span>
               </h1>
             </motion.div>
 
-            {/* Body Copy - Space Grotesk */}
+            {/* Body Copy - High-Legibility Modern Sans */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.55, duration: 0.6 }}
-              className="font-sans text-sm sm:text-base text-muted-foreground max-w-lg leading-relaxed font-normal text-pretty"
+              className="font-body text-sm sm:text-base text-muted-foreground max-w-lg leading-relaxed font-normal text-pretty"
             >
               I engineer intelligent AI-powered products and scalable full-stack applications.
               Specialized in production conversational AI, LightRAG knowledge graph architectures,
@@ -260,7 +260,7 @@ const HeroSection = () => {
                       setActiveFocusPill(isActive ? null : idx);
                       playTactileClick('toggle');
                     }}
-                    className={`relative rounded-full border px-3 sm:px-3.5 py-1.5 font-mono text-[8px] sm:text-[9px] tracking-[0.16em] transition-all duration-200 text-left cursor-pointer ${
+                    className={`relative rounded-xs border px-3 sm:px-3.5 py-1.5 font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] transition-all duration-200 text-left cursor-pointer ${
                       isActive
                         ? 'border-foreground bg-foreground text-background font-semibold shadow-[0_0_15px_rgba(255,255,255,0.2)]'
                         : 'border-border/80 bg-background/50 text-foreground/85 hover:border-foreground/50 hover:bg-foreground/5'
@@ -284,7 +284,7 @@ const HeroSection = () => {
             >
               <MagneticCTA
                 href="#projects"
-                className="nav-cta rounded-full px-6 py-3.5 font-sans font-medium text-xs tracking-wider inline-flex items-center justify-center gap-2 group shadow-lg"
+                className="nav-cta rounded-full px-6 py-3.5 font-ndot text-[10px] sm:text-[11px] tracking-[0.25em] inline-flex items-center justify-center gap-2 group shadow-lg"
               >
                 <span>VIEW WORK</span>
                 <span className="transition-transform duration-300 group-hover:translate-x-1 font-mono">→</span>
@@ -292,7 +292,7 @@ const HeroSection = () => {
 
               <MagneticCTA
                 href="#contact"
-                className="glass-panel-hover border-glow px-6 py-3.5 font-sans font-medium text-xs tracking-wider text-foreground inline-flex items-center justify-center gap-2 rounded-full border border-border"
+                className="glass-panel-hover border-glow px-6 py-3.5 font-ndot text-[10px] sm:text-[11px] tracking-[0.25em] text-foreground inline-flex items-center justify-center gap-2 rounded-full border border-border"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-foreground animate-pulse" />
                 <span>CONTACT</span>
@@ -302,7 +302,7 @@ const HeroSection = () => {
                 href="/resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="glass-panel px-4 py-3.5 font-mono text-[10px] tracking-widest text-muted-foreground hover:text-foreground rounded-full transition-colors inline-flex items-center justify-center gap-1.5"
+                className="glass-panel px-4 py-3.5 font-ndot text-[9px] sm:text-[10px] tracking-[0.2em] text-muted-foreground hover:text-foreground rounded-full transition-colors inline-flex items-center justify-center gap-1.5"
               >
                 <span>SYSTEM SPEC [CV]</span>
                 <span className="font-mono text-xs">↗</span>
@@ -314,7 +314,7 @@ const HeroSection = () => {
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 1.0, duration: 0.6 }}
-              className="pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-y-2 gap-x-6 text-[8px] sm:text-[9px] font-mono tracking-[0.18em] text-muted-foreground"
+              className="pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-y-2 gap-x-6 text-[8px] sm:text-[9px] font-ndot tracking-[0.2em] text-muted-foreground"
             >
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
@@ -360,7 +360,7 @@ const HeroSection = () => {
               <div className="absolute -bottom-3 -right-3 font-mono text-[10px] text-foreground/40 pointer-events-none">┘</div>
 
               {/* HUD Header Strip */}
-              <div className="flex items-center justify-between pb-2 mb-2 font-mono text-[7.5px] sm:text-[8px] tracking-[0.25em] text-muted-foreground border-b border-border/40">
+              <div className="flex items-center justify-between pb-2 mb-2 font-ndot text-[7.5px] sm:text-[8px] tracking-[0.25em] text-muted-foreground border-b border-border/40">
                 <div className="flex items-center gap-1.5">
                   <span className={`h-1.5 w-1.5 rounded-full ${hudCoords.isLocked ? 'bg-foreground' : 'bg-muted-foreground/60'} animate-pulse`} />
                   <span className="text-foreground">TARGET_LOCK: {hudCoords.isLocked ? 'ACTIVE' : 'STANDBY'}</span>
@@ -406,14 +406,14 @@ const HeroSection = () => {
                     <div className="absolute left-1/2 -top-2.5 h-2 w-px bg-foreground/80" />
                     <div className="absolute left-1/2 -bottom-2.5 h-2 w-px bg-foreground/80" />
 
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 whitespace-nowrap font-mono text-[7px] tracking-[0.2em] px-2 py-0.5 rounded-xs bg-background/95 border border-border text-foreground shadow-lg backdrop-blur-md">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 whitespace-nowrap font-ndot text-[7px] tracking-[0.2em] px-2 py-0.5 rounded-xs bg-background/95 border border-border text-foreground shadow-lg backdrop-blur-md">
                       TARGET_LOCK // MURALI_PAILA
                     </div>
                   </div>
                 )}
 
                 {/* Live Neural / Comms Waveform Overlay */}
-                <div className="absolute bottom-2 left-2 right-2 p-2 glass-panel rounded-xs text-[7px] sm:text-[8px] font-mono tracking-[0.2em] text-foreground/90 flex justify-between items-center border border-border/60 pointer-events-none backdrop-blur-md z-[3]">
+                <div className="absolute bottom-2 left-2 right-2 p-2 glass-panel rounded-xs text-[7px] sm:text-[8px] font-ndot tracking-[0.2em] text-foreground/90 flex justify-between items-center border border-border/60 pointer-events-none backdrop-blur-md z-[3]">
                   <div className="flex items-center gap-1.5">
                     <span className="text-muted-foreground">NEURAL:</span>
                     <div className="flex items-center gap-0.5 h-2">
@@ -436,7 +436,7 @@ const HeroSection = () => {
               </div>
 
               {/* Hardware Telemetry Label */}
-              <div className="mt-2.5 pt-2 border-t border-border/40 flex items-center justify-between font-mono text-[7.5px] sm:text-[8px] tracking-[0.25em] text-muted-foreground">
+              <div className="mt-2.5 pt-2 border-t border-border/40 flex items-center justify-between font-ndot text-[7.5px] sm:text-[8px] tracking-[0.25em] text-muted-foreground">
                 <span>SUBJECT: MURALI_PAILA</span>
                 <span className="text-foreground/80">CLASS: PRODUCTION_ENGINEER</span>
               </div>
@@ -455,7 +455,7 @@ const HeroSection = () => {
             {[...techStack, ...techStack].map((tech, i) => (
               <span
                 key={i}
-                className="mx-6 sm:mx-8 font-mono text-[9px] sm:text-[10px] tracking-[0.25em] text-muted-foreground whitespace-nowrap hover:text-foreground transition-colors"
+                className="mx-6 sm:mx-8 font-ndot text-[9px] sm:text-[10px] tracking-[0.28em] text-muted-foreground whitespace-nowrap hover:text-foreground transition-colors"
               >
                 {tech}
               </span>
