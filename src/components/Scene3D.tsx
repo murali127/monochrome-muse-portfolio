@@ -253,7 +253,7 @@ const MinimalVisakhapatnamBeacon = ({
         const scale = 1.0 + t * 2.6;
         ringRef.current.scale.set(scale, scale, 1);
         const ringMat = ringRef.current.material as THREE.MeshBasicMaterial;
-        ringMat.opacity = Math.pow(1 - t, 1.4) * (isLight ? 0.85 : 0.9) * visibility;
+        ringMat.opacity = Math.pow(1 - t, 1.4) * (isLight ? 0.85 : 0.95) * visibility;
       }
 
       // 3. Small glowing core dot pulse
@@ -298,12 +298,13 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
   const globeGroupRef = useRef<THREE.Group>(null);
 
   const RADIUS = 1.25;
-  const POINT_COUNT = 14000;
+  const POINT_COUNT = 12000;
 
-  // 1. Generate Uniform Fibonacci Point Cloud Sphere (Dual-Layer Density: Land + Ocean)
+  // 1. Generate Uniform Fibonacci Point Cloud with Dedicated Per-Vertex Colors & Sizes
+  // Every single point in the 12,000 grid is preserved—ZERO dropped/omitted points
   const { geometry: dotGeometry, material: dotMaterial } = useMemo(() => {
     const positions = new Float32Array(POINT_COUNT * 3);
-    const brightness = new Float32Array(POINT_COUNT);
+    const colors = new Float32Array(POINT_COUNT * 3);
     const sizes = new Float32Array(POINT_COUNT);
 
     for (let i = 0; i < POINT_COUNT; i++) {
@@ -318,81 +319,86 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
 
       const isLand = checkIsLand(lon, lat);
 
-      // Land nodes are elevated slightly and render significantly larger & brighter
-      const r = isLand ? RADIUS * 1.006 : RADIUS;
+      // Coordinates
+      const r = isLand ? RADIUS * 1.004 : RADIUS;
       positions[i * 3] = -(r * Math.sin(phi) * Math.cos(theta));
       positions[i * 3 + 1] = r * Math.cos(phi);
       positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
 
-      // Land = 1.0 (bright, high-density), Ocean = 0.0 (subtle visible coordinate matrix)
-      brightness[i] = isLand ? 1.0 : 0.0;
-      sizes[i] = isLand ? 0.026 : 0.012;
+      // Dedicated RGB Vertex Colors & Sizes (Land vs Ocean)
+      if (isLand) {
+        // Land: Bright, crisp, prominent
+        if (isLight) {
+          colors[i * 3] = 0.035;      // Deep obsidian #09090B
+          colors[i * 3 + 1] = 0.035;
+          colors[i * 3 + 2] = 0.043;
+        } else {
+          colors[i * 3] = 1.0;        // Crisp white #FFFFFF
+          colors[i * 3 + 1] = 1.0;
+          colors[i * 3 + 2] = 1.0;
+        }
+        sizes[i] = 0.028;
+      } else {
+        // Ocean: Explicitly colored & visible (never empty / never hollow)
+        if (isLight) {
+          colors[i * 3] = 0.78;       // Architectural blueprint grey #C7C7CC
+          colors[i * 3 + 1] = 0.78;
+          colors[i * 3 + 2] = 0.80;
+        } else {
+          colors[i * 3] = 0.227;      // Visible gunmetal grey #3A3A3C
+          colors[i * 3 + 1] = 0.227;
+          colors[i * 3 + 2] = 0.235;
+        }
+        sizes[i] = 0.014;
+      }
     }
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('aBrightness', new THREE.BufferAttribute(brightness, 1));
-    geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-    // Antialiased Circular Point Shader Material with Dual Density
+    // Custom Shader with guaranteed non-subpixel point rendering and zero depth traps
     const mat = new THREE.ShaderMaterial({
       uniforms: {
-        uLandColor: { value: new THREE.Color(isLight ? 0x09090b : 0xffffff) },
-        uOceanColor: { value: new THREE.Color(isLight ? 0x71717a : 0x666666) },
-        uLandAlpha: { value: 1.0 },
-        uOceanAlpha: { value: isLight ? 0.25 : 0.28 },
+        uScale: { value: 850.0 },
       },
       vertexShader: `
-        attribute float aBrightness;
-        attribute float aSize;
-        varying float vBrightness;
+        attribute vec3 color;
+        attribute float size;
+        varying vec3 vColor;
+
+        uniform float uScale;
 
         void main() {
-          vBrightness = aBrightness;
+          vColor = color;
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = aSize * (350.0 / -mvPosition.z);
+          float pSize = size * (uScale / -mvPosition.z);
+          // Ensure every ocean point maintains a guaranteed visible minimum size
+          gl_PointSize = max(pSize, 1.8);
           gl_Position = projectionMatrix * mvPosition;
         }
       `,
       fragmentShader: `
-        uniform vec3 uLandColor;
-        uniform vec3 uOceanColor;
-        uniform float uLandAlpha;
-        uniform float uOceanAlpha;
-        varying float vBrightness;
+        varying vec3 vColor;
 
         void main() {
           vec2 coord = gl_PointCoord - vec2(0.5);
           float dist = length(coord);
           if (dist > 0.5) discard;
           float edge = smoothstep(0.5, 0.22, dist);
-
-          vec3 col = mix(uOceanColor, uLandColor, vBrightness);
-          float alpha = mix(uOceanAlpha, uLandAlpha, vBrightness) * edge;
-
-          gl_FragColor = vec4(col, alpha);
+          gl_FragColor = vec4(vColor, edge);
         }
       `,
       transparent: true,
       depthWrite: false,
-      blending: THREE.NormalBlending,
+      blending: isLight ? THREE.NormalBlending : THREE.AdditiveBlending,
     });
 
     return { geometry: geo, material: mat };
   }, [isLight]);
 
-  // Update shader uniforms smoothly on theme toggle
-  useEffect(() => {
-    if (dotMaterial) {
-      dotMaterial.uniforms.uLandColor.value.set(isLight ? 0x09090b : 0xffffff);
-      dotMaterial.uniforms.uOceanColor.value.set(isLight ? 0x71717a : 0x666666);
-      dotMaterial.uniforms.uLandAlpha.value = 1.0;
-      dotMaterial.uniforms.uOceanAlpha.value = isLight ? 0.25 : 0.28;
-      dotMaterial.needsUpdate = true;
-    }
-  }, [isLight, dotMaterial]);
-
-  // 2. Subtle Navigation Grid (Equator, Parallels, Meridians) - Never disappears over oceans
+  // 2. Navigation Grid (Equator, Parallels, Meridians) for persistent coordinate framework
   const gridGeometry = useMemo(() => createLatLonGridGeometry(RADIUS), [RADIUS]);
 
   // 3. Atmospheric Rim Particle Halo
@@ -428,26 +434,16 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
       {/* Globe Group - Perfectly Straight & Upright */}
       <group ref={globeGroupRef} rotation={[0, 0, 0]}>
-        {/* Physical Core Sphere - Gives solid architectural 3D volume & occludes backside points */}
-        <mesh>
-          <sphereGeometry args={[RADIUS * 0.990, 48, 48]} />
-          <meshBasicMaterial
-            color={isLight ? '#f2f2f5' : '#040406'}
-            transparent
-            opacity={isLight ? 0.94 : 0.92}
-          />
-        </mesh>
-
-        {/* High-Density Points Earth (Dual-Density Land + Ocean Grid) */}
+        {/* Unified High-Density Dot-Matrix Sphere (Land + Ocean Grid) */}
         <points geometry={dotGeometry} material={dotMaterial} />
 
-        {/* Subtle Navigational Latitude & Longitude Coordinate Parallels */}
+        {/* Persistent Navigational Latitude & Longitude Coordinate Parallels */}
         <points geometry={gridGeometry}>
           <pointsMaterial
-            size={0.010}
+            size={0.012}
             color={isLight ? '#09090b' : '#ffffff'}
             transparent
-            opacity={isLight ? 0.16 : 0.22}
+            opacity={isLight ? 0.18 : 0.25}
             sizeAttenuation
             depthWrite={false}
           />
