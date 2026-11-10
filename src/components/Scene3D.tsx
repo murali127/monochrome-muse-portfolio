@@ -844,11 +844,6 @@ const RelativeSolarSystemRig = ({
           </bufferGeometry>
           <primitive object={pointMat} attach="material" />
         </points>
-        <Html center distanceFactor={22}>
-          <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
-            MARS // 1.524 AU
-          </div>
-        </Html>
       </group>
 
       <group ref={jupiterRef}>
@@ -858,11 +853,6 @@ const RelativeSolarSystemRig = ({
           </bufferGeometry>
           <primitive object={pointMat} attach="material" />
         </points>
-        <Html center distanceFactor={26}>
-          <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
-            JUPITER // GAS_GIANT
-          </div>
-        </Html>
       </group>
 
       <group ref={saturnRef}>
@@ -886,12 +876,6 @@ const RelativeSolarSystemRig = ({
             depthWrite={false}
           />
         </points>
-
-        <Html center distanceFactor={28}>
-          <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
-            SATURN // RINGED_GIANT
-          </div>
-        </Html>
       </group>
     </group>
   );
@@ -921,16 +905,16 @@ const EarthTargetReticle = ({
 
   return (
     <group position={[0, 0, 0]}>
-      <Html center position={[0, 1.8, 0]} distanceFactor={30}>
+      <Html center position={[0, 1.8, 0]} distanceFactor={48}>
         <div
           style={{ opacity }}
-          className="font-ndot tracking-widest text-foreground bg-background/95 border-2 border-foreground px-3.5 py-2.5 shadow-2xl pointer-events-none select-none whitespace-nowrap flex flex-col gap-0.5 rounded-none min-w-[290px] transition-opacity duration-150"
+          className="font-ndot tracking-widest text-foreground bg-background/95 border border-foreground/60 px-2.5 py-1.5 shadow-xl pointer-events-none select-none whitespace-nowrap flex flex-col gap-0.5 rounded-none transition-opacity duration-150"
         >
-          <div className="flex items-center gap-2 text-foreground font-bold text-[12px] sm:text-[14px]">
-            <span className="w-2.5 h-2.5 rounded-full bg-foreground animate-ping" />
-            <span>TARGET IDENTIFIED: TERRA (EARTH)</span>
+          <div className="flex items-center gap-1.5 text-foreground font-bold text-[9px] sm:text-[10px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-foreground animate-ping" />
+            <span>TARGET: TERRA (EARTH)</span>
           </div>
-          <div className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
+          <div className="text-[7.5px] sm:text-[8px] font-mono text-muted-foreground">
             ORBIT_03 // HABITABLE ZONE // 1.000 AU
           </div>
         </div>
@@ -1036,241 +1020,6 @@ const CosmicDust = ({ isLight }: { isLight: boolean }) => {
         depthWrite={false}
       />
     </points>
-  );
-};
-
-// ----------------------------------------------------------------------------
-// Minimal Dot-Matrix Luna (Natural Satellite orbiting Earth)
-// ----------------------------------------------------------------------------
-const MinimalLuna = ({ isLight }: { isLight: boolean }) => {
-  const moonGroupRef = useRef<THREE.Group>(null);
-  const moonOrbitR = 3.3;
-  const count = 220;
-  const radius = 0.22;
-
-  const positions = useMemo(() => generateFibonacciSphere(count, radius), [count, radius]);
-  const orbitPositions = useMemo(() => generateDottedOrbit(moonOrbitR, 140), [moonOrbitR]);
-
-  const color = isLight ? '#141416' : '#f4f4f5';
-
-  useFrame((state) => {
-    if (!moonGroupRef.current) return;
-    const t = state.clock.elapsedTime * 0.04;
-    moonGroupRef.current.position.x = Math.cos(t) * moonOrbitR;
-    moonGroupRef.current.position.y = Math.sin(t) * 0.65;
-    moonGroupRef.current.position.z = Math.sin(t) * (moonOrbitR * 0.55);
-  });
-
-  return (
-    <>
-      <points rotation={[0.2, 0, 0]}>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            count={140}
-            array={orbitPositions}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <pointsMaterial
-          size={0.007}
-          color={color}
-          transparent
-          opacity={isLight ? 0.08 : 0.16}
-          sizeAttenuation
-          depthWrite={false}
-        />
-      </points>
-
-      <group ref={moonGroupRef}>
-        <points>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={count}
-              array={positions}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <pointsMaterial
-            size={0.011}
-            color={color}
-            transparent
-            opacity={isLight ? 0.55 : 0.85}
-            sizeAttenuation
-            depthWrite={false}
-          />
-        </points>
-
-        <Html center distanceFactor={22}>
-          <div className="font-ndot text-[7px] tracking-[0.2em] px-1.5 py-0.5 border border-border/60 bg-background/85 text-muted-foreground whitespace-nowrap shadow-sm pointer-events-none select-none backdrop-blur-xs opacity-75">
-            LUNA // 384.4K KM
-          </div>
-        </Html>
-      </group>
-    </>
-  );
-};
-
-// ----------------------------------------------------------------------------
-// Tactical Orbital Relay Station (LEO Satellite Beacon)
-// ----------------------------------------------------------------------------
-const OrbitalRelaySatellite = ({ isLight }: { isLight: boolean }) => {
-  const satRef = useRef<THREE.Group>(null);
-  const r = 1.95;
-  const color = isLight ? '#141416' : '#ffffff';
-
-  const trackPositions = useMemo(() => generateDottedOrbit(r, 90), [r]);
-
-  useFrame((state) => {
-    if (!satRef.current) return;
-    const t = state.clock.elapsedTime * 0.14;
-    satRef.current.position.x = Math.cos(t) * r;
-    satRef.current.position.y = Math.sin(t * 1.5) * 0.45;
-    satRef.current.position.z = Math.sin(t) * r;
-  });
-
-  return (
-    <>
-      <points rotation={[-0.35, 0.2, 0.4]}>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            count={90}
-            array={trackPositions}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <pointsMaterial
-          size={0.006}
-          color={color}
-          transparent
-          opacity={isLight ? 0.06 : 0.12}
-          sizeAttenuation
-          depthWrite={false}
-        />
-      </points>
-
-      <group ref={satRef}>
-        <points>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={3}
-              array={new Float32Array([0, 0, 0, -0.04, 0, 0, 0.04, 0, 0])}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <pointsMaterial
-            size={0.012}
-            color={color}
-            transparent
-            opacity={isLight ? 0.8 : 1.0}
-            sizeAttenuation
-            depthWrite={false}
-          />
-        </points>
-
-        <Html center distanceFactor={18}>
-          <div className="font-ndot text-[6.5px] tracking-[0.2em] px-1 py-0.2 border border-border/40 bg-background/80 text-foreground/80 whitespace-nowrap pointer-events-none select-none">
-            SAT-01 // LEO 408KM
-          </div>
-        </Html>
-      </group>
-    </>
-  );
-};
-
-// ----------------------------------------------------------------------------
-// Deep Space Cosmic Pulsar (Distant Extraterrestrial Entity)
-// ----------------------------------------------------------------------------
-const DeepSpacePulsar = ({ isLight }: { isLight: boolean }) => {
-  const pulsarRef = useRef<THREE.Group>(null);
-  const count = 90;
-  const color = isLight ? '#141416' : '#ffffff';
-
-  const diskPositions = useMemo(() => {
-    const arr = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      const rad = 0.4 + Math.random() * 0.9;
-      const th = Math.random() * Math.PI * 2;
-      arr[i * 3] = Math.cos(th) * rad;
-      arr[i * 3 + 1] = (Math.random() - 0.5) * 0.08;
-      arr[i * 3 + 2] = Math.sin(th) * rad;
-    }
-    return arr;
-  }, []);
-
-  const jetPositions = useMemo(() => {
-    const jetCount = 40;
-    const arr = new Float32Array(jetCount * 3);
-    for (let i = 0; i < jetCount; i++) {
-      const sign = i % 2 === 0 ? 1 : -1;
-      const dist = Math.random() * 1.8 + 0.1;
-      arr[i * 3] = (Math.random() - 0.5) * 0.04 * dist;
-      arr[i * 3 + 1] = sign * dist;
-      arr[i * 3 + 2] = (Math.random() - 0.5) * 0.04 * dist;
-    }
-    return arr;
-  }, []);
-
-  useFrame((state) => {
-    if (!pulsarRef.current) return;
-    const t = state.clock.elapsedTime;
-    pulsarRef.current.rotation.y = t * 0.06;
-
-    const pulse = 1.0 + Math.sin(t * 4.2) * 0.12;
-    pulsarRef.current.scale.set(pulse, pulse, pulse);
-  });
-
-  return (
-    <group position={[-24, 14, -36]}>
-      <group ref={pulsarRef}>
-        <points rotation={[0.6, 0.2, 0.4]}>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={count}
-              array={diskPositions}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <pointsMaterial
-            size={0.01}
-            color={color}
-            transparent
-            opacity={isLight ? 0.2 : 0.4}
-            sizeAttenuation
-            depthWrite={false}
-          />
-        </points>
-
-        <points>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              count={40}
-              array={jetPositions}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <pointsMaterial
-            size={0.008}
-            color={color}
-            transparent
-            opacity={isLight ? 0.25 : 0.5}
-            sizeAttenuation
-            depthWrite={false}
-          />
-        </points>
-      </group>
-
-      <Html center distanceFactor={35}>
-        <div className="font-ndot text-[6px] tracking-[0.25em] px-1.5 py-0.5 border border-border/40 bg-background/80 text-muted-foreground whitespace-nowrap pointer-events-none select-none opacity-60">
-          PULSAR // PSR-B1919 [DEEP_SPACE]
-        </div>
-      </Html>
-    </group>
   );
 };
 
@@ -1580,7 +1329,7 @@ const CinematicCameraRig = ({
 
       if (completedRef.current) {
         const targetRotY = mouse.current.x * 0.15;
-        const targetPosX = (isDesktop ? 0.45 : 0) + mouse.current.x * 0.12;
+        const targetPosX = mouse.current.x * 0.12;
         const targetPosY = mouse.current.y * 0.08;
 
         rigRef.current.rotation.y = THREE.MathUtils.damp(rigRef.current.rotation.y, targetRotY, 3.0, delta);
@@ -1588,7 +1337,7 @@ const CinematicCameraRig = ({
         rigRef.current.position.y = THREE.MathUtils.damp(rigRef.current.position.y, targetPosY, 2.5, delta);
       }
 
-      const targetScale = isDesktop ? 0.84 : 0.68;
+      const targetScale = isDesktop ? 0.95 : 0.75;
       const currentScale = rigRef.current.scale.x;
       const dampedScale = THREE.MathUtils.damp(currentScale, targetScale, 3.0, delta);
       rigRef.current.scale.set(dampedScale, dampedScale, dampedScale);
@@ -1637,14 +1386,7 @@ const CinematicCameraRig = ({
           isIgnited={isBeaconIgnited}
           scale={earthScale}
         />
-        {completedRef.current && (
-          <>
-            <CosmicDust isLight={isLight} />
-            <MinimalLuna isLight={isLight} />
-            <OrbitalRelaySatellite isLight={isLight} />
-            <DeepSpacePulsar isLight={isLight} />
-          </>
-        )}
+        {completedRef.current && <CosmicDust isLight={isLight} />}
       </group>
     </>
   );
