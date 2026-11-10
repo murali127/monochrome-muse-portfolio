@@ -35,6 +35,8 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onSkip]);
 
+  const warpSpeedNum = parseFloat(telemetry.velocity) || 0;
+
   return (
     <motion.div
       key="cinematic-warp-hud"
@@ -44,7 +46,7 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
       exit={{
         opacity: 0,
         filter: 'blur(8px)',
-        transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+        transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
       }}
     >
       {/* Top Header Bar */}
@@ -54,7 +56,11 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-foreground" />
           </span>
-          <span>DEEP_SPACE // DIVE_TELEMETRY</span>
+          <span>
+            {warpSpeedNum > 0.5
+              ? 'RELATIVISTIC_CORRIDOR // VELOCITY_MAX'
+              : 'DEEP_SPACE // SECTOR_08'}
+          </span>
         </div>
 
         {/* Tactile Skip Button */}
@@ -69,13 +75,21 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
         </button>
       </div>
 
-      {/* Center Subtle Targeting Reticle (Gently dissolves on dive) */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-25">
-        <div className="relative w-48 h-48 border border-foreground/30 rounded-full flex items-center justify-center">
-          <div className="w-2 h-2 rounded-full border border-foreground" />
-          <div className="absolute -top-3 font-ndot text-[8px] tracking-widest text-foreground">
-            TARGET: SOL-3
+      {/* Center Reticle Lock (Visible in Deep Space, Dissolves on Entry) */}
+      <div
+        className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
+          warpSpeedNum > 1.0 ? 'opacity-10' : 'opacity-40'
+        }`}
+      >
+        <div className="relative w-44 h-44 sm:w-52 sm:h-52 border border-foreground/30 rounded-full flex items-center justify-center">
+          <div className="w-2.5 h-2.5 rounded-full border border-foreground" />
+          <div className="absolute -top-3.5 font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] text-foreground bg-background/80 px-2">
+            TARGET_ACQUIRED: SECTOR_08 // TERRA
           </div>
+          <div className="absolute top-1/2 left-0 w-3 h-[1px] bg-foreground/60" />
+          <div className="absolute top-1/2 right-0 w-3 h-[1px] bg-foreground/60" />
+          <div className="absolute left-1/2 top-0 h-3 w-[1px] bg-foreground/60" />
+          <div className="absolute left-1/2 bottom-0 h-3 w-[1px] bg-foreground/60" />
         </div>
       </div>
 
@@ -91,7 +105,11 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
             <span className="font-ndot text-foreground text-glow text-[10px] sm:text-[11px]">
               {telemetry.isLocked
                 ? 'APPROACH_VECTOR: LOCKED // ORBIT_400KM'
-                : 'APPROACH_VECTOR: HYPERSPACE_DIVE'}
+                : warpSpeedNum > 0.8
+                ? 'APPROACH_VECTOR: HYPERSPACE_DIVE // RELATIVISTIC_STRETCH'
+                : warpSpeedNum > 0
+                ? 'APPROACH_VECTOR: ORBITAL_BRAKE // SHOCKWAVE_EMISSION'
+                : 'APPROACH_VECTOR: ACQUIRING_VECTOR'}
             </span>
           </div>
           <div className="font-ndot tracking-widest text-muted-foreground">
