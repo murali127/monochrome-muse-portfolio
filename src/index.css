@@ -436,6 +436,68 @@
       linear-gradient(90deg, rgba(0, 0, 0, 0.055) 1px, transparent 1px);
     background-size: 60px 60px;
   }
+
+  /* CRT Terminal Atmosphere & Shutter Effects */
+  .crt-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 10;
+  }
+
+  .crt-scanlines {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%, 
+      rgba(0, 0, 0, 0.32) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.8;
+  }
+
+  .light .crt-scanlines {
+    background: linear-gradient(
+      rgba(255, 255, 255, 0) 50%, 
+      rgba(0, 0, 0, 0.04) 50%
+    );
+    background-size: 100% 4px;
+    opacity: 0.65;
+  }
+
+  .crt-beam-sweep {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 140px;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      hsl(var(--foreground) / 0.05) 50%,
+      transparent 100%
+    );
+    pointer-events: none;
+    animation: crt-sweep 4.2s linear infinite;
+  }
+
+  .crt-grain {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .light .crt-grain {
+    opacity: 0.35;
+  }
+}
+
+@keyframes crt-sweep {
+  0% { transform: translateY(-140px); }
+  100% { transform: translateY(105vh); }
 }
 
 @keyframes marquee {

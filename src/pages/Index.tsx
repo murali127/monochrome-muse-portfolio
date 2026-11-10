@@ -15,32 +15,33 @@ import ContactSection from '@/components/ContactSection';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const Index = () => {
-  const [booted, setBooted] = useState(false);
+  const [bootCompleted, setBootCompleted] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <CustomCursor />
-      <BootLoader onComplete={() => setBooted(true)} />
 
-      {booted && (
-        <>
-          <ParticleField />
-          <Scene3D />
-          <div className="noise-overlay" />
-          <ThemeToggle />
+      {/* Background 3D Earth Globe & Ambient Field pre-mount for instant zero-lag reveal */}
+      <ParticleField />
+      <Scene3D />
+      <div className="noise-overlay" />
+      <ThemeToggle />
 
-          <main className="relative z-10">
-            <Navbar />
-            <HeroSection />
-            <AboutSection />
-            <EducationSection />
-            <SkillsSection />
-            <ExperienceSection />
-            <ProjectsSection />
-            <AchievementsSection />
-            <ContactSection />
-          </main>
-        </>
+      <main className="relative z-10">
+        <Navbar />
+        <HeroSection />
+        <AboutSection />
+        <EducationSection />
+        <SkillsSection />
+        <ExperienceSection />
+        <ProjectsSection />
+        <AchievementsSection />
+        <ContactSection />
+      </main>
+
+      {/* Terminal BIOS Boot Sequence Overlay */}
+      {!bootCompleted && (
+        <BootLoader onComplete={() => setBootCompleted(true)} />
       )}
     </div>
   );
