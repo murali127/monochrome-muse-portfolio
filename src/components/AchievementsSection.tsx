@@ -55,8 +55,8 @@ const AchievementsSection = () => {
           })}
         </div>
 
-        {/* HIGH-DENSITY FLIGHT MANIFEST / VERIFICATION TABLE (No Boxed Cards) */}
-        <div className="border-t border-b border-border/60">
+        {/* HIGH-DENSITY FLIGHT MANIFEST / VERIFICATION TABLE */}
+        <div className="border border-border/80 rounded-sm bg-background/94 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl">
           
           {/* Table Header Row */}
           <div className="hidden md:grid grid-cols-12 gap-4 py-3 border-b border-border/80 font-ndot text-[8px] tracking-[0.28em] text-muted-foreground uppercase">

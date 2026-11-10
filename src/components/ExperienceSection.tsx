@@ -135,8 +135,8 @@ const ExperienceSection = () => {
                     </div>
                   </div>
 
-                  {/* RIGHT RAIL: Open Editorial Content Stream (Zero Boxed Cards) */}
-                  <div className="pl-8 sm:pl-0 space-y-4">
+                  {/* RIGHT RAIL: Open Editorial Content Stream with High-Contrast Shielding */}
+                  <div className="pl-8 sm:pl-0 space-y-4 bg-background/92 backdrop-blur-xl p-5 sm:p-7 rounded-sm border border-border/80 hover:border-foreground/60 transition-all shadow-xl">
                     
                     {/* Header Row: Company, Role & Category */}
                     <div>

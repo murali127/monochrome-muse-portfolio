@@ -34,7 +34,7 @@ const EducationSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="hud-frame glass-panel p-5 sm:p-10 relative overflow-hidden"
+          className="hud-frame glass-panel p-5 sm:p-10 relative overflow-hidden bg-background/95 backdrop-blur-2xl shadow-2xl border border-border/80 rounded-sm"
         >
           <HudCorners />
 

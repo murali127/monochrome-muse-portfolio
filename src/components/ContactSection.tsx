@@ -1,5 +1,5 @@
-import { FormEvent, useRef, useState } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { FormEvent, useRef, useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import SectionHeader from './SectionHeader';
 import { playTactileClick } from '@/utils/audioFeedback';
 
@@ -8,45 +8,52 @@ interface QuickChannel {
   label: string;
   value: string;
   href: string;
-  copyableText: string;
+  protocol: string;
 }
 
 const channels: QuickChannel[] = [
   {
     id: 'email',
-    label: 'PRIMARY_LINK',
+    label: 'PRIMARY_DISPATCH',
     value: 'muralijay360@gmail.com',
     href: 'mailto:muralijay360@gmail.com',
-    copyableText: 'muralijay360@gmail.com',
+    protocol: 'SMTP / TLS 1.3',
   },
   {
     id: 'github',
-    label: 'SOURCE_TRACE',
+    label: 'SOURCE_REPOSITORY',
     value: 'github.com/murali127',
     href: 'https://github.com/murali127',
-    copyableText: 'https://github.com/murali127',
+    protocol: 'HTTPS / GIT_SSH',
   },
   {
     id: 'linkedin',
     label: 'NETWORK_IDENTITY',
     value: 'linkedin.com/in/muralipaila',
     href: 'https://www.linkedin.com/in/muralipaila/',
-    copyableText: 'https://www.linkedin.com/in/muralipaila/',
+    protocol: 'OIDC / VERIFIED',
   },
 ];
 
 type TransmissionStage = 'IDLE' | 'ENCRYPTING' | 'LOCKING_UPLINK' | 'TRANSMITTED';
 
 const ContactSection = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-100px' });
   const [stage, setStage] = useState<TransmissionStage>('IDLE');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Compute live byte count formatted in Hex
   const totalBytes = form.name.length + form.email.length + form.message.length;
   const hexBytes = `0x${totalBytes.toString(16).padStart(4, '0').toUpperCase()}`;
+
+  const handleInputChange = (field: 'name' | 'email' | 'message', val: string) => {
+    setForm((prev) => ({ ...prev, [field]: val }));
+    setIsTyping(true);
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => setIsTyping(false), 400);
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -76,206 +83,277 @@ const ContactSection = () => {
   };
 
   const handleCopy = (ch: QuickChannel) => {
-    navigator.clipboard.writeText(ch.copyableText);
+    navigator.clipboard.writeText(ch.value);
     setCopiedId(ch.id);
     playTactileClick('toggle');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
-    <section id="contact" className="relative py-24 sm:py-28 px-4 sm:px-6 overflow-hidden" ref={ref}>
+    <section id="contact" className="relative py-24 sm:py-28 px-4 sm:px-6 overflow-hidden">
       <div className="mx-auto max-w-7xl">
         <SectionHeader label="ESTABLISH_CONNECTION // DIRECT_UPLINK" title="CONTACT" number="07" />
 
-        {/* OPEN BRUTALIST DIRECT UPLINK CONSOLE (Zero Box Envelopes) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start mt-4">
+        {/* HIGH-CONTRAST MATTE CONSOLE ENCLOSURE (Completely shields text from 3D background bleed) */}
+        <div className="hud-frame glass-panel p-6 sm:p-10 lg:p-12 border border-border/90 rounded-sm relative shadow-2xl bg-background/95 backdrop-blur-2xl">
           
-          {/* Left Column: Direct Underline-Only Transmission Form */}
-          <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5 }}
-            className="lg:col-span-7 space-y-8"
-          >
-            <div>
-              <div className="font-ndot text-[8.5px] tracking-[0.3em] text-muted-foreground mb-2 flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground phosphor-led" />
-                <span>TERMINAL_CARRIER // DIRECT_COMM_LINK</span>
-              </div>
-              <h3 className="font-ndot text-3xl sm:text-5xl lg:text-6xl text-foreground text-glow tracking-wider uppercase font-bold leading-none">
-                INITIATE_TRANSMISSION
-              </h3>
-              <p className="font-body text-xs sm:text-sm text-muted-foreground mt-3 leading-relaxed text-pretty font-normal">
-                Direct encrypted transmission channel. Type your payload below to dispatch through secure SMTP relays.
-              </p>
-            </div>
+          {/* Tactical Corner Brackets */}
+          <span className="hud-corner hud-tl" />
+          <span className="hud-corner hud-tr" />
+          <span className="hud-corner hud-bl" />
+          <span className="hud-corner hud-br" />
 
-            <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+          {/* Laser Scanning Beam Header Accent */}
+          <div className="absolute inset-x-0 top-0 h-px overflow-hidden">
+            <div className="h-px w-1/3 bg-foreground/70 animate-[beam_3s_linear_infinite]" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+            
+            {/* Left Column: Direct Encrypted Transmission Console */}
+            <div className="lg:col-span-7 space-y-6">
               
-              {/* [01] CALLSIGN - Minimal Underline Only */}
-              <div className="space-y-1">
-                <label className="font-ndot text-[8px] tracking-[0.25em] text-muted-foreground uppercase flex items-center justify-between">
-                  <span>[01] CALLSIGN // YOUR_NAME</span>
-                  <span className="font-mono text-[8px]">{form.name.length} CHR</span>
-                </label>
-                <input
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Enter your name or organization callsign..."
-                  className="w-full bg-transparent border-b border-border/80 focus:border-foreground py-2.5 font-mono text-sm sm:text-base text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors rounded-none"
-                  data-cursor-hover
-                />
+              <div>
+                <div className="font-ndot text-[8px] tracking-[0.3em] text-muted-foreground mb-2 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-foreground phosphor-led" />
+                  <span>SECURE_ENCLAVE // DIRECT_UPLINK_CONSOLE</span>
+                </div>
+
+                <h3 className="font-ndot text-3xl sm:text-4xl lg:text-5xl text-foreground text-glow tracking-wider uppercase font-bold leading-none">
+                  INITIATE_TRANSMISSION
+                </h3>
+
+                <p className="font-body text-xs sm:text-sm text-muted-foreground mt-3 leading-relaxed text-pretty font-normal">
+                  Direct encrypted transmission channel. Type your payload below to dispatch through secure SMTP relays.
+                </p>
               </div>
 
-              {/* [02] FREQUENCY - Minimal Underline Only */}
-              <div className="space-y-1">
-                <label className="font-ndot text-[8px] tracking-[0.25em] text-muted-foreground uppercase flex items-center justify-between">
-                  <span>[02] RETURN_FREQUENCY // YOUR_EMAIL</span>
-                  <span className="font-mono text-[8px]">VALIDATED_STATION</span>
-                </label>
-                <input
-                  required
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="name@organization.com"
-                  className="w-full bg-transparent border-b border-border/80 focus:border-foreground py-2.5 font-mono text-sm sm:text-base text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors rounded-none"
-                  data-cursor-hover
-                />
-              </div>
-
-              {/* [03] PAYLOAD - Minimal Underline Only */}
-              <div className="space-y-1">
-                <label className="font-ndot text-[8px] tracking-[0.25em] text-muted-foreground uppercase flex items-center justify-between">
-                  <span>[03] PAYLOAD // ENCRYPTED_MESSAGE</span>
-                  <span className="font-mono text-[8.5px] text-foreground font-semibold">
-                    {hexBytes} BYTES
+              {/* Real-time Typing Kinetic Visualizer */}
+              <div className="p-3 border border-border/70 rounded-xs bg-foreground/[0.02] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`h-1.5 w-1.5 rounded-full ${isTyping ? 'bg-foreground phosphor-led' : 'bg-muted-foreground'}`} />
+                  <span className="font-ndot text-[8px] tracking-[0.25em] text-foreground/80">
+                    {isTyping ? 'KEYSTREAM: ENCODING_CHARS...' : 'KEYSTREAM: STANDBY'}
                   </span>
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  placeholder="Detail your inquiry, project scope, or engineering collaboration brief..."
-                  className="w-full bg-transparent border-b border-border/80 focus:border-foreground py-2.5 font-mono text-sm sm:text-base text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors rounded-none resize-none"
-                  data-cursor-hover
-                />
-              </div>
-
-              {/* Transmission Progress State */}
-              <div className="pt-2 flex items-center justify-between font-ndot text-[8px] tracking-[0.22em] text-muted-foreground">
-                <span>STATUS:</span>
-                <span className="font-mono text-foreground font-semibold">
-                  {stage === 'IDLE' && 'STANDBY // READY_FOR_DISPATCH'}
-                  {stage === 'ENCRYPTING' && 'STEP 1/3: ENCRYPTING (SHA-256)...'}
-                  {stage === 'LOCKING_UPLINK' && 'STEP 2/3: LOCKING SATELLITE UPLINK...'}
-                  {stage === 'TRANSMITTED' && 'STEP 3/3: TRANSMITTED [200 OK]'}
+                </div>
+                <span className="font-mono text-[9px] text-foreground font-bold">
+                  PAYLOAD_SIZE: {hexBytes}
                 </span>
               </div>
 
-              {/* Minimal Execute Button */}
-              <button
-                type="submit"
-                disabled={stage !== 'IDLE'}
-                className="nav-cta w-full py-4 rounded-xs font-ndot text-[10px] sm:text-[11px] tracking-[0.28em] focus:outline-none flex items-center justify-center gap-3 transition-transform"
-                data-cursor-hover
-              >
-                {stage === 'IDLE' && (
-                  <>
-                    <span>EXECUTE_TRANSMISSION</span>
-                    <span className="font-mono">[200 OK]</span>
-                  </>
-                )}
-                {stage === 'ENCRYPTING' && (
-                  <>
-                    <span className="h-2 w-2 rounded-full bg-background animate-ping" />
-                    <span>ENCRYPTING (SHA-256)...</span>
-                  </>
-                )}
-                {stage === 'LOCKING_UPLINK' && (
-                  <>
-                    <span className="h-2 w-2 rounded-full bg-background animate-ping" />
-                    <span>LOCKING SATELLITE UPLINK...</span>
-                  </>
-                )}
-                {stage === 'TRANSMITTED' && (
-                  <>
-                    <span>TRANSMISSION_DISPATCHED [200 OK]</span>
-                  </>
-                )}
-              </button>
-            </form>
-          </motion.div>
+              {/* Transmission Input Fields */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                
+                {/* [01] CALLSIGN */}
+                <div className="space-y-1.5">
+                  <label className="font-ndot text-[8.5px] tracking-[0.25em] text-muted-foreground uppercase flex items-center justify-between">
+                    <span>[01] CALLSIGN // YOUR_NAME</span>
+                    <span className="font-mono text-[8px] text-foreground/70">{form.name.length} CHR</span>
+                  </label>
+                  <input
+                    required
+                    value={form.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Enter full name or operational callsign..."
+                    className="w-full bg-foreground/[0.02] border border-border/80 focus:border-foreground focus:ring-1 focus:ring-foreground/50 px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all rounded-xs"
+                    data-cursor-hover
+                  />
+                </div>
 
-          {/* Right Column: Direct Quick-Action Channels with 1-Click Copy */}
-          <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="lg:col-span-5 space-y-6 pt-4 lg:pt-8"
-          >
-            <div className="font-ndot text-[8px] tracking-[0.3em] text-muted-foreground uppercase border-b border-border/60 pb-3">
-              DIRECT CHANNELS // 1-CLICK DISPATCH
+                {/* [02] RETURN_FREQUENCY */}
+                <div className="space-y-1.5">
+                  <label className="font-ndot text-[8.5px] tracking-[0.25em] text-muted-foreground uppercase flex items-center justify-between">
+                    <span>[02] RETURN_FREQUENCY // YOUR_EMAIL</span>
+                    <span className="font-mono text-[8px] text-foreground/70">SMTP_VALIDATED</span>
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder="name@organization.com"
+                    className="w-full bg-foreground/[0.02] border border-border/80 focus:border-foreground focus:ring-1 focus:ring-foreground/50 px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all rounded-xs"
+                    data-cursor-hover
+                  />
+                </div>
+
+                {/* [03] PAYLOAD */}
+                <div className="space-y-1.5">
+                  <label className="font-ndot text-[8.5px] tracking-[0.25em] text-muted-foreground uppercase flex items-center justify-between">
+                    <span>[03] PAYLOAD // ENCRYPTED_MESSAGE</span>
+                    <span className="font-mono text-[8px] text-foreground font-semibold">{totalBytes} BYTES</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={form.message}
+                    onChange={(e) => handleInputChange('message', e.target.value)}
+                    placeholder="Specify project objectives, engineering collaboration brief, or system specifications..."
+                    className="w-full bg-foreground/[0.02] border border-border/80 focus:border-foreground focus:ring-1 focus:ring-foreground/50 px-4 py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all rounded-xs resize-none"
+                    data-cursor-hover
+                  />
+                </div>
+
+                {/* 3-Step Transmission Telemetry Bar */}
+                <div className="p-3.5 rounded-xs border border-border/80 bg-foreground/[0.02] space-y-2">
+                  <div className="flex items-center justify-between font-ndot text-[8px] tracking-[0.2em] text-muted-foreground">
+                    <span>TRANSMISSION_PROGRESS:</span>
+                    <span className="font-mono text-foreground font-semibold">
+                      {stage === 'IDLE' && 'READY_FOR_DISPATCH'}
+                      {stage === 'ENCRYPTING' && 'STEP 1/3: SHA-256 DIGEST...'}
+                      {stage === 'LOCKING_UPLINK' && 'STEP 2/3: LOCKING SATELLITE UPLINK...'}
+                      {stage === 'TRANSMITTED' && 'STEP 3/3: TRANSMITTED [200 OK]'}
+                    </span>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="h-1.5 w-full bg-border/40 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-foreground transition-all duration-500 ease-out"
+                      style={{
+                        width:
+                          stage === 'IDLE'
+                            ? '0%'
+                            : stage === 'ENCRYPTING'
+                            ? '35%'
+                            : stage === 'LOCKING_UPLINK'
+                            ? '75%'
+                            : '100%',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Transmission Execution CTA */}
+                <button
+                  type="submit"
+                  disabled={stage !== 'IDLE'}
+                  className="nav-cta w-full py-4 rounded-xs font-ndot text-[10px] sm:text-[11px] tracking-[0.28em] focus:outline-none flex items-center justify-center gap-2 shadow-xl disabled:opacity-75"
+                  data-cursor-hover
+                >
+                  {stage === 'IDLE' && (
+                    <>
+                      <span>EXECUTE_TRANSMISSION</span>
+                      <span className="font-mono">[200 OK]</span>
+                    </>
+                  )}
+                  {stage === 'ENCRYPTING' && (
+                    <>
+                      <span className="h-2 w-2 rounded-full bg-background animate-ping" />
+                      <span>ENCRYPTING (SHA-256)...</span>
+                    </>
+                  )}
+                  {stage === 'LOCKING_UPLINK' && (
+                    <>
+                      <span className="h-2 w-2 rounded-full bg-background animate-ping" />
+                      <span>LOCKING SATELLITE UPLINK...</span>
+                    </>
+                  )}
+                  {stage === 'TRANSMITTED' && (
+                    <>
+                      <span>TRANSMISSION_DISPATCHED [200 OK]</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
             </div>
 
-            <div className="space-y-4">
-              {channels.map((ch) => {
-                const isCopied = copiedId === ch.id;
+            {/* Right Column: Kinetic Radar Motion Graphic & 1-Click Direct Channels */}
+            <div className="lg:col-span-5 space-y-6 pt-2 lg:pt-0">
+              
+              {/* KINETIC POLAR RADAR MOTION GRAPHIC */}
+              <div className="p-5 border border-border/80 rounded-xs bg-foreground/[0.02] relative overflow-hidden">
+                <div className="flex items-center justify-between font-ndot text-[8px] tracking-[0.25em] text-muted-foreground border-b border-border/50 pb-2.5 mb-4">
+                  <span className="flex items-center gap-1.5 text-foreground font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-foreground phosphor-led" />
+                    BASE_STATION // POLAR_RADAR
+                  </span>
+                  <span className="font-mono text-foreground">AZ: 184.2° | EL: 42°</span>
+                </div>
 
-                return (
-                  <div
-                    key={ch.id}
-                    className="p-4 border border-border/70 rounded-xs hover:border-foreground/60 transition-colors flex items-center justify-between gap-4 group"
-                  >
-                    <div className="space-y-0.5">
-                      <div className="font-ndot text-[7.5px] tracking-[0.25em] text-muted-foreground group-hover:text-foreground transition-colors">
-                        {ch.label}
+                {/* Polar Radar Scope */}
+                <div className="relative w-44 h-44 sm:w-48 sm:h-48 mx-auto flex items-center justify-center">
+                  {/* Concentric Range Rings */}
+                  <div className="absolute inset-0 rounded-full border border-border/60" />
+                  <div className="absolute inset-6 rounded-full border border-border/40" />
+                  <div className="absolute inset-12 rounded-full border border-border/30" />
+                  
+                  {/* Crosshairs */}
+                  <div className="absolute inset-x-0 top-1/2 h-px bg-border/40 -translate-y-1/2" />
+                  <div className="absolute inset-y-0 left-1/2 w-px bg-border/40 -translate-x-1/2" />
+
+                  {/* Rotating Radar Sweep Arm */}
+                  <div className="absolute inset-0 flex items-center justify-center animate-radar-sweep pointer-events-none">
+                    <div className="w-1/2 h-full bg-gradient-to-r from-transparent via-foreground/[0.12] to-foreground/30 origin-right rounded-full" />
+                  </div>
+
+                  {/* Target Blip Ping (Visakhapatnam station) */}
+                  <div className="absolute top-[38%] left-[62%] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+                    <span className="h-2.5 w-2.5 rounded-full bg-foreground animate-ping absolute" />
+                    <span className="h-2 w-2 rounded-full bg-foreground" />
+                  </div>
+
+                  {/* Center Node */}
+                  <div className="w-3 h-3 rounded-full border border-foreground bg-background z-10 flex items-center justify-center">
+                    <span className="w-1 h-1 rounded-full bg-foreground" />
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-2.5 border-t border-border/40 flex items-center justify-between font-mono text-[8px] text-muted-foreground">
+                  <span>VIZAG_NODE: 17.68° N, 83.21° E</span>
+                  <span className="text-foreground font-semibold">SIGNAL: LOCKED</span>
+                </div>
+              </div>
+
+              {/* DIRECT QUICK-ACTION 1-CLICK COPY CHANNELS */}
+              <div className="space-y-3">
+                <div className="font-ndot text-[8px] tracking-[0.3em] text-muted-foreground uppercase">
+                  DIRECT CHANNELS // 1-CLICK DISPATCH
+                </div>
+
+                {channels.map((ch) => {
+                  const isCopied = copiedId === ch.id;
+
+                  return (
+                    <div
+                      key={ch.id}
+                      className="p-3.5 border border-border/70 rounded-xs bg-background/80 hover:border-foreground/80 transition-all flex items-center justify-between gap-3 group"
+                    >
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="font-ndot text-[7.5px] tracking-[0.25em] text-muted-foreground group-hover:text-foreground transition-colors">
+                          {ch.label} // {ch.protocol}
+                        </div>
+                        <a
+                          href={ch.href}
+                          target={ch.href.startsWith('http') ? '_blank' : undefined}
+                          rel="noreferrer"
+                          className="font-mono text-xs sm:text-[13px] text-foreground hover:underline block truncate"
+                          data-cursor-hover
+                        >
+                          {ch.value}
+                        </a>
                       </div>
-                      <a
-                        href={ch.href}
-                        target={ch.href.startsWith('http') ? '_blank' : undefined}
-                        rel="noreferrer"
-                        className="font-mono text-xs sm:text-sm text-foreground hover:underline block"
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(ch)}
+                        className="px-3 py-1.5 rounded-xs border border-border/80 hover:border-foreground bg-foreground/[0.04] font-ndot text-[8px] tracking-[0.2em] text-foreground transition-colors shrink-0"
                         data-cursor-hover
                       >
-                        {ch.value}
-                      </a>
+                        {isCopied ? 'COPIED!' : 'COPY'}
+                      </button>
                     </div>
+                  );
+                })}
+              </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(ch)}
-                      className="px-2.5 py-1 rounded-xs border border-border/80 hover:border-foreground bg-foreground/[0.03] font-ndot text-[8px] tracking-[0.2em] text-foreground transition-colors shrink-0"
-                      data-cursor-hover
-                    >
-                      {isCopied ? 'COPIED!' : 'COPY'}
-                    </button>
-                  </div>
-                );
-              })}
             </div>
 
-            {/* Geodetic Telemetry Block */}
-            <div className="pt-4 border-t border-border/60 space-y-2 font-mono text-[9px] text-muted-foreground">
-              <div className="flex justify-between items-center">
-                <span className="font-ndot text-[7.5px] tracking-wider">GEO_COORDINATES:</span>
-                <span className="text-foreground">17.6868° N, 83.2185° E [VIZAG]</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-ndot text-[7.5px] tracking-wider">PRIMARY_ROLE:</span>
-                <span className="text-foreground">GENAI FULL-STACK DEVELOPER</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-ndot text-[7.5px] tracking-wider">ENCRYPTION:</span>
-                <span className="text-foreground">TLS 1.3 / SHA-256</span>
-              </div>
-            </div>
-
-          </motion.div>
+          </div>
 
         </div>
+
       </div>
     </section>
   );

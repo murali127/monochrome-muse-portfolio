@@ -97,7 +97,7 @@ const AboutSection = () => {
             initial={{ opacity: 0, x: -25 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="lg:col-span-4 flex flex-col justify-between hud-frame glass-panel p-5 sm:p-6 border border-border/80 rounded-sm relative"
+            className="lg:col-span-4 flex flex-col justify-between hud-frame glass-panel p-5 sm:p-6 border border-border/80 rounded-sm relative bg-background/95 backdrop-blur-2xl shadow-2xl"
           >
             <span className="hud-corner hud-tl" />
             <span className="hud-corner hud-tr" />
@@ -256,7 +256,7 @@ const AboutSection = () => {
             initial={{ opacity: 0, x: 25 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-8 flex flex-col justify-between hud-frame glass-panel p-6 sm:p-8 lg:p-10 border border-border/80 rounded-sm relative"
+            className="lg:col-span-8 flex flex-col justify-between hud-frame glass-panel p-6 sm:p-8 lg:p-10 border border-border/80 rounded-sm relative bg-background/95 backdrop-blur-2xl shadow-2xl"
           >
             <span className="hud-corner hud-tl" />
             <span className="hud-corner hud-tr" />
