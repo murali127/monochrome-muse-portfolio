@@ -1345,7 +1345,7 @@ const CinematicCameraRig = ({
 
       if (completedRef.current) {
         const targetRotY = mouse.current.x * 0.15;
-        const targetPosX = mouse.current.x * 0.12;
+        const targetPosX = (isDesktop ? 0.45 : 0) + mouse.current.x * 0.12;
         const targetPosY = mouse.current.y * 0.08;
 
         rigRef.current.rotation.y = THREE.MathUtils.damp(rigRef.current.rotation.y, targetRotY, 3.0, delta);
@@ -1353,7 +1353,7 @@ const CinematicCameraRig = ({
         rigRef.current.position.y = THREE.MathUtils.damp(rigRef.current.position.y, targetPosY, 2.5, delta);
       }
 
-      const targetScale = isDesktop ? 0.90 : 0.72;
+      const targetScale = isDesktop ? 0.84 : 0.68;
       const currentScale = rigRef.current.scale.x;
       const dampedScale = THREE.MathUtils.damp(currentScale, targetScale, 3.0, delta);
       rigRef.current.scale.set(dampedScale, dampedScale, dampedScale);

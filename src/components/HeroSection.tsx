@@ -1,49 +1,10 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import profilePhoto from '@/assets/murali-photo.png';
 import { playTactileClick } from '@/utils/audioFeedback';
 
 // ----------------------------------------------------------------------------
-// Cybernetic Glyphs for Tactical Decode Effect
-// ----------------------------------------------------------------------------
-const CYBER_GLYPHS = '01_XF94#*&$%+-/[]<>';
-
-function useCyberDecode(finalText: string, trigger: boolean) {
-  const [displayText, setDisplayText] = useState(finalText);
-
-  const decode = useCallback(() => {
-    let iteration = 0;
-    playTactileClick('subtle');
-    const interval = setInterval(() => {
-      setDisplayText(
-        finalText
-          .split('')
-          .map((char, index) => {
-            if (char === ' ' || char === '\n') return char;
-            if (index < iteration) return finalText[index];
-            return CYBER_GLYPHS[Math.floor(Math.random() * CYBER_GLYPHS.length)];
-          })
-          .join('')
-      );
-      if (iteration >= finalText.length) {
-        clearInterval(interval);
-      }
-      iteration += 1;
-    }, 32);
-    return () => clearInterval(interval);
-  }, [finalText]);
-
-  useEffect(() => {
-    if (trigger) {
-      decode();
-    }
-  }, [trigger, decode]);
-
-  return { displayText, triggerDecode: decode };
-}
-
-// ----------------------------------------------------------------------------
-// Magnetic Tactile Button Component
+// Types & Interfaces
 // ----------------------------------------------------------------------------
 interface MagneticCTAProps {
   children: React.ReactNode;
@@ -71,8 +32,8 @@ const MagneticCTA = ({
     const { left, top, width, height } = ref.current.getBoundingClientRect();
     const centerX = left + width / 2;
     const centerY = top + height / 2;
-    const pullX = (e.clientX - centerX) * 0.28;
-    const pullY = (e.clientY - centerY) * 0.28;
+    const pullX = (e.clientX - centerX) * 0.25;
+    const pullY = (e.clientY - centerY) * 0.25;
     setOffset({ x: pullX, y: pullY });
   };
 
@@ -114,11 +75,7 @@ const HeroSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
 
-  // Cybernetic Decryption for Headline
-  const { displayText: firstName, triggerDecode: decodeFirstName } = useCyberDecode('MURALI', isInView);
-  const { displayText: lastName, triggerDecode: decodeLastName } = useCyberDecode('PAILA', isInView);
-
-  // Active Focus Pill Hover State
+  // Active Focus Pill State
   const [activeFocusPill, setActiveFocusPill] = useState<number | null>(null);
 
   // Real-time live clock: UTC & IST (Visakhapatnam)
@@ -147,7 +104,7 @@ const HeroSection = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // 3D Hologram Tilt & HUD Reticle Tracking
+  // Hologram 3D Parallax & Hover Reticle Tracking
   const hudBoxRef = useRef<HTMLDivElement>(null);
   const [hudCoords, setHudCoords] = useState({
     azimuth: 184.2,
@@ -157,7 +114,7 @@ const HeroSection = () => {
     reticleY: 50,
   });
 
-  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
 
   const handleHudMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!hudBoxRef.current) return;
@@ -170,19 +127,12 @@ const HeroSection = () => {
     const az = (180 + ((relX - 50) / 50) * 18.5).toFixed(1);
     const el = (42 + ((50 - relY) / 50) * 12.0).toFixed(1);
 
-    // Smooth 3D perspective tilt
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const rotX = ((centerY - y) / centerY) * 8; // Max 8 degrees tilt
-    const rotY = ((x - centerX) / centerX) * 8;
+    const rotX = ((centerY - y) / centerY) * 7;
+    const rotY = ((x - centerX) / centerX) * 7;
 
-    setTilt({
-      rotateX: rotX,
-      rotateY: rotY,
-      glareX: relX,
-      glareY: relY,
-    });
-
+    setTilt({ rotateX: rotX, rotateY: rotY });
     setHudCoords({
       azimuth: parseFloat(az),
       elevation: parseFloat(el),
@@ -193,7 +143,7 @@ const HeroSection = () => {
   };
 
   const handleHudMouseLeave = () => {
-    setTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+    setTilt({ rotateX: 0, rotateY: 0 });
     setHudCoords((prev) => ({
       ...prev,
       isLocked: false,
@@ -237,96 +187,67 @@ const HeroSection = () => {
 
   return (
     <section ref={ref} className="relative min-h-[92dvh] flex items-center justify-center overflow-hidden">
-      {/* Laser scan line sweep */}
+      {/* Subtle Laser scan line */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute left-0 right-0 h-[1px] bg-foreground/10 animate-scan" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 w-full pt-24 sm:pt-28 pb-12 sm:pb-16">
-        {/* Asymmetrical High-Contrast Grid Layout */}
+        {/* Asymmetrical High-Craft Layout: Left Narrative (6 cols) & Right Holographic Pod (6 cols) */}
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* Left Column: Hero Narrative & Controls (7 Cols) */}
-          <div className="lg:col-span-7 space-y-5 sm:space-y-6">
+          {/* Left Column: Architectural Editorial Narrative (6 cols) */}
+          <div className="lg:col-span-6 space-y-5 sm:space-y-6">
             
-            {/* Telemetry Status Badge with Live Signal Wave */}
+            {/* Status Telemetry Badge */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.25, duration: 0.5 }}
               className="inline-flex items-center gap-3 glass-panel px-3.5 py-1.5 rounded-full border border-foreground/15 shadow-[0_0_20px_rgba(255,255,255,0.04)]"
             >
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-foreground" />
                 </span>
-                <span className="font-ndot text-[8px] sm:text-[9.5px] tracking-[0.25em] text-foreground">
+                <span className="font-mono text-[8px] sm:text-[9.5px] tracking-[0.25em] text-foreground font-medium uppercase">
                   SYS.01 // ORBITAL_NOMINAL // GENAI ARCHITECT
                 </span>
               </div>
-
-              {/* Micro Signal Spectrum */}
-              <div className="hidden sm:flex items-center gap-0.5 h-2.5 pl-2 border-l border-border/80">
-                {[60, 100, 40, 80, 50].map((h, i) => (
-                  <span
-                    key={i}
-                    className="w-[2px] bg-foreground/60 rounded-full animate-pulse"
-                    style={{
-                      height: `${h}%`,
-                      animationDelay: `${i * 0.12}s`,
-                      animationDuration: '0.9s',
-                    }}
-                  />
-                ))}
-              </div>
             </motion.div>
 
-            {/* Display Headline: Interactive Cyber Decryption on Hover */}
+            {/* Display Headline: Architectural Space Grotesk Typography */}
             <motion.div
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 35 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.4, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-              className="cursor-pointer select-none group inline-block"
-              onMouseEnter={() => {
-                decodeFirstName();
-                decodeLastName();
-              }}
             >
-              <h1 className="font-ndot text-5xl sm:text-7xl lg:text-8xl leading-[0.95] sm:leading-[0.88] tracking-tight text-foreground text-glow break-words text-balance transition-all">
-                <span className="inline-block hover:text-white transition-colors">
-                  {firstName}
-                </span>
+              <h1 className="font-sans font-bold text-5xl sm:text-6xl lg:text-7xl xl:text-8xl leading-[0.92] tracking-tight text-foreground text-balance">
+                MURALI
                 <br />
-                <span className="text-muted-foreground/85 inline-block group-hover:text-foreground transition-colors">
-                  {lastName}
-                </span>
+                <span className="text-muted-foreground/80 font-normal">PAILA</span>
               </h1>
-              <div className="flex items-center gap-2 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span className="font-mono text-[8px] tracking-[0.3em] text-muted-foreground">
-                  [RE-DECODE IDENTIFIER // CLICK / HOVER]
-                </span>
-              </div>
             </motion.div>
 
-            {/* Body Copy - High-Legibility Modern Sans (Space Grotesk) */}
+            {/* Body Copy - Space Grotesk */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.6, duration: 0.6 }}
-              className="font-body text-sm sm:text-base text-muted-foreground max-w-xl leading-relaxed text-pretty font-normal"
+              transition={{ delay: 0.55, duration: 0.6 }}
+              className="font-sans text-sm sm:text-base text-muted-foreground max-w-lg leading-relaxed font-normal text-pretty"
             >
               I engineer intelligent AI-powered products and scalable full-stack applications.
-              Specialized in production conversational AI, RAG knowledge graph architectures,
+              Specialized in production conversational AI, LightRAG knowledge graph architectures,
               real-time Voice AI pipelines, and high-performance backend systems.
             </motion.p>
 
-            {/* Futuristic Interactive Capability Telemetry Badges */}
+            {/* Interactive Capability Badges */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
-              transition={{ delay: 0.75, duration: 0.5 }}
-              className="flex flex-wrap gap-2 pt-1"
+              transition={{ delay: 0.7, duration: 0.5 }}
+              className="flex flex-wrap gap-2 pt-1 max-w-lg"
             >
               {focusAreas.map((area, idx) => {
                 const isActive = activeFocusPill === idx;
@@ -334,23 +255,19 @@ const HeroSection = () => {
                   <button
                     key={area.name}
                     type="button"
-                    onMouseEnter={() => {
-                      setActiveFocusPill(idx);
-                      playTactileClick('subtle');
-                    }}
-                    onMouseLeave={() => setActiveFocusPill(null)}
+                    onMouseEnter={() => playTactileClick('subtle')}
                     onClick={() => {
                       setActiveFocusPill(isActive ? null : idx);
                       playTactileClick('toggle');
                     }}
-                    className={`relative group rounded-xs border px-3 py-1.5 font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] transition-all duration-200 text-left ${
+                    className={`relative rounded-full border px-3 sm:px-3.5 py-1.5 font-mono text-[8px] sm:text-[9px] tracking-[0.16em] transition-all duration-200 text-left cursor-pointer ${
                       isActive
-                        ? 'border-foreground bg-foreground/10 text-foreground shadow-[0_0_15px_rgba(255,255,255,0.08)]'
-                        : 'border-border/80 bg-foreground/[0.02] text-foreground/80 hover:border-foreground/50 hover:bg-foreground/[0.05]'
+                        ? 'border-foreground bg-foreground text-background font-semibold shadow-[0_0_15px_rgba(255,255,255,0.2)]'
+                        : 'border-border/80 bg-background/50 text-foreground/85 hover:border-foreground/50 hover:bg-foreground/5'
                     }`}
                   >
                     <div className="flex items-center gap-1.5">
-                      <span className={`h-1 w-1 rounded-full ${isActive ? 'bg-foreground animate-ping' : 'bg-muted-foreground'}`} />
+                      <span className={`h-1 w-1 rounded-full ${isActive ? 'bg-background' : 'bg-foreground/60'}`} />
                       <span>{isActive ? area.telemetry : area.name}</span>
                     </div>
                   </button>
@@ -362,12 +279,12 @@ const HeroSection = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.9, duration: 0.6 }}
+              transition={{ delay: 0.85, duration: 0.6 }}
               className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 pt-2"
             >
               <MagneticCTA
                 href="#projects"
-                className="nav-cta rounded-full px-6 py-3.5 font-ndot text-[10px] sm:text-[11px] tracking-[0.25em] inline-flex items-center justify-center gap-2 group shadow-lg"
+                className="nav-cta rounded-full px-6 py-3.5 font-sans font-medium text-xs tracking-wider inline-flex items-center justify-center gap-2 group shadow-lg"
               >
                 <span>VIEW WORK</span>
                 <span className="transition-transform duration-300 group-hover:translate-x-1 font-mono">→</span>
@@ -375,7 +292,7 @@ const HeroSection = () => {
 
               <MagneticCTA
                 href="#contact"
-                className="glass-panel-hover border-glow px-6 py-3.5 font-ndot text-[10px] sm:text-[11px] tracking-[0.25em] text-foreground inline-flex items-center justify-center gap-2 rounded-full border border-border"
+                className="glass-panel-hover border-glow px-6 py-3.5 font-sans font-medium text-xs tracking-wider text-foreground inline-flex items-center justify-center gap-2 rounded-full border border-border"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-foreground animate-pulse" />
                 <span>CONTACT</span>
@@ -385,7 +302,7 @@ const HeroSection = () => {
                 href="/resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="glass-panel px-4 py-3.5 font-ndot text-[9px] sm:text-[10px] tracking-[0.2em] text-muted-foreground hover:text-foreground rounded-full transition-colors inline-flex items-center justify-center gap-1.5"
+                className="glass-panel px-4 py-3.5 font-mono text-[10px] tracking-widest text-muted-foreground hover:text-foreground rounded-full transition-colors inline-flex items-center justify-center gap-1.5"
               >
                 <span>SYSTEM SPEC [CV]</span>
                 <span className="font-mono text-xs">↗</span>
@@ -396,8 +313,8 @@ const HeroSection = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
-              transition={{ delay: 1.1, duration: 0.6 }}
-              className="pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-y-2 gap-x-6 text-[8px] sm:text-[9px] font-ndot tracking-[0.2em] text-muted-foreground"
+              transition={{ delay: 1.0, duration: 0.6 }}
+              className="pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-y-2 gap-x-6 text-[8px] sm:text-[9px] font-mono tracking-[0.18em] text-muted-foreground"
             >
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
@@ -409,17 +326,17 @@ const HeroSection = () => {
               <div className="flex items-center gap-3">
                 <span>VISAKHAPATNAM [17.68° N, 83.21° E]</span>
                 <span className="text-foreground/40">•</span>
-                <span className="text-foreground/90">ORBIT_STATUS: NOMINAL</span>
+                <span className="text-foreground/90">ORBIT: NOMINAL</span>
               </div>
             </motion.div>
           </div>
 
-          {/* Right Column: Holographic Volumetric Pod with 3D Tilt & Comms Wave (5 Cols) */}
+          {/* Right Column: Seamless Holographic Avatar (6 cols) */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
+            initial={{ opacity: 0, scale: 0.94 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ delay: 0.5, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-5 relative flex justify-center mt-2 lg:mt-0"
+            transition={{ delay: 0.5, duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-6 relative flex justify-center lg:justify-end mt-4 lg:mt-0"
             style={{ perspective: 1000 }}
           >
             <motion.div
@@ -430,44 +347,49 @@ const HeroSection = () => {
                 rotateX: tilt.rotateX,
                 rotateY: tilt.rotateY,
               }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25, mass: 0.5 }}
-              className="relative p-3 sm:p-4 glass-panel border border-border/80 rounded-sm shadow-2xl group cursor-crosshair max-w-[340px] sm:max-w-[380px] w-full transition-shadow duration-300 hover:shadow-[0_0_35px_rgba(255,255,255,0.08)]"
+              transition={{ type: 'spring', stiffness: 280, damping: 25, mass: 0.5 }}
+              className="relative max-w-[320px] sm:max-w-[360px] w-full select-none cursor-crosshair group"
             >
-              {/* Tactical Reticle Precision Corner Brackets */}
-              <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-foreground/70 transition-all duration-300 group-hover:scale-110" />
-              <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-foreground/70 transition-all duration-300 group-hover:scale-110" />
-              <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-foreground/70 transition-all duration-300 group-hover:scale-110" />
-              <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-foreground/70 transition-all duration-300 group-hover:scale-110" />
+              {/* Soft Ambient Radial Aura */}
+              <div className="absolute inset-0 -inset-y-4 bg-gradient-to-t from-foreground/[0.04] via-transparent to-transparent blur-3xl pointer-events-none rounded-full" />
 
-              {/* Holographic Header Bar */}
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/60 font-ndot text-[8px] tracking-[0.25em] text-muted-foreground">
+              {/* Minimalist Hairline HUD Corner Crosshairs */}
+              <div className="absolute -top-3 -left-3 font-mono text-[10px] text-foreground/40 pointer-events-none">┌</div>
+              <div className="absolute -top-3 -right-3 font-mono text-[10px] text-foreground/40 pointer-events-none">┐</div>
+              <div className="absolute -bottom-3 -left-3 font-mono text-[10px] text-foreground/40 pointer-events-none">└</div>
+              <div className="absolute -bottom-3 -right-3 font-mono text-[10px] text-foreground/40 pointer-events-none">┘</div>
+
+              {/* HUD Header Strip */}
+              <div className="flex items-center justify-between pb-2 mb-2 font-mono text-[7.5px] sm:text-[8px] tracking-[0.25em] text-muted-foreground border-b border-border/40">
                 <div className="flex items-center gap-1.5">
-                  <span className={`h-1.5 w-1.5 rounded-full ${hudCoords.isLocked ? 'bg-foreground' : 'bg-muted-foreground'} animate-pulse`} />
+                  <span className={`h-1.5 w-1.5 rounded-full ${hudCoords.isLocked ? 'bg-foreground' : 'bg-muted-foreground/60'} animate-pulse`} />
                   <span className="text-foreground">TARGET_LOCK: {hudCoords.isLocked ? 'ACTIVE' : 'STANDBY'}</span>
                 </div>
-                <span>FOCAL_ZONE // 01</span>
+                <span>FOCAL_PLANE // 01</span>
               </div>
 
-              {/* Profile Image Viewport (Preserves Full Image Aspect Ratio 788:1080) */}
-              <div className="relative w-full aspect-[788/1080] overflow-hidden rounded-xs border border-border/70 bg-gradient-to-b from-transparent via-background/40 to-background/90 transition-colors duration-300">
-                {/* Tech grid texture backdrop */}
-                <div className="absolute inset-0 dot-grid-bg opacity-30 pointer-events-none" />
+              {/* Complete Developer Portrait (Uncropped, aspect-[788/1080], Organic Soft Fade at Base) */}
+              <div className="relative w-full aspect-[788/1080] overflow-hidden rounded-md border border-border/40 bg-gradient-to-b from-transparent via-background/20 to-background/80 transition-colors">
+                
+                {/* Subtle dot texture */}
+                <div className="absolute inset-0 dot-grid-bg opacity-20 pointer-events-none" />
 
-                {/* Complete Developer Image */}
+                {/* Complete Developer Portrait Image */}
                 <img
                   src={profilePhoto}
-                  alt="Murali Paila - GenAI Full-Stack Developer"
-                  className="relative z-[1] w-full h-full object-contain grayscale contrast-125 transition-all duration-500 group-hover:contrast-130 group-hover:scale-[1.01]"
+                  alt="Murali Paila - GenAI Engineer"
+                  className="relative z-[1] w-full h-full object-contain grayscale contrast-125 transition-transform duration-500 group-hover:scale-[1.015]"
+                  style={{
+                    maskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
+                  }}
                   loading="eager"
                 />
 
-                {/* CRT Scanline Overlay */}
-                <div className="absolute inset-0 scanline pointer-events-none z-[2]" />
+                {/* Subtle Scanline CRT Overlay */}
+                <div className="absolute inset-0 scanline pointer-events-none z-[2] opacity-60" />
 
-                {/* Periodic Hologram Laser Scan Sweep */}
-                <div className="absolute inset-x-0 h-16 bg-gradient-to-b from-transparent via-foreground/[0.08] to-transparent pointer-events-none animate-scan z-[2]" />
-
-                {/* Tactical Reticle Crosshairs Follower: ONLY VISIBLE ON HOVER */}
+                {/* Tactical Reticle Crosshairs: Only Visible On Hover */}
                 {hudCoords.isLocked && (
                   <div
                     className="absolute pointer-events-none transition-all duration-75 -translate-x-1/2 -translate-y-1/2 z-[3]"
@@ -476,26 +398,26 @@ const HeroSection = () => {
                       top: `${hudCoords.reticleY}%`,
                     }}
                   >
-                    <div className="w-10 h-10 border border-foreground/80 rounded-full flex items-center justify-center animate-pulse">
-                      <div className="w-2 h-2 rounded-full bg-foreground" />
+                    <div className="w-9 h-9 border border-foreground/80 rounded-full flex items-center justify-center animate-pulse">
+                      <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
                     </div>
-                    <div className="absolute top-1/2 -left-3 w-2 h-px bg-foreground/80" />
-                    <div className="absolute top-1/2 -right-3 w-2 h-px bg-foreground/80" />
-                    <div className="absolute left-1/2 -top-3 h-2 w-px bg-foreground/80" />
-                    <div className="absolute left-1/2 -bottom-3 h-2 w-px bg-foreground/80" />
+                    <div className="absolute top-1/2 -left-2.5 w-2 h-px bg-foreground/80" />
+                    <div className="absolute top-1/2 -right-2.5 w-2 h-px bg-foreground/80" />
+                    <div className="absolute left-1/2 -top-2.5 h-2 w-px bg-foreground/80" />
+                    <div className="absolute left-1/2 -bottom-2.5 h-2 w-px bg-foreground/80" />
 
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap font-ndot text-[6.5px] tracking-[0.2em] px-1.5 py-0.5 rounded-xs bg-background/95 border border-border text-foreground shadow-lg backdrop-blur-md">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 whitespace-nowrap font-mono text-[7px] tracking-[0.2em] px-2 py-0.5 rounded-xs bg-background/95 border border-border text-foreground shadow-lg backdrop-blur-md">
                       TARGET_LOCK // MURALI_PAILA
                     </div>
                   </div>
                 )}
 
                 {/* Live Neural / Comms Waveform Overlay */}
-                <div className="absolute bottom-2 left-2 right-2 p-2 glass-panel rounded-xs text-[7px] sm:text-[8px] font-ndot tracking-[0.2em] text-foreground/90 flex justify-between items-center border border-border/80 pointer-events-none backdrop-blur-md z-[3]">
+                <div className="absolute bottom-2 left-2 right-2 p-2 glass-panel rounded-xs text-[7px] sm:text-[8px] font-mono tracking-[0.2em] text-foreground/90 flex justify-between items-center border border-border/60 pointer-events-none backdrop-blur-md z-[3]">
                   <div className="flex items-center gap-1.5">
                     <span className="text-muted-foreground">NEURAL:</span>
                     <div className="flex items-center gap-0.5 h-2">
-                      {[50, 90, 70, 100, 60, 40, 85].map((h, i) => (
+                      {[40, 85, 60, 100, 50, 35, 75].map((h, i) => (
                         <span
                           key={i}
                           className="w-[2px] bg-foreground/80 rounded-full animate-pulse"
@@ -514,7 +436,7 @@ const HeroSection = () => {
               </div>
 
               {/* Hardware Telemetry Label */}
-              <div className="mt-2.5 pt-2 border-t border-border/50 flex items-center justify-between font-ndot text-[7.5px] sm:text-[8px] tracking-[0.28em] text-muted-foreground">
+              <div className="mt-2.5 pt-2 border-t border-border/40 flex items-center justify-between font-mono text-[7.5px] sm:text-[8px] tracking-[0.25em] text-muted-foreground">
                 <span>SUBJECT: MURALI_PAILA</span>
                 <span className="text-foreground/80">CLASS: PRODUCTION_ENGINEER</span>
               </div>
@@ -533,7 +455,7 @@ const HeroSection = () => {
             {[...techStack, ...techStack].map((tech, i) => (
               <span
                 key={i}
-                className="mx-6 sm:mx-8 font-ndot text-[9px] sm:text-[10px] tracking-[0.3em] text-muted-foreground whitespace-nowrap hover:text-foreground transition-colors"
+                className="mx-6 sm:mx-8 font-mono text-[9px] sm:text-[10px] tracking-[0.25em] text-muted-foreground whitespace-nowrap hover:text-foreground transition-colors"
               >
                 {tech}
               </span>
