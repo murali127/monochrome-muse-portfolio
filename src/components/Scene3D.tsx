@@ -307,17 +307,17 @@ const GravitationalShockwave = ({
 };
 
 // ----------------------------------------------------------------------------
-// Stage 4 & 5: Dot-Matrix Earth Core (Z: 0, Centered, Strictly 0 Axial Tilt)
-// Rendered ONLY when isHeroGlobeActive is true (Mutual Exclusion with Mini Earth)
+// Unified Single-Entity Earth Globe (Statically Anchored at [0, 0, 0])
+// Scales continuously from 0.12 (Solar System view) to 1.0 (Portfolio Dock)
 // ----------------------------------------------------------------------------
 const DotMatrixGlobe = ({
   isLight,
   isIgnited,
-  cameraZ,
+  scale,
 }: {
   isLight: boolean;
   isIgnited: boolean;
-  cameraZ: number;
+  scale: number;
 }) => {
   const globeGroupRef = useRef<THREE.Group>(null);
   const radius = 1.55;
@@ -353,13 +353,6 @@ const DotMatrixGlobe = ({
     });
   }, [isLight]);
 
-  // Smooth continuous scaling from handoff threshold (Z: 14 -> 5.5)
-  const currentScale = useMemo(() => {
-    if (cameraZ > 14.0) return 0.45;
-    const p = (14.0 - cameraZ) / (14.0 - 5.5);
-    return 0.45 + 0.55 * (1 - Math.pow(1 - p, 3));
-  }, [cameraZ]);
-
   // Strict 0 Axial Tilt: Vertical upright planetary rotation on Y-axis
   useFrame((_state, delta) => {
     if (!globeGroupRef.current) return;
@@ -368,8 +361,12 @@ const DotMatrixGlobe = ({
     globeGroupRef.current.rotation.y += delta * 0.15;
   });
 
+  if (scale <= 0.001) {
+    return null;
+  }
+
   return (
-    <group ref={globeGroupRef} scale={[currentScale, currentScale, currentScale]} position={[0, 0, 0]}>
+    <group ref={globeGroupRef} scale={[scale, scale, scale]} position={[0, 0, 0]}>
       {/* Structural Ocean Coordinate Points */}
       <points>
         <bufferGeometry>
@@ -403,8 +400,8 @@ const DotMatrixGlobe = ({
 };
 
 // ----------------------------------------------------------------------------
-// Stage 1 & 2: Deep Cosmos & Galaxy Cluster Field (Camera Z: 240 -> 75)
-// Featuring High-Visibility HUD Framing & Target Label (14px - 16px font-ndot)
+// Stage 1 & 2: Deep Cosmos & Galaxy Cluster Field (Camera Z: 200 -> 75)
+// High-Visibility HUD Framing & Target Label (14px - 16px font-ndot)
 // ----------------------------------------------------------------------------
 const MultiGalaxyClusterField = ({
   isLight,
@@ -416,7 +413,7 @@ const MultiGalaxyClusterField = ({
   const targetGalaxyRef = useRef<THREE.Points>(null);
   const distantGalaxiesRef = useRef<THREE.Points>(null);
 
-  const isClusterActive = cameraZ > 70.0;
+  const isClusterActive = cameraZ > 65.0;
 
   // 1. Target Milky Way Galaxy at [0, 0, 0]: 2-arm logarithmic spiral (~4,600 points)
   const targetData = useMemo(() => {
@@ -533,14 +530,14 @@ const MultiGalaxyClusterField = ({
   }, [isLight]);
 
   const targetOpacity = useMemo(() => {
-    if (cameraZ > 140.0) return isLight ? 0.45 : 0.85;
-    const fade = THREE.MathUtils.clamp((cameraZ - 75.0) / (140.0 - 75.0), 0, 1);
+    if (cameraZ > 130.0) return isLight ? 0.45 : 0.85;
+    const fade = THREE.MathUtils.clamp((cameraZ - 70.0) / (130.0 - 70.0), 0, 1);
     return (isLight ? 0.45 : 0.85) * Math.pow(fade, 1.4);
   }, [cameraZ, isLight]);
 
   const distantOpacity = useMemo(() => {
-    if (cameraZ > 170.0) return isLight ? 0.35 : 0.7;
-    const fade = THREE.MathUtils.clamp((cameraZ - 100.0) / (170.0 - 100.0), 0, 1);
+    if (cameraZ > 160.0) return isLight ? 0.35 : 0.7;
+    const fade = THREE.MathUtils.clamp((cameraZ - 90.0) / (160.0 - 90.0), 0, 1);
     return (isLight ? 0.35 : 0.7) * fade;
   }, [cameraZ, isLight]);
 
@@ -584,8 +581,8 @@ const MultiGalaxyClusterField = ({
           depthWrite={false}
         />
 
-        {/* High-Visibility HUD Galaxy Reticle & Tactical Framing (14px - 16px font-ndot) */}
-        {cameraZ > 145.0 && (
+        {/* High-Visibility HUD Galaxy Reticle & Tactical Framing */}
+        {cameraZ > 135.0 && (
           <Html center position={[0, 9.5, 0]} distanceFactor={65}>
             <div className="font-ndot tracking-widest text-foreground bg-background/95 border-2 border-foreground/80 px-4 py-3 shadow-[0_0_30px_rgba(255,255,255,0.18)] dark:shadow-[0_0_30px_rgba(255,255,255,0.25)] select-none pointer-events-none rounded-none min-w-[320px] sm:min-w-[390px]">
               <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-foreground/30">
@@ -643,53 +640,32 @@ const MultiGalaxyClusterField = ({
 };
 
 // ----------------------------------------------------------------------------
-// Stage 3 & 4: Full Solar System Overview & Planetary Orbital Dance
-// Single Entity Morph: Mini Earth renders ONLY until isHeroGlobeActive is true
+// Stage 3 & 4: Relative Solar System Rig
+// Sun and planets revolve in an inverted frame where Earth is fixed at [0, 0, 0]
 // ----------------------------------------------------------------------------
-const FullSolarSystemOverview = ({
+const RelativeSolarSystemRig = ({
   isLight,
-  cameraZ,
-  earthWorldPosRef,
-  isEarthLocked,
-  isHeroGlobeActive,
+  outerBodiesOpacity,
 }: {
   isLight: boolean;
-  cameraZ: number;
-  earthWorldPosRef: React.MutableRefObject<THREE.Vector3>;
-  isEarthLocked: boolean;
-  isHeroGlobeActive: boolean;
+  outerBodiesOpacity: number;
 }) => {
-  const isSystemActive = cameraZ < 75.0 && !isHeroGlobeActive;
-
+  const solarRigRef = useRef<THREE.Group>(null);
   const mercuryRef = useRef<THREE.Group>(null);
   const venusRef = useRef<THREE.Group>(null);
-  const earthNodeRef = useRef<THREE.Group>(null);
   const marsRef = useRef<THREE.Group>(null);
   const jupiterRef = useRef<THREE.Group>(null);
   const saturnRef = useRef<THREE.Group>(null);
-  const solarGroupRef = useRef<THREE.Group>(null);
 
-  // Fade out other planets and Sun as camera locks onto Earth (Z: 26 -> 14)
-  const outerBodiesOpacity = useMemo(() => {
-    if (cameraZ > 26.0) return 1.0;
-    if (cameraZ <= 14.0) return 0.0;
-    return THREE.MathUtils.clamp((cameraZ - 14.0) / (26.0 - 14.0), 0, 1);
-  }, [cameraZ]);
-
-  // Target Box fades cleanly as camera approaches close range (Z: 26 -> 14)
-  const targetBoxOpacity = useMemo(() => {
-    if (cameraZ <= 14.0) return 0;
-    if (cameraZ >= 26.0) return 1;
-    return (cameraZ - 14.0) / (26.0 - 14.0);
-  }, [cameraZ]);
-
+  // Orbit radii from Sun
   const rMercury = 4.8;
   const rVenus = 7.6;
-  const rEarth = 11.5;
-  const rMars = 16.0;
-  const rJupiter = 23.5;
-  const rSaturn = 31.0;
+  const rEarth = 12.0; // Distance between Sun and Earth
+  const rMars = 16.5;
+  const rJupiter = 24.0;
+  const rSaturn = 32.0;
 
+  // Concentric dotted orbit tracks centered on the Sun
   const trackMercury = useMemo(() => generateDottedOrbit(rMercury, 180), [rMercury]);
   const trackVenus = useMemo(() => generateDottedOrbit(rVenus, 240), [rVenus]);
   const trackEarth = useMemo(() => generateDottedOrbit(rEarth, 340), [rEarth]);
@@ -699,7 +675,6 @@ const FullSolarSystemOverview = ({
 
   const mercuryPts = useMemo(() => generateFibonacciSphere(120, 0.32), []);
   const venusPts = useMemo(() => generateFibonacciSphere(180, 0.46), []);
-  const earthNodePts = useMemo(() => generateFibonacciSphere(260, 0.54), []);
   const marsPts = useMemo(() => generateFibonacciSphere(160, 0.42), []);
   const jupiterPts = useMemo(() => generateFibonacciSphere(520, 1.25), []);
   const saturnPts = useMemo(() => generateFibonacciSphere(420, 0.95), []);
@@ -730,17 +705,6 @@ const FullSolarSystemOverview = ({
     });
   }, [isLight, outerBodiesOpacity]);
 
-  const earthNodeMat = useMemo(() => {
-    return new THREE.PointsMaterial({
-      size: 0.016,
-      color: isLight ? 0x09090b : 0xffffff,
-      transparent: true,
-      opacity: isLight ? 0.85 : 1.0,
-      sizeAttenuation: true,
-      depthWrite: false,
-    });
-  }, [isLight]);
-
   const orbitMat = useMemo(() => {
     return new THREE.PointsMaterial({
       size: 0.011,
@@ -763,229 +727,214 @@ const FullSolarSystemOverview = ({
     });
   }, [isLight, outerBodiesOpacity]);
 
-  useFrame((state, delta) => {
+  // Dynamic relative solar positioning:
+  // Rig offset = [-cos(theta) * 12, 0, -sin(theta) * 12]
+  // This mathematically anchors the 3rd orbit track right on world origin [0, 0, 0] (Earth)!
+  useFrame((state) => {
     const t = state.clock.elapsedTime;
+    const thetaEarth = 0.65 + t * 0.06;
 
-    const angMerc = t * 1.6;
-    const angVenus = t * 1.15;
-    const angEarth = t * 0.85;
-    const angMars = t * 0.65;
-    const angJup = t * 0.38;
-    const angSat = t * 0.25;
+    if (solarRigRef.current) {
+      solarRigRef.current.position.set(
+        -Math.cos(thetaEarth) * rEarth,
+        0,
+        -Math.sin(thetaEarth) * rEarth
+      );
+    }
 
+    // Relative planetary revolutions around the Sun
     if (mercuryRef.current) {
-      mercuryRef.current.position.set(Math.cos(angMerc) * rMercury, 0, Math.sin(angMerc) * rMercury);
+      const a = t * 1.6;
+      mercuryRef.current.position.set(Math.cos(a) * rMercury, 0, Math.sin(a) * rMercury);
     }
     if (venusRef.current) {
-      venusRef.current.position.set(Math.cos(angVenus) * rVenus, 0, Math.sin(angVenus) * rVenus);
-    }
-    if (earthNodeRef.current) {
-      const ex = Math.cos(angEarth) * rEarth;
-      const ez = Math.sin(angEarth) * rEarth;
-      earthNodeRef.current.position.set(ex, 0, ez);
-      earthWorldPosRef.current.set(ex, 0, ez);
+      const a = t * 1.15;
+      venusRef.current.position.set(Math.cos(a) * rVenus, 0, Math.sin(a) * rVenus);
     }
     if (marsRef.current) {
-      marsRef.current.position.set(Math.cos(angMars) * rMars, 0, Math.sin(angMars) * rMars);
+      const a = t * 0.65;
+      marsRef.current.position.set(Math.cos(a) * rMars, 0, Math.sin(a) * rMars);
     }
     if (jupiterRef.current) {
-      jupiterRef.current.position.set(Math.cos(angJup) * rJupiter, 0, Math.sin(angJup) * rJupiter);
+      const a = t * 0.38;
+      jupiterRef.current.position.set(Math.cos(a) * rJupiter, 0, Math.sin(a) * rJupiter);
     }
     if (saturnRef.current) {
-      saturnRef.current.position.set(Math.cos(angSat) * rSaturn, 0, Math.sin(angSat) * rSaturn);
-    }
-
-    if (solarGroupRef.current) {
-      if (isEarthLocked && earthNodeRef.current) {
-        const targetOffsetX = -earthNodeRef.current.position.x;
-        const targetOffsetZ = -earthNodeRef.current.position.z;
-        solarGroupRef.current.position.x = THREE.MathUtils.damp(solarGroupRef.current.position.x, targetOffsetX, 4.0, delta);
-        solarGroupRef.current.position.z = THREE.MathUtils.damp(solarGroupRef.current.position.z, targetOffsetZ, 4.0, delta);
-      } else {
-        solarGroupRef.current.position.set(0, 0, 0);
-      }
+      const a = t * 0.25;
+      saturnRef.current.position.set(Math.cos(a) * rSaturn, 0, Math.sin(a) * rSaturn);
     }
   });
 
-  if (!isSystemActive) {
+  if (outerBodiesOpacity <= 0.001) {
     return null;
   }
 
   return (
-    <group ref={solarGroupRef}>
-      {/* 1. Central Illuminated Sun Node at [0, 0, 0] */}
-      {outerBodiesOpacity > 0.01 && (
-        <group position={[0, 0, 0]}>
-          <points>
+    <group ref={solarRigRef}>
+      {/* 1. Central Illuminated Sun Node inside Rig */}
+      <group position={[0, 0, 0]}>
+        <points>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              count={480}
+              array={sunCoronaPoints}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <primitive object={sunMat} attach="material" />
+        </points>
+
+        <mesh>
+          <sphereGeometry args={[1.5, 24, 24]} />
+          <meshBasicMaterial
+            color={isLight ? 0x09090b : 0xffffff}
+            transparent
+            opacity={0.85 * outerBodiesOpacity}
+          />
+        </mesh>
+
+        <Html center position={[0, 3.2, 0]} distanceFactor={36}>
+          <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
+            SOL // TYPE G2V // STAR_NODE
+          </div>
+        </Html>
+      </group>
+
+      {/* 2. Concentric Dotted Orbit Tracks (3rd track passes exactly through [0, 0, 0]) */}
+      <group>
+        {[trackMercury, trackVenus, trackEarth, trackMars, trackJupiter, trackSaturn].map((track, i) => (
+          <points key={i}>
             <bufferGeometry>
               <bufferAttribute
                 attach="attributes-position"
-                count={480}
-                array={sunCoronaPoints}
+                count={track.length / 3}
+                array={track}
                 itemSize={3}
               />
             </bufferGeometry>
-            <primitive object={sunMat} attach="material" />
+            <primitive object={orbitMat} attach="material" />
           </points>
+        ))}
+      </group>
 
-          <mesh>
-            <sphereGeometry args={[1.5, 24, 24]} />
-            <meshBasicMaterial
-              color={isLight ? 0x09090b : 0xffffff}
-              transparent
-              opacity={0.85 * outerBodiesOpacity}
-            />
-          </mesh>
+      {/* 3. Planets (Mercury, Venus, Mars, Jupiter, Saturn) */}
+      <group ref={mercuryRef}>
+        <points>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={120} array={mercuryPts} itemSize={3} />
+          </bufferGeometry>
+          <primitive object={pointMat} attach="material" />
+        </points>
+      </group>
 
-          {cameraZ > 35.0 && (
-            <Html center position={[0, 3.2, 0]} distanceFactor={36}>
-              <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
-                SOL // TYPE G2V // STAR_NODE
-              </div>
-            </Html>
-          )}
-        </group>
-      )}
+      <group ref={venusRef}>
+        <points>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={180} array={venusPts} itemSize={3} />
+          </bufferGeometry>
+          <primitive object={pointMat} attach="material" />
+        </points>
+      </group>
 
-      {/* 2. Concentric Dotted Orbit Tracks */}
-      {outerBodiesOpacity > 0.01 && (
-        <group>
-          {[trackMercury, trackVenus, trackEarth, trackMars, trackJupiter, trackSaturn].map((track, i) => (
-            <points key={i}>
-              <bufferGeometry>
-                <bufferAttribute
-                  attach="attributes-position"
-                  count={track.length / 3}
-                  array={track}
-                  itemSize={3}
-                />
-              </bufferGeometry>
-              <primitive object={orbitMat} attach="material" />
-            </points>
-          ))}
-        </group>
-      )}
+      <group ref={marsRef}>
+        <points>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={160} array={marsPts} itemSize={3} />
+          </bufferGeometry>
+          <primitive object={pointMat} attach="material" />
+        </points>
+        <Html center distanceFactor={22}>
+          <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
+            MARS // 1.524 AU
+          </div>
+        </Html>
+      </group>
 
-      {/* 3. Planets Revolved in Real-time */}
-      {/* Mercury */}
-      {outerBodiesOpacity > 0.01 && (
-        <group ref={mercuryRef}>
-          <points>
-            <bufferGeometry>
-              <bufferAttribute attach="attributes-position" count={120} array={mercuryPts} itemSize={3} />
-            </bufferGeometry>
-            <primitive object={pointMat} attach="material" />
-          </points>
-        </group>
-      )}
+      <group ref={jupiterRef}>
+        <points>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={520} array={jupiterPts} itemSize={3} />
+          </bufferGeometry>
+          <primitive object={pointMat} attach="material" />
+        </points>
+        <Html center distanceFactor={26}>
+          <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
+            JUPITER // GAS_GIANT
+          </div>
+        </Html>
+      </group>
 
-      {/* Venus */}
-      {outerBodiesOpacity > 0.01 && (
-        <group ref={venusRef}>
-          <points>
-            <bufferGeometry>
-              <bufferAttribute attach="attributes-position" count={180} array={venusPts} itemSize={3} />
-            </bufferGeometry>
-            <primitive object={pointMat} attach="material" />
-          </points>
-        </group>
-      )}
+      <group ref={saturnRef}>
+        <points>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={420} array={saturnPts} itemSize={3} />
+          </bufferGeometry>
+          <primitive object={pointMat} attach="material" />
+        </points>
 
-      {/* Earth (Terra) - Miniature Node (Strictly Mutually Exclusive with DotMatrixGlobe) */}
-      {!isHeroGlobeActive && (
-        <group ref={earthNodeRef}>
-          <points>
-            <bufferGeometry>
-              <bufferAttribute attach="attributes-position" count={260} array={earthNodePts} itemSize={3} />
-            </bufferGeometry>
-            <primitive object={earthNodeMat} attach="material" />
-          </points>
+        <points rotation={[0.465, 0.2, 0]}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={550} array={saturnRings} itemSize={3} />
+          </bufferGeometry>
+          <pointsMaterial
+            size={0.012}
+            color={isLight ? 0x222225 : 0xe4e4e7}
+            transparent
+            opacity={(isLight ? 0.6 : 0.75) * outerBodiesOpacity}
+            sizeAttenuation
+            depthWrite={false}
+          />
+        </points>
 
-          {/* High-Visibility Target Identification Reticle (Fades cleanly before docking) */}
-          {isEarthLocked && targetBoxOpacity > 0.01 && (
-            <Html center position={[0, 1.8, 0]} distanceFactor={28}>
-              <div
-                style={{ opacity: targetBoxOpacity }}
-                className="font-ndot tracking-widest text-foreground bg-background/95 border-2 border-foreground px-3 py-2 shadow-2xl pointer-events-none select-none whitespace-nowrap flex flex-col gap-0.5 rounded-none min-w-[280px] transition-opacity duration-150"
-              >
-                <div className="flex items-center gap-1.5 text-foreground font-bold text-[12px] sm:text-[14px]">
-                  <span className="w-2.5 h-2.5 rounded-full bg-foreground animate-ping" />
-                  <span>TARGET IDENTIFIED: TERRA (EARTH)</span>
-                </div>
-                <div className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
-                  ORBIT_03 // HABITABLE ZONE // 1.000 AU
-                </div>
-              </div>
-            </Html>
-          )}
-        </group>
-      )}
+        <Html center distanceFactor={28}>
+          <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
+            SATURN // RINGED_GIANT
+          </div>
+        </Html>
+      </group>
+    </group>
+  );
+};
 
-      {/* Mars */}
-      {outerBodiesOpacity > 0.01 && (
-        <group ref={marsRef}>
-          <points>
-            <bufferGeometry>
-              <bufferAttribute attach="attributes-position" count={160} array={marsPts} itemSize={3} />
-            </bufferGeometry>
-            <primitive object={pointMat} attach="material" />
-          </points>
-          <Html center distanceFactor={22}>
-            <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
-              MARS // 1.524 AU
-            </div>
-          </Html>
-        </group>
-      )}
+// ----------------------------------------------------------------------------
+// Target Identification Reticle (Anchored above Earth at [0, 0, 0])
+// Fades cleanly out before camera descends below Z = 20
+// ----------------------------------------------------------------------------
+const EarthTargetReticle = ({
+  isLocked,
+  cameraZ,
+}: {
+  isLocked: boolean;
+  cameraZ: number;
+}) => {
+  const opacity = useMemo(() => {
+    if (!isLocked) return 0;
+    if (cameraZ <= 14.0) return 0;
+    if (cameraZ >= 24.0) return 1;
+    return (cameraZ - 14.0) / (24.0 - 14.0);
+  }, [isLocked, cameraZ]);
 
-      {/* Jupiter */}
-      {outerBodiesOpacity > 0.01 && (
-        <group ref={jupiterRef}>
-          <points>
-            <bufferGeometry>
-              <bufferAttribute attach="attributes-position" count={520} array={jupiterPts} itemSize={3} />
-            </bufferGeometry>
-            <primitive object={pointMat} attach="material" />
-          </points>
-          <Html center distanceFactor={26}>
-            <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
-              JUPITER // GAS_GIANT
-            </div>
-          </Html>
-        </group>
-      )}
+  if (opacity <= 0.01) {
+    return null;
+  }
 
-      {/* Saturn with Tilted Rings */}
-      {outerBodiesOpacity > 0.01 && (
-        <group ref={saturnRef}>
-          <points>
-            <bufferGeometry>
-              <bufferAttribute attach="attributes-position" count={420} array={saturnPts} itemSize={3} />
-            </bufferGeometry>
-            <primitive object={pointMat} attach="material" />
-          </points>
-
-          <points rotation={[0.465, 0.2, 0]}>
-            <bufferGeometry>
-              <bufferAttribute attach="attributes-position" count={550} array={saturnRings} itemSize={3} />
-            </bufferGeometry>
-            <pointsMaterial
-              size={0.012}
-              color={isLight ? 0x222225 : 0xe4e4e7}
-              transparent
-              opacity={(isLight ? 0.6 : 0.75) * outerBodiesOpacity}
-              sizeAttenuation
-              depthWrite={false}
-            />
-          </points>
-
-          <Html center distanceFactor={28}>
-            <div className="font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] px-2 py-0.5 border border-border/80 bg-background/90 text-foreground whitespace-nowrap shadow-md pointer-events-none select-none">
-              SATURN // RINGED_GIANT
-            </div>
-          </Html>
-        </group>
-      )}
+  return (
+    <group position={[0, 0, 0]}>
+      <Html center position={[0, 1.8, 0]} distanceFactor={30}>
+        <div
+          style={{ opacity }}
+          className="font-ndot tracking-widest text-foreground bg-background/95 border-2 border-foreground px-3.5 py-2.5 shadow-2xl pointer-events-none select-none whitespace-nowrap flex flex-col gap-0.5 rounded-none min-w-[290px] transition-opacity duration-150"
+        >
+          <div className="flex items-center gap-2 text-foreground font-bold text-[12px] sm:text-[14px]">
+            <span className="w-2.5 h-2.5 rounded-full bg-foreground animate-ping" />
+            <span>TARGET IDENTIFIED: TERRA (EARTH)</span>
+          </div>
+          <div className="text-[10px] sm:text-[11px] font-mono text-muted-foreground">
+            ORBIT_03 // HABITABLE ZONE // 1.000 AU
+          </div>
+        </div>
+      </Html>
     </group>
   );
 };
@@ -1091,12 +1040,8 @@ const CosmicDust = ({ isLight }: { isLight: boolean }) => {
 };
 
 // ----------------------------------------------------------------------------
-// Flight Controller: 5-Stage Scientific Cosmic Descent
-// Stage 1: Deep Cosmos & Galaxy Cluster (Z: 220 -> 150)
-// Stage 2: Entering Milky Way Galaxy (Z: 150 -> 75)
-// Stage 3: Full Solar System Overview (Angled overhead [0, 35, 60], tilted ~30°)
-// Stage 4: Target Acquisition & Single Entity Morph Lock on Earth (Z: 60 -> 5.5)
-// Stage 5: Visakhapatnam Beacon Ignition & Hero Reveal (Z: 5.5, Y: 0)
+// Flight Controller: Relative Camera Inversion Architecture
+// Earth is PERMANENTLY at [0, 0, 0] | Camera is ALWAYS looking directly at [0, 0, 0]
 // ----------------------------------------------------------------------------
 const CinematicCameraRig = ({
   isLight,
@@ -1117,14 +1062,13 @@ const CinematicCameraRig = ({
   const timeRef = useRef(0);
   const completedRef = useRef(false);
   const handoffTriggeredRef = useRef(false);
-  const [currentCameraZ, setCurrentCameraZ] = useState(220.0);
+
+  const [currentCameraZ, setCurrentCameraZ] = useState(200.0);
+  const [earthScale, setEarthScale] = useState(0.0);
+  const [solarRigOpacity, setSolarRigOpacity] = useState(0.0);
+  const [isEarthLocked, setIsEarthLocked] = useState(false);
   const [isBeaconIgnited, setIsBeaconIgnited] = useState(false);
   const [isShockwaveTriggered, setIsShockwaveTriggered] = useState(false);
-  const [isEarthLocked, setIsEarthLocked] = useState(false);
-  const [isHeroGlobeActive, setIsHeroGlobeActive] = useState(false);
-
-  const earthWorldPosRef = useRef<THREE.Vector3>(new THREE.Vector3(11.5, 0, 0));
-  const currentLookAt = useRef(new THREE.Vector3(0, 0, 0));
 
   useEffect(() => {
     const handleResize = () => {
@@ -1160,9 +1104,10 @@ const CinematicCameraRig = ({
 
       completedRef.current = true;
       handoffTriggeredRef.current = true;
+      setEarthScale(1.0);
+      setSolarRigOpacity(0.0);
       setIsBeaconIgnited(true);
       setIsEarthLocked(true);
-      setIsHeroGlobeActive(true);
       onWarpComplete?.();
       onTelemetryUpdate?.({
         velocity: '0.0c',
@@ -1174,7 +1119,7 @@ const CinematicCameraRig = ({
         sectorText: 'ORBIT_STABLE // NODE: VISAKHAPATNAM [ACTIVE]',
       });
     } else {
-      camera.position.set(0, 22, 220);
+      camera.position.set(0, 20, 200);
       camera.lookAt(0, 0, 0);
       persCam.fov = 46;
       persCam.updateProjectionMatrix();
@@ -1184,9 +1129,8 @@ const CinematicCameraRig = ({
   useFrame((_state, delta) => {
     const persCam = camera as THREE.PerspectiveCamera;
 
-    // Failsafe & Skip handling: Smooth lerp to [0, 0, 5.5] within 300ms
+    // Failsafe & Skip handling: Continuous smooth damp to [0, 0, 5.5], lookAt [0, 0, 0]
     if (skipWarp && !completedRef.current) {
-      currentLookAt.current.set(0, 0, 0);
       camera.position.x = THREE.MathUtils.damp(camera.position.x, 0, 14.0, delta);
       camera.position.y = THREE.MathUtils.damp(camera.position.y, 0, 14.0, delta);
       camera.position.z = THREE.MathUtils.damp(camera.position.z, 5.5, 14.0, delta);
@@ -1195,8 +1139,9 @@ const CinematicCameraRig = ({
       camera.lookAt(0, 0, 0);
 
       setCurrentCameraZ(camera.position.z);
+      setEarthScale(THREE.MathUtils.damp(earthScale, 1.0, 12.0, delta));
+      setSolarRigOpacity(0.0);
       setIsEarthLocked(true);
-      setIsHeroGlobeActive(true);
 
       if (!handoffTriggeredRef.current) {
         handoffTriggeredRef.current = true;
@@ -1204,6 +1149,7 @@ const CinematicCameraRig = ({
       }
 
       if (Math.abs(camera.position.z - 5.5) < 0.05) {
+        setEarthScale(1.0);
         setIsBeaconIgnited(true);
         completedRef.current = true;
         onTelemetryUpdate?.({
@@ -1224,11 +1170,8 @@ const CinematicCameraRig = ({
       const t = timeRef.current;
 
       let targetX = 0;
-      let targetY = 22.0;
-      let targetZ = 220.0;
-      let targetLookAtX = 0;
-      let targetLookAtY = 0;
-      let targetLookAtZ = 0;
+      let targetY = 20.0;
+      let targetZ = 200.0;
       let factor = 0;
       let velText = '0.0c';
       let distText = '54M LY';
@@ -1238,66 +1181,77 @@ const CinematicCameraRig = ({
       let sectorText = 'SECTOR_00 // MULTI_GALAXY_CLUSTER [ACQUIRING]';
 
       // =======================================================================
-      // STAGE 1: Deep Cosmos & Galaxy Cluster (0.0s – 1.1s)
+      // STAGE 1: Deep Cosmos & Galaxy Cluster (0.0s – 1.0s)
+      // Camera: [0, 20, 200] -> [0, 18, 140] | Earth scale: 0.0
       // =======================================================================
-      if (t < 1.1) {
-        const u = t / 1.1;
+      if (t < 1.0) {
+        const u = t / 1.0;
         targetX = 0;
-        targetY = 22.0 - u * 2.0;
-        targetZ = 220.0 - u * 70.0;
+        targetY = 20.0 - u * 2.0;
+        targetZ = 200.0 - u * 60.0;
         factor = 0;
         velText = '0.0c';
         distText = `${Math.round(54000000 - u * 28000000).toLocaleString()} LY`;
+        setEarthScale(0.0);
+        setSolarRigOpacity(0.0);
         stageName = 'DEEP_SPACE // VIRGO_SUPERCLUSTER';
         targetTag = 'DEEP_SPACE // VIRGO_SUPERCLUSTER -> TARGET_LOCKED: MILKY_WAY_GALAXY';
         sectorText = 'SECTOR_00 // MULTI_GALAXY_CLUSTER [ACQUIRING]';
       }
       // =======================================================================
-      // STAGE 2: Entering Milky Way Galaxy (1.1s – 2.0s)
+      // STAGE 2: Entering Milky Way Galaxy (1.0s – 1.9s)
+      // Camera: [0, 18, 140] -> [0, 16, 75] | Core plunge | Earth scale: 0.0
       // =======================================================================
-      else if (t < 2.0) {
-        const u = (t - 1.1) / 0.9;
+      else if (t < 1.9) {
+        const u = (t - 1.0) / 0.9;
         const accel = Math.pow(u, 1.8);
 
-        targetX = Math.sin(u * Math.PI) * 2.5 * (1 - u);
-        targetY = 20.0 + (32.0 - 20.0) * accel;
-        targetZ = 150.0 - (150.0 - 75.0) * accel;
+        targetX = 0;
+        targetY = 18.0 - (18.0 - 16.0) * accel;
+        targetZ = 140.0 - (140.0 - 75.0) * accel;
 
         factor = Math.sin(u * Math.PI) * 0.95;
         velText = (8.5 - u * 2.5).toFixed(1) + 'c';
         distText = `${Math.round(26000000 - accel * 25990000).toLocaleString()} LY`;
+        setEarthScale(0.0);
+        setSolarRigOpacity(0.0);
         stageName = 'ORION_CYGNUS_ARM // SOLAR_NEIGHBORHOOD_ACQUIRED';
         targetTag = 'ORION_CYGNUS_ARM // SOLAR_NEIGHBORHOOD_ACQUIRED';
         sectorText = 'APPROACH_VECTOR: GALACTIC_DISK_INSERTION';
       }
       // =======================================================================
-      // STAGE 3: Full Solar System Overview (The Grand System View) (2.0s – 3.3s)
-      // Camera descends to angled overhead vantage [0, 35, 60] tilted down ~30°
+      // STAGE 3: Full Solar System Overview (1.9s – 3.2s)
+      // Camera arrives at [0, 16, 42], looking at [0, 0, 0]
+      // Earth scale: 0.12 (forms crisp node on 3rd orbit) | Solar System visible
       // =======================================================================
-      else if (t < 3.3) {
-        const u = (t - 2.0) / 1.3;
+      else if (t < 3.2) {
+        const u = (t - 1.9) / 1.3;
         const ease = 1 - Math.pow(1 - u, 3);
 
         targetX = 0;
-        targetY = 32.0 + (35.0 - 32.0) * ease;
-        targetZ = 75.0 - (75.0 - 60.0) * ease;
+        targetY = 16.0;
+        targetZ = 75.0 - (75.0 - 42.0) * ease;
 
         factor = 0.35;
         velText = '1.2c';
         distText = (65.0 - ease * 40.0).toFixed(1) + ' AU';
+
+        // Earth is at 0.12 scale on orbit 3; Solar System is at full opacity
+        setEarthScale(0.12);
+        setSolarRigOpacity(1.0);
+        setIsEarthLocked(false);
+
         stageName = 'SOL SYSTEM // HELIOCENTRIC ORBITAL GRID';
         targetTag = 'SOL SYSTEM // HELIOCENTRIC ORBITAL GRID';
         sectorText = 'SOLAR_DISC_OVERVIEW // REVOLVING_PLANETARY_SYSTEM';
-
-        if (isEarthLocked) setIsEarthLocked(false);
-        if (isHeroGlobeActive) setIsHeroGlobeActive(false);
       }
       // =======================================================================
-      // STAGE 4: Target Acquisition & Single Entity Morph Lock on Earth (3.3s – 4.5s)
-      // Camera dives from overhead [0, 35, 60] straight down to [0, 0, 5.5]
+      // STAGE 4: Continuous Descent to Earth (3.2s – 4.4s)
+      // Camera curve: [0, 16, 42] -> [0, 0, 5.5], always looking at [0, 0, 0]
+      // Earth scale: 0.12 -> 1.0 (single continuous mesh) | Solar system fades to 0
       // =======================================================================
-      else if (t < 4.5) {
-        const u = (t - 3.3) / 1.2;
+      else if (t < 4.4) {
+        const u = (t - 3.2) / 1.2;
         const quintic = 1 - Math.pow(1 - u, 4);
 
         if (!isEarthLocked) {
@@ -1305,12 +1259,14 @@ const CinematicCameraRig = ({
         }
 
         targetX = 0;
-        targetY = 35.0 * (1 - quintic);
-        targetZ = 60.0 - (60.0 - 5.5) * quintic;
+        targetY = 16.0 * (1 - quintic);
+        targetZ = 42.0 - (42.0 - 5.5) * quintic;
 
-        // Smooth camera lookAt convergence onto Earth
-        targetLookAtX = THREE.MathUtils.lerp(earthWorldPosRef.current.x * 0.4, 0, quintic);
-        targetLookAtZ = THREE.MathUtils.lerp(earthWorldPosRef.current.z * 0.4, 0, quintic);
+        // Smooth continuous Earth scale from 0.12 up to 1.0
+        setEarthScale(THREE.MathUtils.lerp(0.12, 1.0, quintic));
+
+        // Solar system fades out smoothly as camera approaches
+        setSolarRigOpacity(Math.max(0, 1 - quintic * 1.6));
 
         factor = (1 - u) * 0.5;
         velText = ((1 - u) * 1.8).toFixed(1) + 'c';
@@ -1319,41 +1275,31 @@ const CinematicCameraRig = ({
         targetTag = 'TARGET IDENTIFIED: TERRA (EARTH) // HABITABLE ZONE';
         sectorText = 'APPROACH_VECTOR: TERRA_ATMOSPHERIC_INSERTION';
 
-        // Precise Single-Entity Swap Threshold (Z < 14):
-        // Microsecond swap: Mini Earth is hidden, Hero DotMatrixGlobe mounts
-        if (targetZ <= 14.0 && !isHeroGlobeActive) {
-          setIsHeroGlobeActive(true);
-        }
-
         if (u >= 0.75 && !handoffTriggeredRef.current) {
           handoffTriggeredRef.current = true;
           onWarpComplete?.();
         }
       }
       // =======================================================================
-      // STAGE 5: Visakhapatnam Beacon Ignition & Hero Reveal (t >= 4.5s)
-      // Camera docked at [0, 0, 5.5] | Beacon ignites ONLY after docking
+      // STAGE 5: Portflio Dock & Beacon Ignition (t >= 4.4s)
+      // Camera at [0, 0, 5.5], looking at [0, 0, 0] | Beacon ignites
       // =======================================================================
       else {
         targetX = 0;
         targetY = 0;
         targetZ = 5.5;
-        targetLookAtX = 0;
-        targetLookAtY = 0;
-        targetLookAtZ = 0;
         factor = 0;
         velText = '0.0c';
         distText = '400 KM';
         locked = true;
+
+        setEarthScale(1.0);
+        setSolarRigOpacity(0.0);
+
         stageName = 'ORBIT_STABLE // NODE: VISAKHAPATNAM [ACTIVE]';
         targetTag = 'NODE: VISAKHAPATNAM [17.6868° N, 83.2185° E]';
         sectorText = 'ORBIT_STABLE // NODE: VISAKHAPATNAM [ACTIVE]';
 
-        if (!isHeroGlobeActive) {
-          setIsHeroGlobeActive(true);
-        }
-
-        // Radar ping & shockwave trigger ONLY after camera docks at 5.5
         if (!isBeaconIgnited) {
           setIsBeaconIgnited(true);
         }
@@ -1368,15 +1314,11 @@ const CinematicCameraRig = ({
         completedRef.current = true;
       }
 
-      // Continuous smooth camera motion
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetX, 7.0, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetY, 7.0, delta);
-      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetZ, 7.0, delta);
-
-      currentLookAt.current.x = THREE.MathUtils.damp(currentLookAt.current.x, targetLookAtX, 8.0, delta);
-      currentLookAt.current.y = THREE.MathUtils.damp(currentLookAt.current.y, targetLookAtY, 8.0, delta);
-      currentLookAt.current.z = THREE.MathUtils.damp(currentLookAt.current.z, targetLookAtZ, 8.0, delta);
-      camera.lookAt(currentLookAt.current);
+      // Continuous, rock-solid camera motion directly toward [0, 0, 5.5]
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetX, 7.5, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetY, 7.5, delta);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetZ, 7.5, delta);
+      camera.lookAt(0, 0, 0);
 
       setCurrentCameraZ(camera.position.z);
 
@@ -1421,13 +1363,16 @@ const CinematicCameraRig = ({
       {/* Ambient Depth: Volumetric 3D Celestial Starfield */}
       <VolumetricCelestialField isLight={isLight} />
 
-      {/* Stage 3 & 4: Full Solar System Overview (Sun Node + Orbit Tracks + Revolving Planets) */}
-      <FullSolarSystemOverview
+      {/* Stage 3 & 4: Relative Solar System Rig (Sun & Planets offset, revolving around Earth) */}
+      <RelativeSolarSystemRig
         isLight={isLight}
+        outerBodiesOpacity={solarRigOpacity}
+      />
+
+      {/* Target Acquisition HUD Reticle (Anchored above Earth at [0, 0, 0], fades out before docking) */}
+      <EarthTargetReticle
+        isLocked={isEarthLocked}
         cameraZ={currentCameraZ}
-        earthWorldPosRef={earthWorldPosRef}
-        isEarthLocked={isEarthLocked}
-        isHeroGlobeActive={isHeroGlobeActive}
       />
 
       {/* Stage 5: Gravitational Shockwave Ripple upon orbital arrival */}
@@ -1437,17 +1382,15 @@ const CinematicCameraRig = ({
         radius={1.55}
       />
 
-      {/* Stage 4 & 5: Centered Dot-Matrix Earth Globe Core (Strictly mutually exclusive with Mini Earth) */}
-      {isHeroGlobeActive && (
-        <group ref={rigRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
-          <DotMatrixGlobe
-            isLight={isLight}
-            isIgnited={isBeaconIgnited}
-            cameraZ={currentCameraZ}
-          />
-          {completedRef.current && <CosmicDust isLight={isLight} />}
-        </group>
-      )}
+      {/* Unified Single Earth: Permanently anchored at [0, 0, 0] */}
+      <group ref={rigRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
+        <DotMatrixGlobe
+          isLight={isLight}
+          isIgnited={isBeaconIgnited}
+          scale={earthScale}
+        />
+        {completedRef.current && <CosmicDust isLight={isLight} />}
+      </group>
     </>
   );
 };
@@ -1479,7 +1422,7 @@ const Scene3D = ({ skipWarp, onWarpComplete, onTelemetryUpdate }: Scene3DProps) 
   return (
     <div className="fixed inset-0 z-[1] pointer-events-none flex items-center justify-center overflow-hidden">
       <Canvas
-        camera={{ position: [0, 22, 220.0], fov: 46 }}
+        camera={{ position: [0, 20, 200.0], fov: 46 }}
         dpr={[1, 1.5]}
         gl={{
           alpha: true,
