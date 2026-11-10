@@ -214,19 +214,12 @@ const DotMatrixGlobe = ({
   // Build points geometry once from true continental coastline coordinates
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry();
-    const rawCoords = landPointsData as number[][];
-    const positions = new Float32Array(rawCoords.length * 3);
-    const normals = new Float32Array(rawCoords.length * 3);
+    const rawCoords = landPointsData as unknown as number[];
+    const positions = new Float32Array(rawCoords.length);
+    const normals = new Float32Array(rawCoords);
 
     for (let i = 0; i < rawCoords.length; i++) {
-      const [nx, ny, nz] = rawCoords[i];
-      positions[i * 3] = nx * radius;
-      positions[i * 3 + 1] = ny * radius;
-      positions[i * 3 + 2] = nz * radius;
-
-      normals[i * 3] = nx;
-      normals[i * 3 + 1] = ny;
-      normals[i * 3 + 2] = nz;
+      positions[i] = rawCoords[i] * radius;
     }
 
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
