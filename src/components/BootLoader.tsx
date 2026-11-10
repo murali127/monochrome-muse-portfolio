@@ -36,6 +36,7 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
   }, [onSkip]);
 
   const warpSpeedNum = parseFloat(telemetry.velocity) || 0;
+  const isDistanceInLightYears = telemetry.distance.includes('LY');
 
   return (
     <motion.div
@@ -57,9 +58,13 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-foreground" />
           </span>
           <span>
-            {warpSpeedNum > 0.5
-              ? 'RELATIVISTIC_CORRIDOR // VELOCITY_MAX'
-              : 'DEEP_SPACE // SECTOR_08'}
+            {telemetry.isLocked
+              ? 'ORBITAL_INSERTION // TERRA_LOCK'
+              : warpSpeedNum > 4.0
+              ? 'GALACTIC_INSERTION // PIERCING_CORE'
+              : isDistanceInLightYears
+              ? 'DEEP_COSMOS // MULTI_GALAXY_CLUSTER'
+              : 'STELLAR_TRANSIT // CELESTIAL_CORRIDOR'}
           </span>
         </div>
 
@@ -75,16 +80,18 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
         </button>
       </div>
 
-      {/* Center Reticle Lock (Visible in Deep Space, Dissolves on Entry) */}
+      {/* Center Reticle Lock (Tracks Target Galaxy in Stage 1 & 2) */}
       <div
         className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
-          warpSpeedNum > 1.0 ? 'opacity-10' : 'opacity-40'
+          telemetry.isLocked ? 'opacity-0' : warpSpeedNum > 5.0 ? 'opacity-15' : 'opacity-50'
         }`}
       >
-        <div className="relative w-44 h-44 sm:w-52 sm:h-52 border border-foreground/30 rounded-full flex items-center justify-center">
+        <div className="relative w-48 h-48 sm:w-56 sm:h-56 border border-foreground/35 rounded-full flex items-center justify-center">
           <div className="w-2.5 h-2.5 rounded-full border border-foreground" />
-          <div className="absolute -top-3.5 font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] text-foreground bg-background/80 px-2">
-            TARGET_ACQUIRED: SECTOR_08 // TERRA
+          <div className="absolute -top-3.5 font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] text-foreground bg-background/85 px-2 border border-foreground/20">
+            {isDistanceInLightYears
+              ? 'SECTOR_08 // MILKY_WAY_GALAXY [TARGET_LOCKED]'
+              : 'TARGET_LOCKED // TERRA [SOL-3]'}
           </div>
           <div className="absolute top-1/2 left-0 w-3 h-[1px] bg-foreground/60" />
           <div className="absolute top-1/2 right-0 w-3 h-[1px] bg-foreground/60" />
@@ -105,11 +112,11 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
             <span className="font-ndot text-foreground text-glow text-[10px] sm:text-[11px]">
               {telemetry.isLocked
                 ? 'APPROACH_VECTOR: LOCKED // ORBIT_400KM'
-                : warpSpeedNum > 0.8
-                ? 'APPROACH_VECTOR: HYPERSPACE_DIVE // RELATIVISTIC_STRETCH'
-                : warpSpeedNum > 0
-                ? 'APPROACH_VECTOR: ORBITAL_BRAKE // SHOCKWAVE_EMISSION'
-                : 'APPROACH_VECTOR: ACQUIRING_VECTOR'}
+                : warpSpeedNum > 4.0
+                ? 'APPROACH_VECTOR: GALACTIC_INSERTION // RELATIVISTIC_STRETCH'
+                : isDistanceInLightYears
+                ? 'APPROACH_VECTOR: ACQUIRING_GALAXY_TARGET'
+                : 'APPROACH_VECTOR: STELLAR_SYSTEM_TRANSIT [MARS/SATURN]'}
             </span>
           </div>
           <div className="font-ndot tracking-widest text-muted-foreground">
@@ -126,7 +133,9 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
 
         <div className="text-right hidden sm:block">
           <div className="font-ndot text-[9px] tracking-widest text-muted-foreground/60">
-            SOLAR_SYSTEM // EARTH ORBITAL INSERTION
+            {telemetry.isLocked
+              ? 'SOLAR_SYSTEM // EARTH ORBITAL INSERTION'
+              : 'DEEP_SPACE_TELEMETRY // SECTOR_08'}
           </div>
           <div className="font-mono text-[8px] text-muted-foreground/40 mt-0.5">
             NODE_VTZ: 17.6868° N, 83.2185° E
