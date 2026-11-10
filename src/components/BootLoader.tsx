@@ -84,24 +84,18 @@ const BootLoader = ({ telemetry, onSkip }: BootLoaderProps) => {
         </button>
       </div>
 
-      {/* Center Reticle Lock (Tracks Target Galaxy in Stage 1 & 2) */}
+      {/* Center Reticle Lock (Subtle Optical Alignment Crosshair) */}
       <div
         className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
-          telemetry.isLocked ? 'opacity-0' : warpSpeedNum > 5.0 ? 'opacity-15' : 'opacity-50'
+          telemetry.isLocked ? 'opacity-0' : 'opacity-35'
         }`}
       >
-        <div className="relative w-48 h-48 sm:w-56 sm:h-56 border border-foreground/35 rounded-full flex items-center justify-center">
-          <div className="w-2.5 h-2.5 rounded-full border border-foreground" />
-          <div className="absolute -top-3.5 font-ndot text-[8px] sm:text-[9px] tracking-[0.2em] text-foreground bg-background/85 px-2 border border-foreground/20">
-            {telemetry.targetTag ||
-              (isDistanceInLightYears
-                ? 'DEEP_SPACE // VIRGO_SUPERCLUSTER -> TARGET_LOCKED: MILKY_WAY_GALAXY'
-                : 'TARGET_ORBIT: TERRA // THIRD_SOL_ORBIT')}
-          </div>
-          <div className="absolute top-1/2 left-0 w-3 h-[1px] bg-foreground/60" />
-          <div className="absolute top-1/2 right-0 w-3 h-[1px] bg-foreground/60" />
-          <div className="absolute left-1/2 top-0 h-3 w-[1px] bg-foreground/60" />
-          <div className="absolute left-1/2 bottom-0 h-3 w-[1px] bg-foreground/60" />
+        <div className="relative w-44 h-44 sm:w-56 sm:h-56 border border-foreground/25 rounded-full flex items-center justify-center">
+          <div className="w-2 h-2 rounded-full border border-foreground/60" />
+          <div className="absolute top-1/2 left-0 w-3.5 h-[1px] bg-foreground/60" />
+          <div className="absolute top-1/2 right-0 w-3.5 h-[1px] bg-foreground/60" />
+          <div className="absolute left-1/2 top-0 h-3.5 w-[1px] bg-foreground/60" />
+          <div className="absolute left-1/2 bottom-0 h-3.5 w-[1px] bg-foreground/60" />
         </div>
       </div>
 
