@@ -69,6 +69,80 @@ const MagneticCTA = ({
 };
 
 // ----------------------------------------------------------------------------
+// Interactive Cybernetic Scramble Word Component
+// ----------------------------------------------------------------------------
+const SCRAMBLE_GLYPHS = '01XF94#*+-_/<>';
+
+interface ScrambleWordProps {
+  text: string;
+  className?: string;
+}
+
+const ScrambleWord = ({ text, className = '' }: ScrambleWordProps) => {
+  const [displayText, setDisplayText] = useState(text);
+  const [isGlitching, setIsGlitching] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const scramble = () => {
+    if (isGlitching) return;
+    playTactileClick('subtle');
+    setIsGlitching(true);
+    let iteration = 0;
+
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    timerRef.current = setInterval(() => {
+      setDisplayText(
+        text
+          .split('')
+          .map((char, index) => {
+            if (char === ' ') return ' ';
+            if (index < iteration) return text[index];
+            return SCRAMBLE_GLYPHS[Math.floor(Math.random() * SCRAMBLE_GLYPHS.length)];
+          })
+          .join('')
+      );
+
+      if (iteration >= text.length) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        setIsGlitching(false);
+        setDisplayText(text);
+      }
+      iteration += 1;
+    }, 32);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  return (
+    <span
+      onMouseEnter={scramble}
+      className={`inline-block relative cursor-pointer select-none transition-all duration-200 ${className} ${
+        isGlitching ? 'animate-glitch text-white' : ''
+      }`}
+      data-cursor-hover
+    >
+      {/* Glitch chromatic split shadows when active */}
+      {isGlitching && (
+        <>
+          <span className="absolute inset-0 text-foreground/40 translate-x-[2px] -translate-y-[1px] pointer-events-none select-none blur-[0.5px]">
+            {displayText}
+          </span>
+          <span className="absolute inset-0 text-foreground/40 -translate-x-[2px] translate-y-[1px] pointer-events-none select-none blur-[0.5px]">
+            {displayText}
+          </span>
+        </>
+      )}
+      <span className="relative z-10">{displayText}</span>
+    </span>
+  );
+};
+
+// ----------------------------------------------------------------------------
 // Main Hero Section
 // ----------------------------------------------------------------------------
 const HeroSection = () => {
@@ -217,17 +291,32 @@ const HeroSection = () => {
               </div>
             </motion.div>
 
-            {/* Display Headline: Signature Nothing OS Dot-Matrix Typography */}
+            {/* Display Headline: Signature Nothing OS Dot-Matrix Typography with Interactive Cybernetic Glitch */}
             <motion.div
               initial={{ opacity: 0, y: 35 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.4, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+              className="group/headline relative inline-block select-none"
             >
               <h1 className="font-ndot text-5xl sm:text-7xl lg:text-8xl leading-[0.95] sm:leading-[0.88] tracking-tight text-foreground text-glow break-words text-balance">
-                MURALI
+                <ScrambleWord
+                  text="MURALI"
+                  className="hover:text-white hover:drop-shadow-[0_0_30px_rgba(255,255,255,0.7)]"
+                />
                 <br />
-                <span className="text-muted-foreground/85">PAILA</span>
+                <ScrambleWord
+                  text="PAILA"
+                  className="text-muted-foreground/85 hover:text-foreground hover:drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]"
+                />
               </h1>
+
+              {/* Tactical micro-tag on hover */}
+              <div className="flex items-center gap-2 mt-2 opacity-0 group-hover/headline:opacity-100 transition-opacity duration-300">
+                <span className="h-1 w-1 rounded-full bg-foreground animate-ping" />
+                <span className="font-ndot text-[7.5px] sm:text-[8.5px] tracking-[0.25em] text-muted-foreground uppercase">
+                  [IDENTIFIER // CRYPTO_VERIFIED: MP-2026 // HOVER_TO_DECODE]
+                </span>
+              </div>
             </motion.div>
 
             {/* Body Copy - High-Legibility Modern Sans */}
