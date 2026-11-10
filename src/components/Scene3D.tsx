@@ -240,9 +240,11 @@ const MinimalVisakhapatnamBeacon = ({
 const GravitationalShockwave = ({
   isTriggered,
   isLight,
+  radius = 1.55,
 }: {
   isTriggered: boolean;
   isLight: boolean;
+  radius?: number;
 }) => {
   const ringRef = useRef<THREE.Mesh>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -277,7 +279,7 @@ const GravitationalShockwave = ({
 
   return (
     <mesh ref={ringRef} position={[0, 0, 0]}>
-      <ringGeometry args={[1.81, 1.86, 64]} />
+      <ringGeometry args={[radius * 1.006, radius * 1.034, 64]} />
       <meshBasicMaterial
         color={isLight ? 0x09090b : 0xffffff}
         transparent
@@ -302,7 +304,7 @@ const DotMatrixGlobe = ({
   cameraZ: number;
 }) => {
   const globeGroupRef = useRef<THREE.Group>(null);
-  const radius = 1.8;
+  const radius = 1.55;
 
   // 1. Crisp Coastline Land Points (8,950 points from high-contrast mask)
   const landGeometry = useMemo(() => {
@@ -1232,7 +1234,7 @@ const CinematicCameraRig = ({
         rigRef.current.position.y = THREE.MathUtils.damp(rigRef.current.position.y, targetPosY, 2.5, delta);
       }
 
-      const targetScale = isDesktop ? 0.95 : 0.75;
+      const targetScale = isDesktop ? 0.90 : 0.72;
       const currentScale = rigRef.current.scale.x;
       const dampedScale = THREE.MathUtils.damp(currentScale, targetScale, 3.0, delta);
       rigRef.current.scale.set(dampedScale, dampedScale, dampedScale);
@@ -1254,6 +1256,7 @@ const CinematicCameraRig = ({
       <GravitationalShockwave
         isTriggered={isShockwaveTriggered}
         isLight={isLight}
+        radius={1.55}
       />
 
       {/* Stage 4 & 5: Centered Dot-Matrix Earth Globe Core (Strict 0 Axial Tilt) */}
