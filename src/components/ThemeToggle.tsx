@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { playTactileClick } from '@/utils/audioFeedback';
 
 const ThemeToggle = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -14,6 +15,7 @@ const ThemeToggle = () => {
   }, []);
 
   const toggleTheme = () => {
+    playTactileClick('toggle');
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     document.documentElement.classList.toggle('light', newTheme === 'light');

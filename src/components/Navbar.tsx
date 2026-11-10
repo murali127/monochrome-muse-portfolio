@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import darkLogo from '@/assets/logo.png';
 import lightLogo from '@/assets/light_logo.png';
+import { playTactileClick } from '@/utils/audioFeedback';
 
 const navItems = [
   'ABOUT',
@@ -80,6 +81,7 @@ const Navbar = () => {
   }, [menuOpen]);
 
   const scrollTo = (id: string) => {
+    playTactileClick('subtle');
     setMenuOpen(false);
     document.getElementById(id.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -185,7 +187,10 @@ const Navbar = () => {
           <div className="flex xl:hidden items-center hud-nav-panel rounded-full p-1.5 pl-2 gap-1.5 shadow-2xl">
             {/* Hamburger Toggle Button */}
             <button
-              onClick={() => setMenuOpen((open) => !open)}
+              onClick={() => {
+                playTactileClick('toggle');
+                setMenuOpen((open) => !open);
+              }}
               onMouseDown={(e) => e.preventDefault()}
               className="flex h-8 w-8 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-foreground focus:outline-none"
               aria-label="Toggle navigation menu"

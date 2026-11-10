@@ -1,5 +1,5 @@
 import { useRef, useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import SectionHeader from './SectionHeader';
 import {
   projectsData,
