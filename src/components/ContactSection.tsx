@@ -95,7 +95,7 @@ const ContactSection = () => {
         <SectionHeader label="ESTABLISH_CONNECTION // DIRECT_UPLINK" title="CONTACT" number="07" />
 
         {/* HIGH-CONTRAST MATTE CONSOLE ENCLOSURE (Completely shields text from 3D background bleed) */}
-        <div className="hud-frame glass-panel p-6 sm:p-10 lg:p-12 border border-border/90 rounded-sm relative shadow-2xl bg-background/95 backdrop-blur-2xl">
+        <div className="hud-frame glass-panel p-4 sm:p-8 lg:p-12 border border-border/90 rounded-sm relative shadow-2xl bg-background/95 backdrop-blur-2xl w-full max-w-full overflow-hidden box-border">
           
           {/* Tactical Corner Brackets */}
           <span className="hud-corner hud-tl" />
@@ -108,10 +108,10 @@ const ContactSection = () => {
             <div className="h-px w-1/3 bg-foreground/70 animate-[beam_3s_linear_infinite]" />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start w-full max-w-full overflow-hidden">
             
             {/* Left Column: Direct Encrypted Transmission Console */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 space-y-6 w-full max-w-full overflow-hidden">
               
               <div>
                 <div className="font-ndot text-[8px] tracking-[0.3em] text-muted-foreground mb-2 flex items-center gap-2">
@@ -119,8 +119,9 @@ const ContactSection = () => {
                   <span>SECURE_ENCLAVE // DIRECT_UPLINK_CONSOLE</span>
                 </div>
 
-                <h3 className="font-ndot text-3xl sm:text-4xl lg:text-5xl text-foreground text-glow tracking-wider uppercase font-bold leading-none">
-                  INITIATE_TRANSMISSION
+                <h3 className="font-ndot text-2xl sm:text-4xl lg:text-5xl text-foreground text-glow tracking-tight sm:tracking-wider uppercase font-bold leading-tight break-words">
+                  <span className="inline-block sm:inline">INITIATE_</span>
+                  <span className="inline-block sm:inline">TRANSMISSION</span>
                 </h3>
 
                 <p className="font-body text-xs sm:text-sm text-muted-foreground mt-3 leading-relaxed text-pretty font-normal">
@@ -129,14 +130,14 @@ const ContactSection = () => {
               </div>
 
               {/* Real-time Typing Kinetic Visualizer */}
-              <div className="p-3 border border-border/70 rounded-xs bg-foreground/[0.02] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`h-1.5 w-1.5 rounded-full ${isTyping ? 'bg-foreground phosphor-led' : 'bg-muted-foreground'}`} />
-                  <span className="font-ndot text-[8px] tracking-[0.25em] text-foreground/80">
+              <div className="p-3 border border-border/70 rounded-xs bg-foreground/[0.02] flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${isTyping ? 'bg-foreground phosphor-led' : 'bg-muted-foreground'}`} />
+                  <span className="font-ndot text-[8px] tracking-[0.2em] sm:tracking-[0.25em] text-foreground/80 truncate">
                     {isTyping ? 'KEYSTREAM: ENCODING_CHARS...' : 'KEYSTREAM: STANDBY'}
                   </span>
                 </div>
-                <span className="font-mono text-[9px] text-foreground font-bold">
+                <span className="font-mono text-[8.5px] sm:text-[9px] text-foreground font-bold shrink-0">
                   PAYLOAD_SIZE: {hexBytes}
                 </span>
               </div>
@@ -228,7 +229,7 @@ const ContactSection = () => {
                 <button
                   type="submit"
                   disabled={stage !== 'IDLE'}
-                  className="nav-cta w-full py-4 rounded-xs font-ndot text-[10px] sm:text-[11px] tracking-[0.28em] focus:outline-none flex items-center justify-center gap-2 shadow-xl disabled:opacity-75"
+                  className="nav-cta w-full py-3.5 sm:py-4 px-3 rounded-xs font-ndot text-[9.5px] sm:text-[11px] tracking-[0.18em] sm:tracking-[0.28em] focus:outline-none flex items-center justify-center gap-2 shadow-xl disabled:opacity-75 text-center"
                   data-cursor-hover
                 >
                   {stage === 'IDLE' && (
@@ -260,24 +261,24 @@ const ContactSection = () => {
             </div>
 
             {/* Right Column: Kinetic Radar Motion Graphic & 1-Click Direct Channels */}
-            <div className="lg:col-span-5 space-y-6 pt-2 lg:pt-0">
+            <div className="lg:col-span-5 space-y-6 pt-2 lg:pt-0 w-full max-w-full overflow-hidden">
               
               {/* KINETIC POLAR RADAR MOTION GRAPHIC */}
-              <div className="p-5 border border-border/80 rounded-xs bg-foreground/[0.02] relative overflow-hidden">
-                <div className="flex items-center justify-between font-ndot text-[8px] tracking-[0.25em] text-muted-foreground border-b border-border/50 pb-2.5 mb-4">
+              <div className="p-4 sm:p-5 border border-border/80 rounded-xs bg-foreground/[0.02] relative overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-2 font-ndot text-[8px] tracking-[0.2em] sm:tracking-[0.25em] text-muted-foreground border-b border-border/50 pb-2.5 mb-4">
                   <span className="flex items-center gap-1.5 text-foreground font-semibold">
                     <span className="h-2 w-2 rounded-full bg-foreground phosphor-led" />
                     BASE_STATION // POLAR_RADAR
                   </span>
-                  <span className="font-mono text-foreground">AZ: 184.2° | EL: 42°</span>
+                  <span className="font-mono text-foreground text-[8px]">AZ: 184.2° | EL: 42°</span>
                 </div>
 
                 {/* Polar Radar Scope */}
-                <div className="relative w-44 h-44 sm:w-48 sm:h-48 mx-auto flex items-center justify-center">
+                <div className="relative w-36 h-36 sm:w-48 sm:h-48 mx-auto flex items-center justify-center">
                   {/* Concentric Range Rings */}
                   <div className="absolute inset-0 rounded-full border border-border/60" />
-                  <div className="absolute inset-6 rounded-full border border-border/40" />
-                  <div className="absolute inset-12 rounded-full border border-border/30" />
+                  <div className="absolute inset-4 sm:inset-6 rounded-full border border-border/40" />
+                  <div className="absolute inset-8 sm:inset-12 rounded-full border border-border/30" />
                   
                   {/* Crosshairs */}
                   <div className="absolute inset-x-0 top-1/2 h-px bg-border/40 -translate-y-1/2" />
@@ -300,7 +301,7 @@ const ContactSection = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-2.5 border-t border-border/40 flex items-center justify-between font-mono text-[8px] text-muted-foreground">
+                <div className="mt-4 pt-2.5 border-t border-border/40 flex flex-wrap items-center justify-between gap-1 font-mono text-[7.5px] sm:text-[8px] text-muted-foreground">
                   <span>VIZAG_NODE: 17.68° N, 83.21° E</span>
                   <span className="text-foreground font-semibold">SIGNAL: LOCKED</span>
                 </div>
