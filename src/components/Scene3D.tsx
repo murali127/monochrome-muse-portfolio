@@ -115,43 +115,17 @@ const latLonToVector3 = (lat: number, lon: number, radius: number): THREE.Vector
 };
 
 // ----------------------------------------------------------------------------
-// Lat/Lon Navigation Grid Geometry (Equator, Parallels, Meridians)
+// Delicate Navigational Equator Reference Ring
 // ----------------------------------------------------------------------------
-const createLatLonGridGeometry = (radius: number) => {
+const createEquatorRingGeometry = (radius: number) => {
   const points: number[] = [];
   const r = radius * 1.002;
+  const count = 72; // every 5 degrees
 
-  // 1. Latitude Parallels (Equator, Tropics, Polar bounds)
-  const latitudes = [-60, -30, 0, 30, 60];
-  const lonStep = 5; // Every 5 degrees
-
-  latitudes.forEach((lat) => {
-    const phi = (90 - lat) * (Math.PI / 180);
-    for (let lon = -180; lon < 180; lon += lonStep) {
-      const theta = (lon + 180) * (Math.PI / 180);
-      points.push(
-        -(r * Math.sin(phi) * Math.cos(theta)),
-        r * Math.cos(phi),
-        r * Math.sin(phi) * Math.sin(theta)
-      );
-    }
-  });
-
-  // 2. Longitude Meridians (Prime meridian, Pacific anti-meridian, quadrants)
-  const longitudes = [-135, -90, -45, 0, 45, 90, 135, 180];
-  const latStep = 4; // Every 4 degrees from -80 to +80
-
-  longitudes.forEach((lon) => {
-    const theta = (lon + 180) * (Math.PI / 180);
-    for (let lat = -80; lat <= 80; lat += latStep) {
-      const phi = (90 - lat) * (Math.PI / 180);
-      points.push(
-        -(r * Math.sin(phi) * Math.cos(theta)),
-        r * Math.cos(phi),
-        r * Math.sin(phi) * Math.sin(theta)
-      );
-    }
-  });
+  for (let i = 0; i < count; i++) {
+    const theta = (i / count) * Math.PI * 2;
+    points.push(-(r * Math.cos(theta)), 0, r * Math.sin(theta));
+  }
 
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
@@ -159,14 +133,14 @@ const createLatLonGridGeometry = (radius: number) => {
 };
 
 // ----------------------------------------------------------------------------
-// Atmospheric Fresnel Rim Shader Material
+// Soft Atmospheric Rim Fresnel Glow Shader
 // ----------------------------------------------------------------------------
 const createAtmosphereFresnelMaterial = (isLight: boolean) => {
   return new THREE.ShaderMaterial({
     uniforms: {
       uColor: { value: new THREE.Color(isLight ? 0x09090b : 0xffffff) },
-      uPower: { value: isLight ? 2.5 : 3.5 },
-      uIntensity: { value: isLight ? 0.38 : 0.65 },
+      uPower: { value: isLight ? 3.8 : 4.4 },
+      uIntensity: { value: isLight ? 0.22 : 0.35 },
     },
     vertexShader: `
       varying vec3 vNormal;
@@ -200,7 +174,7 @@ const createAtmosphereFresnelMaterial = (isLight: boolean) => {
 };
 
 // ----------------------------------------------------------------------------
-// Minimal, Tactile Visakhapatnam Beacon (Subtle pulse point & expanding ripple)
+// Minimal Visakhapatnam Micro-Radar Beacon
 // ----------------------------------------------------------------------------
 const MinimalVisakhapatnamBeacon = ({
   isLight,
@@ -248,12 +222,12 @@ const MinimalVisakhapatnamBeacon = ({
       const time = state.clock.elapsedTime;
 
       // 2. Single delicate expanding radar ring that softly fades out
-      const t = (time * 1.25) % 1;
+      const t = (time * 1.2) % 1;
       if (ringRef.current) {
-        const scale = 1.0 + t * 2.6;
+        const scale = 1.0 + t * 2.2;
         ringRef.current.scale.set(scale, scale, 1);
         const ringMat = ringRef.current.material as THREE.MeshBasicMaterial;
-        ringMat.opacity = Math.pow(1 - t, 1.4) * (isLight ? 0.85 : 0.95) * visibility;
+        ringMat.opacity = Math.pow(1 - t, 1.5) * (isLight ? 0.75 : 0.85) * visibility;
       }
 
       // 3. Small glowing core dot pulse
@@ -261,7 +235,7 @@ const MinimalVisakhapatnamBeacon = ({
         const pulse = 1.0 + Math.sin(time * 4.5) * 0.15;
         coreRef.current.scale.set(pulse, pulse, pulse);
         const coreMat = coreRef.current.material as THREE.MeshBasicMaterial;
-        coreMat.opacity = (isLight ? 0.95 : 1.0) * visibility;
+        coreMat.opacity = (isLight ? 0.9 : 1.0) * visibility;
       }
     }
   });
@@ -270,19 +244,19 @@ const MinimalVisakhapatnamBeacon = ({
 
   return (
     <group position={vspPos} quaternion={orientation} ref={beaconGroupRef}>
-      {/* High-contrast core dot directly on coordinate surface */}
+      {/* High-contrast micro-dot directly on coordinate surface */}
       <mesh ref={coreRef} position={[0, 0, 0]}>
-        <sphereGeometry args={[0.016, 16, 16]} />
+        <sphereGeometry args={[0.012, 16, 16]} />
         <meshBasicMaterial color={primaryColor} transparent opacity={1} />
       </mesh>
 
       {/* Single delicate expanding radar ring (tangent to sphere surface) */}
       <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.018, 0.024, 32]} />
+        <ringGeometry args={[0.014, 0.018, 32]} />
         <meshBasicMaterial
           color={primaryColor}
           transparent
-          opacity={0.85}
+          opacity={0.8}
           side={THREE.DoubleSide}
           depthWrite={false}
         />
@@ -292,23 +266,24 @@ const MinimalVisakhapatnamBeacon = ({
 };
 
 // ----------------------------------------------------------------------------
-// High-Density Dot-Matrix Earth Globe Component (Zero Tilt, Straight Y Rotation)
+// Whisper-Quiet Dot-Matrix Earth Globe (4,800 Micro-Nodes)
 // ----------------------------------------------------------------------------
 const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
   const globeGroupRef = useRef<THREE.Group>(null);
 
   const RADIUS = 1.25;
-  const POINT_COUNT = 12000;
+  // Refined whisper-quiet density with plenty of negative space
+  const POINT_COUNT = 4800;
 
-  // 1. Generate Uniform Fibonacci Point Cloud with Dedicated Per-Vertex Colors & Sizes
-  // Every single point in the 12,000 grid is preserved—ZERO dropped/omitted points
+  // 1. Generate Fibonacci Point Cloud with Dedicated Per-Vertex Colors, Sizes, and Alpha
   const { geometry: dotGeometry, material: dotMaterial } = useMemo(() => {
     const positions = new Float32Array(POINT_COUNT * 3);
     const colors = new Float32Array(POINT_COUNT * 3);
     const sizes = new Float32Array(POINT_COUNT);
+    const alphas = new Float32Array(POINT_COUNT);
 
     for (let i = 0; i < POINT_COUNT; i++) {
-      // Golden Spiral / Fibonacci sphere distribution ensuring 100% spherical coverage
+      // Golden Spiral / Fibonacci sphere distribution with negative space
       const phi = Math.acos(1 - (2 * (i + 0.5)) / POINT_COUNT);
       const theta = Math.PI * (1 + Math.sqrt(5)) * i;
 
@@ -325,31 +300,34 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
       positions[i * 3 + 1] = r * Math.cos(phi);
       positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
 
-      // Dedicated RGB Vertex Colors & Sizes (Land vs Ocean)
       if (isLand) {
-        // Land: Bright, crisp, prominent
+        // Land: Micro pinhead dots (crisp, phosphor white, not blinding)
         if (isLight) {
-          colors[i * 3] = 0.035;      // Deep obsidian #09090B
-          colors[i * 3 + 1] = 0.035;
-          colors[i * 3 + 2] = 0.043;
+          colors[i * 3] = 0.05;      // Deep obsidian #0D0D10
+          colors[i * 3 + 1] = 0.05;
+          colors[i * 3 + 2] = 0.06;
+          alphas[i] = 0.85;
         } else {
-          colors[i * 3] = 1.0;        // Crisp white #FFFFFF
+          colors[i * 3] = 1.0;       // Phosphor white
           colors[i * 3 + 1] = 1.0;
           colors[i * 3 + 2] = 1.0;
+          alphas[i] = 0.75;
         }
-        sizes[i] = 0.028;
+        sizes[i] = 0.013;
       } else {
-        // Ocean: Explicitly colored & visible (never empty / never hollow)
+        // Ocean: Barely-there whisper grey points
         if (isLight) {
-          colors[i * 3] = 0.78;       // Architectural blueprint grey #C7C7CC
-          colors[i * 3 + 1] = 0.78;
-          colors[i * 3 + 2] = 0.80;
+          colors[i * 3] = 0.65;      // Subtle blueprint grey
+          colors[i * 3 + 1] = 0.65;
+          colors[i * 3 + 2] = 0.68;
+          alphas[i] = 0.14;
         } else {
-          colors[i * 3] = 0.227;      // Visible gunmetal grey #3A3A3C
-          colors[i * 3 + 1] = 0.227;
-          colors[i * 3 + 2] = 0.235;
+          colors[i * 3] = 0.35;      // Soft dim gunmetal grey
+          colors[i * 3 + 1] = 0.35;
+          colors[i * 3 + 2] = 0.38;
+          alphas[i] = 0.12;
         }
-        sizes[i] = 0.014;
+        sizes[i] = 0.007;
       }
     }
 
@@ -357,37 +335,41 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    geo.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
 
-    // Custom Shader with guaranteed non-subpixel point rendering and zero depth traps
+    // Custom Shader with natural distance attenuation
     const mat = new THREE.ShaderMaterial({
       uniforms: {
-        uScale: { value: 850.0 },
+        uScale: { value: 650.0 },
       },
       vertexShader: `
         attribute vec3 color;
         attribute float size;
+        attribute float alpha;
         varying vec3 vColor;
+        varying float vAlpha;
 
         uniform float uScale;
 
         void main() {
           vColor = color;
+          vAlpha = alpha;
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          float pSize = size * (uScale / -mvPosition.z);
-          // Ensure every ocean point maintains a guaranteed visible minimum size
-          gl_PointSize = max(pSize, 1.8);
+          // Soft natural distance attenuation
+          gl_PointSize = size * (uScale / -mvPosition.z);
           gl_Position = projectionMatrix * mvPosition;
         }
       `,
       fragmentShader: `
         varying vec3 vColor;
+        varying float vAlpha;
 
         void main() {
           vec2 coord = gl_PointCoord - vec2(0.5);
           float dist = length(coord);
           if (dist > 0.5) discard;
-          float edge = smoothstep(0.5, 0.22, dist);
-          gl_FragColor = vec4(vColor, edge);
+          float edge = smoothstep(0.5, 0.2, dist);
+          gl_FragColor = vec4(vColor, vAlpha * edge);
         }
       `,
       transparent: true,
@@ -398,17 +380,17 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     return { geometry: geo, material: mat };
   }, [isLight]);
 
-  // 2. Navigation Grid (Equator, Parallels, Meridians) for persistent coordinate framework
-  const gridGeometry = useMemo(() => createLatLonGridGeometry(RADIUS), [RADIUS]);
+  // 2. Subtle Equator Reference Ring
+  const equatorGeometry = useMemo(() => createEquatorRingGeometry(RADIUS), [RADIUS]);
 
-  // 3. Atmospheric Rim Particle Halo
+  // 3. Delicate Atmospheric Particle Halo (whisper density)
   const haloGeometry = useMemo(() => {
-    const haloCount = 650;
+    const haloCount = 220;
     const positions = new Float32Array(haloCount * 3);
     for (let i = 0; i < haloCount; i++) {
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      const r = RADIUS * (1.05 + Math.random() * 0.06);
+      const r = RADIUS * (1.04 + Math.random() * 0.05);
       positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
       positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
       positions[i * 3 + 2] = r * Math.cos(phi);
@@ -418,7 +400,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     return geo;
   }, [RADIUS]);
 
-  // Fresnel Atmosphere
+  // Softened Fresnel Atmosphere
   const atmosphereMaterial = useMemo(() => createAtmosphereFresnelMaterial(isLight), [isLight]);
 
   // Strict Upright Vertical Y-Axis Rotation (Zero Tilt)
@@ -434,28 +416,28 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
       {/* Globe Group - Perfectly Straight & Upright */}
       <group ref={globeGroupRef} rotation={[0, 0, 0]}>
-        {/* Unified High-Density Dot-Matrix Sphere (Land + Ocean Grid) */}
+        {/* Whisper-Quiet Dot-Matrix Sphere */}
         <points geometry={dotGeometry} material={dotMaterial} />
 
-        {/* Persistent Navigational Latitude & Longitude Coordinate Parallels */}
-        <points geometry={gridGeometry}>
+        {/* Delicate Equator Reference Ring */}
+        <points geometry={equatorGeometry}>
           <pointsMaterial
-            size={0.012}
+            size={0.008}
             color={isLight ? '#09090b' : '#ffffff'}
             transparent
-            opacity={isLight ? 0.18 : 0.25}
+            opacity={isLight ? 0.10 : 0.15}
             sizeAttenuation
             depthWrite={false}
           />
         </points>
 
-        {/* Atmospheric Particle Halo */}
+        {/* Soft Atmospheric Particle Halo */}
         <points geometry={haloGeometry}>
           <pointsMaterial
-            size={0.014}
+            size={0.008}
             color={isLight ? '#09090b' : '#ffffff'}
             transparent
-            opacity={isLight ? 0.18 : 0.38}
+            opacity={isLight ? 0.12 : 0.22}
             sizeAttenuation
             depthWrite={false}
           />
@@ -469,9 +451,9 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
         />
       </group>
 
-      {/* Atmospheric Fresnel Rim Glow / Ambient Rim Shadow */}
+      {/* Softened Fresnel Rim Glow */}
       <mesh material={atmosphereMaterial}>
-        <sphereGeometry args={[RADIUS + 0.08, 48, 48]} />
+        <sphereGeometry args={[RADIUS + 0.05, 48, 48]} />
       </mesh>
     </group>
   );
@@ -482,7 +464,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
 // ----------------------------------------------------------------------------
 const CosmicDust = ({ isLight }: { isLight: boolean }) => {
   const ref = useRef<THREE.Points>(null);
-  const count = 350;
+  const count = 280;
   const color = isLight ? '#09090b' : '#ffffff';
 
   const positions = useMemo(() => {
@@ -515,10 +497,10 @@ const CosmicDust = ({ isLight }: { isLight: boolean }) => {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.016}
+        size={0.012}
         color={color}
         transparent
-        opacity={isLight ? 0.12 : 0.35}
+        opacity={isLight ? 0.08 : 0.22}
         sizeAttenuation
         depthWrite={false}
       />
