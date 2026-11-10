@@ -1,6 +1,5 @@
 import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ----------------------------------------------------------------------------
@@ -123,7 +122,7 @@ const createAtmosphereFresnelMaterial = (isLight: boolean) => {
     uniforms: {
       uColor: { value: new THREE.Color(isLight ? 0x050508 : 0xffffff) },
       uPower: { value: 3.5 },
-      uIntensity: { value: isLight ? 0.4 : 0.7 },
+      uIntensity: { value: isLight ? 0.38 : 0.65 },
     },
     vertexShader: `
       varying vec3 vNormal;
@@ -157,9 +156,9 @@ const createAtmosphereFresnelMaterial = (isLight: boolean) => {
 };
 
 // ----------------------------------------------------------------------------
-// Visakhapatnam Interactive Telemetry Beacon & Tactical HUD Component
+// Minimal, Tactile Visakhapatnam Beacon (Subtle pulse point & expanding ripple)
 // ----------------------------------------------------------------------------
-const VisakhapatnamBeacon = ({
+const MinimalVisakhapatnamBeacon = ({
   isLight,
   radius,
   globeGroupRef,
@@ -169,16 +168,13 @@ const VisakhapatnamBeacon = ({
   globeGroupRef: React.RefObject<THREE.Group>;
 }) => {
   const beaconGroupRef = useRef<THREE.Group>(null);
-  const ring1Ref = useRef<THREE.Mesh>(null);
-  const ring2Ref = useRef<THREE.Mesh>(null);
-  const beamRef = useRef<THREE.Mesh>(null);
-  const tipRef = useRef<THREE.Mesh>(null);
-  const hudContainerRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+  const coreRef = useRef<THREE.Mesh>(null);
 
   // Exact anchor position at Visakhapatnam [17.6868° N, 83.2185° E]
   const vspPos = useMemo(() => latLonToVector3(17.6868, 83.2185, radius * 1.006), [radius]);
 
-  // Compute normal quaternion so the beacon extends perpendicular from the globe surface
+  // Normal quaternion so the ripple ring lies perfectly tangent to the sphere surface
   const orientation = useMemo(() => {
     const normal = vspPos.clone().normalize();
     const q = new THREE.Quaternion();
@@ -186,66 +182,42 @@ const VisakhapatnamBeacon = ({
     return q;
   }, [vspPos]);
 
-  // Dynamic animation and back-hemisphere occlusion detection in useFrame
   useFrame((state) => {
-    const time = state.clock.elapsedTime;
+    if (!beaconGroupRef.current || !globeGroupRef.current) return;
 
-    if (beaconGroupRef.current && globeGroupRef.current) {
-      // 1. Occlusion Detection: determine if the coordinate is on the visible front hemisphere
-      const worldPos = new THREE.Vector3();
-      beaconGroupRef.current.getWorldPosition(worldPos);
+    // 1. Backface Culling: Calculate dot product between surface normal and camera vector
+    const worldPos = new THREE.Vector3();
+    beaconGroupRef.current.getWorldPosition(worldPos);
 
-      const globeCenter = new THREE.Vector3();
-      globeGroupRef.current.getWorldPosition(globeCenter);
+    const globeCenter = new THREE.Vector3();
+    globeGroupRef.current.getWorldPosition(globeCenter);
 
-      const surfaceNormal = worldPos.clone().sub(globeCenter).normalize();
-      const toCamera = state.camera.position.clone().sub(worldPos).normalize();
-      const dot = surfaceNormal.dot(toCamera);
+    const surfaceNormal = worldPos.clone().sub(globeCenter).normalize();
+    const toCamera = state.camera.position.clone().sub(worldPos).normalize();
+    const dot = surfaceNormal.dot(toCamera);
 
-      // Smooth fade transition between front and back hemispheres
-      const visibility = THREE.MathUtils.clamp((dot - 0.05) / 0.22, 0, 1);
+    // Smooth visibility fade when rotating to the back hemisphere
+    const visibility = THREE.MathUtils.clamp((dot - 0.02) / 0.18, 0, 1);
+    beaconGroupRef.current.visible = visibility > 0.001;
 
-      // Update HTML HUD visibility
-      if (hudContainerRef.current) {
-        if (visibility <= 0.01) {
-          hudContainerRef.current.style.opacity = '0';
-          hudContainerRef.current.style.pointerEvents = 'none';
-        } else {
-          hudContainerRef.current.style.opacity = `${visibility}`;
-          hudContainerRef.current.style.transform = `scale(${0.88 + visibility * 0.12})`;
-          hudContainerRef.current.style.pointerEvents = visibility > 0.5 ? 'auto' : 'none';
-        }
+    if (visibility > 0.001) {
+      const time = state.clock.elapsedTime;
+
+      // 2. Single delicate expanding radar ring that softly fades out
+      const t = (time * 1.25) % 1;
+      if (ringRef.current) {
+        const scale = 1.0 + t * 2.6;
+        ringRef.current.scale.set(scale, scale, 1);
+        const ringMat = ringRef.current.material as THREE.MeshBasicMaterial;
+        ringMat.opacity = Math.pow(1 - t, 1.4) * (isLight ? 0.75 : 0.9) * visibility;
       }
 
-      // 2. Animate 2 Concentric Ripple Rings (scaling outward & fading opacity)
-      const t1 = (time * 1.3) % 1;
-      const t2 = (time * 1.3 + 0.5) % 1;
-
-      if (ring1Ref.current) {
-        const s1 = 1 + t1 * 2.8;
-        ring1Ref.current.scale.set(s1, s1, 1);
-        const mat = ring1Ref.current.material as THREE.MeshBasicMaterial;
-        mat.opacity = (1 - t1) * (isLight ? 0.75 : 0.9) * visibility;
-      }
-
-      if (ring2Ref.current) {
-        const s2 = 1 + t2 * 2.8;
-        ring2Ref.current.scale.set(s2, s2, 1);
-        const mat = ring2Ref.current.material as THREE.MeshBasicMaterial;
-        mat.opacity = (1 - t2) * (isLight ? 0.75 : 0.9) * visibility;
-      }
-
-      // 3. Vertical Signal Beam & Glowing Tip Pulse
-      if (beamRef.current) {
-        const mat = beamRef.current.material as THREE.MeshBasicMaterial;
-        mat.opacity = (isLight ? 0.7 : 0.85) * visibility;
-      }
-
-      if (tipRef.current) {
-        const pulse = 1 + Math.sin(time * 6) * 0.25;
-        tipRef.current.scale.set(pulse, pulse, pulse);
-        const mat = tipRef.current.material as THREE.MeshBasicMaterial;
-        mat.opacity = (0.75 + Math.sin(time * 6) * 0.25) * visibility;
+      // 3. Small glowing core dot pulse
+      if (coreRef.current) {
+        const pulse = 1.0 + Math.sin(time * 4.5) * 0.15;
+        coreRef.current.scale.set(pulse, pulse, pulse);
+        const coreMat = coreRef.current.material as THREE.MeshBasicMaterial;
+        coreMat.opacity = (isLight ? 0.9 : 1.0) * visibility;
       }
     }
   });
@@ -254,119 +226,37 @@ const VisakhapatnamBeacon = ({
 
   return (
     <group position={vspPos} quaternion={orientation} ref={beaconGroupRef}>
-      {/* Surface Base Pip */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[0.016, 16, 16]} />
-        <meshBasicMaterial color={primaryColor} />
-      </mesh>
-
-      {/* Concentric Radar Ripple Rings (tangent to sphere surface) */}
-      <group rotation={[-Math.PI / 2, 0, 0]}>
-        {/* Core Static Reference Ring */}
-        <mesh>
-          <ringGeometry args={[0.02, 0.026, 32]} />
-          <meshBasicMaterial
-            color={primaryColor}
-            transparent
-            opacity={isLight ? 0.75 : 0.9}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-
-        {/* Dynamic Expanding Ripple Ring 1 */}
-        <mesh ref={ring1Ref}>
-          <ringGeometry args={[0.022, 0.028, 32]} />
-          <meshBasicMaterial
-            color={primaryColor}
-            transparent
-            opacity={0.8}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-
-        {/* Dynamic Expanding Ripple Ring 2 */}
-        <mesh ref={ring2Ref}>
-          <ringGeometry args={[0.022, 0.028, 32]} />
-          <meshBasicMaterial
-            color={primaryColor}
-            transparent
-            opacity={0.8}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      </group>
-
-      {/* Vertical Signal Beam / Laser Spike (Normal to Surface, extending ~0.28 units) */}
-      <mesh position={[0, 0.14, 0]} ref={beamRef}>
-        <cylinderGeometry args={[0.0015, 0.0035, 0.28, 8]} />
-        <meshBasicMaterial color={primaryColor} transparent opacity={isLight ? 0.7 : 0.85} />
-      </mesh>
-
-      {/* Intense Glowing Tip Point at the top of the beam */}
-      <mesh position={[0, 0.28, 0]} ref={tipRef}>
-        <sphereGeometry args={[0.014, 16, 16]} />
+      {/* High-contrast core dot directly on coordinate surface */}
+      <mesh ref={coreRef} position={[0, 0, 0]}>
+        <sphereGeometry args={[0.015, 16, 16]} />
         <meshBasicMaterial color={primaryColor} transparent opacity={1} />
       </mesh>
 
-      {/* Tactical HTML / Drei HUD Overlay */}
-      <Html
-        position={[0, 0.35, 0]}
-        distanceFactor={5.5}
-        center
-        style={{ pointerEvents: 'none' }}
-      >
-        <div
-          ref={hudContainerRef}
-          className="transition-all duration-150 select-none flex flex-col items-center gap-1 font-ndot"
-          style={{ opacity: 1 }}
-        >
-          {/* Reticle HUD Box with Corner Brackets */}
-          <div className="relative border border-foreground/50 bg-background/90 text-foreground px-2.5 py-1.5 rounded-xs shadow-2xl backdrop-blur-md whitespace-nowrap">
-            {/* Sci-Fi Corner Brackets */}
-            <span className="absolute -top-[2px] -left-[2px] w-1.5 h-1.5 border-t-2 border-l-2 border-foreground" />
-            <span className="absolute -top-[2px] -right-[2px] w-1.5 h-1.5 border-t-2 border-r-2 border-foreground" />
-            <span className="absolute -bottom-[2px] -left-[2px] w-1.5 h-1.5 border-b-2 border-l-2 border-foreground" />
-            <span className="absolute -bottom-[2px] -right-[2px] w-1.5 h-1.5 border-b-2 border-r-2 border-foreground" />
-
-            {/* Header: [ + ] LOC // 17.68° N, 83.21° E */}
-            <div className="flex items-center gap-1.5 text-[8.5px] sm:text-[9.5px] tracking-[0.2em] font-semibold">
-              <span className="text-foreground/70">[ + ]</span>
-              <span>LOC // 17.68° N, 83.21° E</span>
-            </div>
-
-            {/* Subtext Badge: NODE: VISAKHAPATNAM [ACTIVE] */}
-            <div className="mt-0.5 flex items-center justify-between gap-2.5 text-[7.5px] sm:text-[8px] tracking-[0.18em]">
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground animate-ping" />
-                <span className="font-bold">NODE: VISAKHAPATNAM</span>
-              </div>
-              <span className="px-1 py-0.2 rounded-2xs border border-foreground/30 bg-foreground/10 text-[6.5px] font-mono tracking-widest text-foreground font-semibold">
-                [ACTIVE]
-              </span>
-            </div>
-          </div>
-
-          {/* Dotted Anchor Stem Line */}
-          <div className="w-[1px] h-2.5 border-l border-dashed border-foreground/60" />
-        </div>
-      </Html>
+      {/* Single delicate expanding radar ring (tangent to sphere surface) */}
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.018, 0.023, 32]} />
+        <meshBasicMaterial
+          color={primaryColor}
+          transparent
+          opacity={0.8}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
     </group>
   );
 };
 
 // ----------------------------------------------------------------------------
-// High-Density Dot-Matrix Earth Globe Component
+// High-Density Dot-Matrix Earth Globe Component (Zero Tilt, Straight Y Rotation)
 // ----------------------------------------------------------------------------
 const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
   const globeGroupRef = useRef<THREE.Group>(null);
-  const orbitSatelliteRef = useRef<THREE.Group>(null);
 
-  // Scaled radius for balanced viewport composition
   const RADIUS = 1.25;
-  const ORBIT_RADIUS = 1.75;
   const POINT_COUNT = 18000;
 
-  // 1. Generate Fibonacci Point Cloud Sphere with Land/Ocean Sampling
+  // Generate Fibonacci Point Cloud Sphere with Land/Ocean Sampling
   const { geometry: dotGeometry, material: dotMaterial } = useMemo(() => {
     const positions = new Float32Array(POINT_COUNT * 3);
     const brightness = new Float32Array(POINT_COUNT);
@@ -384,7 +274,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
 
       const isLand = checkIsLand(lon, lat);
 
-      // Land nodes are elevated slightly and render significantly larger & brighter
+      // Land nodes elevated slightly & rendered larger/brighter
       const r = isLand ? RADIUS * 1.008 : RADIUS;
       positions[i * 3] = -(r * Math.sin(phi) * Math.cos(theta));
       positions[i * 3 + 1] = r * Math.cos(phi);
@@ -399,7 +289,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     geo.setAttribute('aBrightness', new THREE.BufferAttribute(brightness, 1));
     geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
 
-    // Custom Antialiased Circular Point Shader Material
+    // Antialiased Circular Point Shader Material
     const mat = new THREE.ShaderMaterial({
       uniforms: {
         uLandColor: { value: new THREE.Color(isLight ? 0x0a0a0c : 0xffffff) },
@@ -454,7 +344,7 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
     }
   }, [isLight, dotMaterial]);
 
-  // 2. Atmospheric Rim Particle Halo
+  // Atmospheric Rim Particle Halo
   const haloGeometry = useMemo(() => {
     const haloCount = 650;
     const positions = new Float32Array(haloCount * 3);
@@ -474,96 +364,46 @@ const DotMatrixGlobe = ({ isLight }: { isLight: boolean }) => {
   // Fresnel Atmosphere
   const atmosphereMaterial = useMemo(() => createAtmosphereFresnelMaterial(isLight), [isLight]);
 
-  // Frame animation loop with delta time (60 FPS)
+  // Strict Upright Vertical Y-Axis Rotation (Zero Tilt)
   useFrame((_state, delta) => {
-    // Continuous axial rotation of the dot-matrix planet along its local polar axis
     if (globeGroupRef.current) {
+      globeGroupRef.current.rotation.x = 0;
+      globeGroupRef.current.rotation.z = 0;
       globeGroupRef.current.rotation.y += delta * 0.15;
-    }
-
-    // Revolving telemetry beacon node along opposing orbital trajectory
-    if (orbitSatelliteRef.current) {
-      orbitSatelliteRef.current.rotation.y += delta * 0.45;
     }
   });
 
   return (
-    <>
-      {/* ------------------------------------------------------------------ */}
-      {/* Earth System with True Axial Tilt: 23.4° on Z-axis                 */}
-      {/* ------------------------------------------------------------------ */}
-      <group rotation={[0, 0, -23.44 * (Math.PI / 180)]}>
-        
-        {/* Continuous Axial Rotating Dot-Matrix Globe */}
-        <group ref={globeGroupRef}>
-          {/* High-Density Points Earth */}
-          <points geometry={dotGeometry} material={dotMaterial} />
+    <group position={[0, 0, 0]} rotation={[0, 0, 0]}>
+      {/* Globe Group - Perfectly Straight & Upright */}
+      <group ref={globeGroupRef} rotation={[0, 0, 0]}>
+        {/* High-Density Points Earth */}
+        <points geometry={dotGeometry} material={dotMaterial} />
 
-          {/* Atmospheric Particle Halo */}
-          <points geometry={haloGeometry}>
-            <pointsMaterial
-              size={0.014}
-              color={isLight ? '#0a0a0c' : '#ffffff'}
-              transparent
-              opacity={isLight ? 0.22 : 0.4}
-              sizeAttenuation
-            />
-          </points>
-
-          {/* Dedicated Visakhapatnam Telemetry Beacon & Tactical HUD */}
-          <VisakhapatnamBeacon
-            isLight={isLight}
-            radius={RADIUS}
-            globeGroupRef={globeGroupRef}
-          />
-        </group>
-
-        {/* Subtle Atmospheric Fresnel Rim Glow */}
-        <mesh material={atmosphereMaterial}>
-          <sphereGeometry args={[RADIUS + 0.09, 48, 48]} />
-        </mesh>
-      </group>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Elliptical Orbital Guide Ring tilted at opposing angle (15°)       */}
-      {/* ------------------------------------------------------------------ */}
-      <group rotation={[15 * (Math.PI / 180), 0, 15 * (Math.PI / 180)]}>
-        {/* Orbital Trajectory Ring */}
-        <mesh>
-          <torusGeometry args={[ORBIT_RADIUS, 0.0035, 8, 120]} />
-          <meshBasicMaterial
-            color={isLight ? '#000000' : '#ffffff'}
+        {/* Atmospheric Particle Halo */}
+        <points geometry={haloGeometry}>
+          <pointsMaterial
+            size={0.014}
+            color={isLight ? '#0a0a0c' : '#ffffff'}
             transparent
-            opacity={isLight ? 0.2 : 0.35}
+            opacity={isLight ? 0.22 : 0.4}
+            sizeAttenuation
           />
-        </mesh>
+        </points>
 
-        {/* Orbiting Telemetry Satellite Rig */}
-        <group ref={orbitSatelliteRef}>
-          <group position={[ORBIT_RADIUS, 0, 0]}>
-            {/* Satellite Core Box */}
-            <mesh>
-              <boxGeometry args={[0.04, 0.022, 0.025]} />
-              <meshBasicMaterial color={isLight ? '#000000' : '#ffffff'} />
-            </mesh>
-            {/* Solar Array Wings */}
-            <mesh position={[0, 0.042, 0]}>
-              <boxGeometry args={[0.025, 0.055, 0.003]} />
-              <meshBasicMaterial color={isLight ? '#222222' : '#cccccc'} />
-            </mesh>
-            <mesh position={[0, -0.042, 0]}>
-              <boxGeometry args={[0.025, 0.055, 0.003]} />
-              <meshBasicMaterial color={isLight ? '#222222' : '#cccccc'} />
-            </mesh>
-            {/* Sensor Beacon Pip */}
-            <mesh position={[0.022, 0, 0]}>
-              <sphereGeometry args={[0.009, 8, 8]} />
-              <meshBasicMaterial color={isLight ? '#000000' : '#ffffff'} />
-            </mesh>
-          </group>
-        </group>
+        {/* Minimal Visakhapatnam Beacon */}
+        <MinimalVisakhapatnamBeacon
+          isLight={isLight}
+          radius={RADIUS}
+          globeGroupRef={globeGroupRef}
+        />
       </group>
-    </>
+
+      {/* Atmospheric Fresnel Rim Glow */}
+      <mesh material={atmosphereMaterial}>
+        <sphereGeometry args={[RADIUS + 0.08, 48, 48]} />
+      </mesh>
+    </group>
   );
 };
 
@@ -616,7 +456,7 @@ const CosmicDust = ({ isLight }: { isLight: boolean }) => {
 };
 
 // ----------------------------------------------------------------------------
-// Centered Parallax Rig with Smooth Mouse Damping
+// Centered Parallax Rig with Smooth Mouse Damping (Zero X/Z Tilt)
 // ----------------------------------------------------------------------------
 const CenteredParallaxRig = ({ isLight }: { isLight: boolean }) => {
   const rigRef = useRef<THREE.Group>(null);
@@ -642,17 +482,19 @@ const CenteredParallaxRig = ({ isLight }: { isLight: boolean }) => {
     };
   }, []);
 
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     if (!rigRef.current) return;
 
-    // Perfectly centered root coordinates [0, 0, 0] with subtle parallax tilt
-    const targetRotX = mouse.current.y * 0.22;
-    const targetRotY = mouse.current.x * 0.26;
+    // Strict upright alignment: X and Z rotations remain strictly 0
+    rigRef.current.rotation.x = 0;
+    rigRef.current.rotation.z = 0;
+
+    // Subtle horizontal parallax & gentle translation
+    const targetRotY = mouse.current.x * 0.15;
     const targetPosX = mouse.current.x * 0.12;
     const targetPosY = mouse.current.y * 0.08;
 
-    rigRef.current.rotation.x = THREE.MathUtils.damp(rigRef.current.rotation.x, targetRotX, 3.2, delta);
-    rigRef.current.rotation.y = THREE.MathUtils.damp(rigRef.current.rotation.y, targetRotY, 3.2, delta);
+    rigRef.current.rotation.y = THREE.MathUtils.damp(rigRef.current.rotation.y, targetRotY, 3.0, delta);
     rigRef.current.position.x = THREE.MathUtils.damp(rigRef.current.position.x, targetPosX, 2.5, delta);
     rigRef.current.position.y = THREE.MathUtils.damp(rigRef.current.position.y, targetPosY, 2.5, delta);
 
@@ -663,7 +505,7 @@ const CenteredParallaxRig = ({ isLight }: { isLight: boolean }) => {
   });
 
   return (
-    <group ref={rigRef} position={[0, 0, 0]}>
+    <group ref={rigRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
       <DotMatrixGlobe isLight={isLight} />
       <CosmicDust isLight={isLight} />
     </group>
