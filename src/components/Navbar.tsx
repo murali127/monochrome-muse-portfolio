@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import darkLogo from '@/assets/logo.png';
 import lightLogo from '@/assets/light_logo.png';
 import { playTactileClick } from '@/utils/audioFeedback';
-import ResumeButton from './ResumeButton';
 
 const navItems = [
   'ABOUT',
@@ -171,13 +170,7 @@ const Navbar = () => {
             </a>
 
             {/* Subtle Divider */}
-            <div className="h-4 w-px bg-foreground/20 mx-1" />
-
-            {/* Resume Decouple Trigger */}
-            <ResumeButton
-              label="CV"
-              className="py-1.5 px-3 text-[9px] border border-border/80"
-            />
+            <div className="h-4 w-px bg-foreground/20 mx-1.5" />
 
             {/* Contact Primary CTA */}
             <button
@@ -281,14 +274,6 @@ const Navbar = () => {
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">↗</span>
                 </a>
-
-                {/* Mobile Resume Trigger */}
-                <div className="my-1.5 flex justify-center">
-                  <ResumeButton
-                    label="RESUME"
-                    className="w-full text-center py-2.5 text-[10px]"
-                  />
-                </div>
 
                 <button
                   onClick={() => scrollTo('CONTACT')}
