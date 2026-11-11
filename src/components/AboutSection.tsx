@@ -254,8 +254,8 @@ const AboutSection = () => {
             {/* Tactical Resume Decoupling Trigger */}
             <div className="mt-5 pt-4 border-t border-border/50 flex justify-center">
               <ResumeButton
-                label="DECOUPLE_CV // SPEC_V2.6"
-                className="w-full text-center py-3 text-[8.5px] sm:text-[9.5px]"
+                label="RESUME"
+                className="w-full text-center py-3 text-[9px] sm:text-[10px]"
               />
             </div>
           </motion.div>

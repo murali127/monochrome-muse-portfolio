@@ -389,7 +389,7 @@ const HeroSection = () => {
               </MagneticCTA>
 
               <ResumeButton
-                label="SYSTEM SPEC [CV]"
+                label="RESUME"
                 resumeUrl="/resume.pdf"
               />
             </motion.div>

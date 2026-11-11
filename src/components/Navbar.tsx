@@ -285,8 +285,8 @@ const Navbar = () => {
                 {/* Mobile Resume Trigger */}
                 <div className="my-1.5 flex justify-center">
                   <ResumeButton
-                    label="SYSTEM SPEC [CV]"
-                    className="w-full text-center py-2.5 text-[9.5px]"
+                    label="RESUME"
+                    className="w-full text-center py-2.5 text-[10px]"
                   />
                 </div>
 
