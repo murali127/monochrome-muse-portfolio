@@ -3,37 +3,236 @@ import { motion } from 'framer-motion';
 import SectionHeader from './SectionHeader';
 import { playTactileClick } from '@/utils/audioFeedback';
 
-interface QuickChannel {
+interface SwitchboardChannel {
   id: string;
+  channelIndex: string;
   label: string;
+  protocol: string;
   value: string;
   href: string;
-  protocol: string;
+  isExternal: boolean;
 }
 
-const channels: QuickChannel[] = [
+const channels: SwitchboardChannel[] = [
   {
     id: 'email',
+    channelIndex: 'CH_01',
     label: 'PRIMARY_DISPATCH',
+    protocol: 'SMTP // TLS 1.3',
     value: 'muralijay360@gmail.com',
     href: 'mailto:muralijay360@gmail.com',
-    protocol: 'SMTP / TLS 1.3',
+    isExternal: false,
   },
   {
     id: 'github',
+    channelIndex: 'CH_02',
     label: 'SOURCE_REPOSITORY',
+    protocol: 'GIT_SSH // HTTPS',
     value: 'github.com/murali127',
     href: 'https://github.com/murali127',
-    protocol: 'HTTPS / GIT_SSH',
+    isExternal: true,
   },
   {
     id: 'linkedin',
+    channelIndex: 'CH_03',
     label: 'NETWORK_IDENTITY',
+    protocol: 'OIDC // VERIFIED',
     value: 'linkedin.com/in/muralipaila',
     href: 'https://www.linkedin.com/in/muralipaila/',
-    protocol: 'OIDC / VERIFIED',
+    isExternal: true,
   },
 ];
+
+const GLYPHS = '0123456789ABCDEFx_#<>';
+
+const useScrambleText = (targetText: string, isHovered: boolean) => {
+  const [text, setText] = useState(targetText);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!isHovered) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setText(targetText);
+      return;
+    }
+
+    let iteration = 0;
+    const maxIterations = 8;
+    const interval = 16;
+
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      iteration++;
+      if (iteration >= maxIterations) {
+        setText(targetText);
+        if (timerRef.current) clearInterval(timerRef.current);
+      } else {
+        setText(
+          targetText
+            .split('')
+            .map((char) => {
+              if (char === '.' || char === '@' || char === '/') return char;
+              if (Math.random() > 0.45) {
+                return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+              }
+              return char;
+            })
+            .join('')
+        );
+      }
+    }, interval);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isHovered, targetText]);
+
+  return text;
+};
+
+const EqualizerBars = ({ isHovered }: { isHovered: boolean }) => {
+  return (
+    <div className="flex items-end gap-[2px] h-3 w-4 shrink-0" aria-hidden="true">
+      {[0.35, 0.75, 0.45, 1.0, 0.6].map((peak, i) => (
+        <motion.span
+          key={i}
+          className="w-[2px] rounded-full bg-foreground"
+          animate={{
+            height: isHovered ? [`${peak * 30}%`, `${peak * 100}%`, `${peak * 45}%`] : '30%',
+            opacity: isHovered ? 1 : 0.35,
+          }}
+          transition={
+            isHovered
+              ? {
+                  duration: 0.45 + i * 0.08,
+                  repeat: Infinity,
+                  repeatType: 'reverse',
+                  ease: 'easeInOut',
+                }
+              : { duration: 0.2 }
+          }
+          style={{ minHeight: '3px' }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const SwitchboardRow = ({
+  channel,
+  onCopy,
+  isCopied,
+}: {
+  channel: SwitchboardChannel;
+  onCopy: (channel: SwitchboardChannel) => void;
+  isCopied: boolean;
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const scrambledAddress = useScrambleText(channel.value, isHovered);
+
+  const handleRowClick = () => {
+    playTactileClick('subtle');
+    if (channel.isExternal) {
+      window.open(channel.href, '_blank', 'noopener,noreferrer');
+    } else {
+      window.location.href = channel.href;
+    }
+  };
+
+  const handleCopyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCopy(channel);
+  };
+
+  return (
+    <div
+      onClick={handleRowClick}
+      onMouseEnter={() => {
+        setIsHovered(true);
+        playTactileClick('subtle');
+      }}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group relative p-3.5 sm:p-4 hover:bg-foreground/[0.035] transition-all duration-200 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden"
+      data-cursor-hover
+    >
+      {/* Laser line wipe pulse on row hover */}
+      {isHovered && (
+        <span className="absolute inset-x-0 bottom-0 h-px bg-foreground/60 shadow-[0_0_8px_rgba(255,255,255,0.7)] pointer-events-none" />
+      )}
+
+      {/* Left: Metadata, Channel ID & Address */}
+      <div className="space-y-1 min-w-0 flex-1">
+        {/* Channel Header Ribbon */}
+        <div className="flex flex-wrap items-center gap-2 font-ndot text-[7.5px] sm:text-[8px] tracking-[0.22em] text-muted-foreground">
+          <span className="font-mono text-foreground/80 font-bold">{channel.channelIndex}</span>
+          <span className="text-border/80">/</span>
+          <span className="group-hover:text-foreground transition-colors font-medium">{channel.label}</span>
+          <span className="text-border/80 hidden sm:inline">•</span>
+          <span className="font-mono text-[7px] sm:text-[7.5px] text-muted-foreground/75 hidden sm:inline">
+            {channel.protocol}
+          </span>
+          <div className="ml-auto sm:ml-0 flex items-center gap-2.5">
+            <EqualizerBars isHovered={isHovered} />
+            <div className="flex items-center gap-1.5">
+              <div className="relative flex items-center justify-center">
+                {isHovered && (
+                  <span className="absolute -inset-1 rounded-full border border-foreground/60 animate-ping pointer-events-none" />
+                )}
+                <span
+                  className={`h-1.5 w-1.5 rounded-full transition-all duration-200 ${
+                    isHovered
+                      ? 'bg-foreground shadow-[0_0_8px_rgba(255,255,255,0.9)]'
+                      : 'bg-muted-foreground/50'
+                  }`}
+                />
+              </div>
+              <span
+                className={`font-mono text-[7px] sm:text-[7.5px] tracking-wider transition-colors duration-200 ${
+                  isHovered ? 'text-foreground font-semibold' : 'text-muted-foreground/70'
+                }`}
+              >
+                {isHovered ? '● UPLINK_LOCKED' : '○ STANDBY'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Address with Kinetic Scramble & Dispatch Glyph */}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-mono text-xs sm:text-[13px] text-foreground font-medium truncate group-hover:text-glow transition-all">
+            {scrambledAddress}
+          </span>
+          <span className="font-mono text-xs text-muted-foreground/70 transition-transform duration-200 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0">
+            ↗
+          </span>
+        </div>
+      </div>
+
+      {/* Right: Brutalist Hardware Latch Copy Button */}
+      <div className="self-end sm:self-center shrink-0">
+        <button
+          type="button"
+          onClick={handleCopyClick}
+          className={`relative px-3 py-1.5 rounded-xs font-mono text-[8px] sm:text-[8.5px] tracking-[0.2em] transition-all duration-200 border ${
+            isCopied
+              ? 'bg-foreground text-background border-foreground font-bold shadow-[0_0_12px_rgba(255,255,255,0.8)]'
+              : 'border-border/70 bg-foreground/[0.04] text-foreground hover:border-foreground hover:bg-foreground/[0.08]'
+          }`}
+          data-cursor-hover
+          title={`Copy ${channel.value}`}
+        >
+          {isCopied ? (
+            <span className="inline-flex items-center gap-1">
+              <span>[ ✓ HASH_BUFFERED ]</span>
+            </span>
+          ) : (
+            <span>[ 0xCOPY ]</span>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 type TransmissionStage = 'IDLE' | 'ENCRYPTING' | 'LOCKING_UPLINK' | 'TRANSMITTED';
 
@@ -82,11 +281,11 @@ const ContactSection = () => {
     }, 600);
   };
 
-  const handleCopy = (ch: QuickChannel) => {
+  const handleCopy = (ch: SwitchboardChannel) => {
     navigator.clipboard.writeText(ch.value);
     setCopiedId(ch.id);
     playTactileClick('toggle');
-    setTimeout(() => setCopiedId(null), 2000);
+    setTimeout(() => setCopiedId(null), 1500);
   };
 
   return (
@@ -307,46 +506,36 @@ const ContactSection = () => {
                 </div>
               </div>
 
-              {/* DIRECT QUICK-ACTION 1-CLICK COPY CHANNELS */}
-              <div className="space-y-3">
-                <div className="font-ndot text-[8px] tracking-[0.3em] text-muted-foreground uppercase">
-                  DIRECT CHANNELS // 1-CLICK DISPATCH
+              {/* DIRECT CHANNELS HARDWARE TELEMETRY SWITCHBOARD */}
+              <div className="space-y-2.5">
+                {/* Header Ribbon */}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2">
+                  <div className="font-ndot text-[8px] tracking-[0.28em] text-muted-foreground uppercase flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-foreground phosphor-led" />
+                    <span>HARDWARE_BUS_SWITCHBOARD // DIRECT_DISPATCH</span>
+                  </div>
+                  <div className="font-mono text-[7.5px] text-foreground/80 tracking-wider">
+                    BUS_STATUS: 3/3 ONLINE
+                  </div>
                 </div>
 
-                {channels.map((ch) => {
-                  const isCopied = copiedId === ch.id;
-
-                  return (
-                    <div
+                {/* Terminal Bus Strip Container */}
+                <div className="border border-border/70 rounded-xs bg-background/80 divide-y divide-border/40 overflow-hidden shadow-lg">
+                  {channels.map((ch) => (
+                    <SwitchboardRow
                       key={ch.id}
-                      className="p-3.5 border border-border/70 rounded-xs bg-background/80 hover:border-foreground/80 transition-all flex items-center justify-between gap-3 group"
-                    >
-                      <div className="space-y-0.5 min-w-0">
-                        <div className="font-ndot text-[7.5px] tracking-[0.25em] text-muted-foreground group-hover:text-foreground transition-colors">
-                          {ch.label} // {ch.protocol}
-                        </div>
-                        <a
-                          href={ch.href}
-                          target={ch.href.startsWith('http') ? '_blank' : undefined}
-                          rel="noreferrer"
-                          className="font-mono text-xs sm:text-[13px] text-foreground hover:underline block truncate"
-                          data-cursor-hover
-                        >
-                          {ch.value}
-                        </a>
-                      </div>
+                      channel={ch}
+                      onCopy={handleCopy}
+                      isCopied={copiedId === ch.id}
+                    />
+                  ))}
+                </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(ch)}
-                        className="px-3 py-1.5 rounded-xs border border-border/80 hover:border-foreground bg-foreground/[0.04] font-ndot text-[8px] tracking-[0.2em] text-foreground transition-colors shrink-0"
-                        data-cursor-hover
-                      >
-                        {isCopied ? 'COPIED!' : 'COPY'}
-                      </button>
-                    </div>
-                  );
-                })}
+                {/* Live System Diagnostics Footer Sub-bar */}
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-2 font-mono text-[7px] sm:text-[7.5px] text-muted-foreground/80 tracking-wider border-t border-border/30">
+                  <span>LATENCY: 24ms // ENCRYPTION: TLS_1.3_CHACHA20</span>
+                  <span className="text-foreground/70">INTEGRITY: 100% // NO_PACKET_LOSS</span>
+                </div>
               </div>
 
             </div>
