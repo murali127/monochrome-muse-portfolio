@@ -882,8 +882,9 @@ const RelativeSolarSystemRig = ({
 };
 
 // ----------------------------------------------------------------------------
-// Target Identification Reticle (Anchored above Earth at [0, 0, 0])
-// Fades cleanly out before camera descends below Z = 20
+// Target Identification Reticle (Anchored directly around Earth at [0, 0, 0])
+// Delicate micro-reticle with corner tick brackets and single-line telemetry.
+// Fades cleanly to opacity 0 as camera descends below Z = 25.
 // ----------------------------------------------------------------------------
 const EarthTargetReticle = ({
   isLocked,
@@ -892,31 +893,58 @@ const EarthTargetReticle = ({
   isLocked: boolean;
   cameraZ: number;
 }) => {
-  const opacity = useMemo(() => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Fallback initial opacity
+  const initialOpacity = useMemo(() => {
     if (!isLocked) return 0;
-    if (cameraZ <= 14.0) return 0;
-    if (cameraZ >= 24.0) return 1;
-    return (cameraZ - 14.0) / (24.0 - 14.0);
+    if (cameraZ <= 25.0) return 0;
+    if (cameraZ >= 36.0) return 1;
+    return (cameraZ - 25.0) / (36.0 - 25.0);
   }, [isLocked, cameraZ]);
 
-  if (opacity <= 0.01) {
+  // Synchronous per-frame opacity update matching 60fps camera descent
+  useFrame(({ camera }) => {
+    if (!containerRef.current) return;
+    const z = camera.position.z;
+    if (!isLocked || z <= 25.0) {
+      containerRef.current.style.opacity = '0';
+      return;
+    }
+    if (z >= 36.0) {
+      containerRef.current.style.opacity = '1';
+      return;
+    }
+    const val = (z - 25.0) / (36.0 - 25.0);
+    containerRef.current.style.opacity = val.toFixed(3);
+  });
+
+  if (!isLocked || cameraZ <= 24.5) {
     return null;
   }
 
   return (
     <group position={[0, 0, 0]}>
-      <Html center position={[0, 1.8, 0]} distanceFactor={48}>
+      <Html center position={[0, 0, 0]} distanceFactor={26}>
         <div
-          style={{ opacity }}
-          className="font-ndot tracking-widest text-foreground bg-background/95 border border-foreground/60 px-2.5 py-1.5 shadow-xl pointer-events-none select-none whitespace-nowrap flex flex-col gap-0.5 rounded-none transition-opacity duration-150"
+          ref={containerRef}
+          style={{ opacity: initialOpacity }}
+          className="relative w-11 h-11 flex items-center justify-center pointer-events-none select-none transition-opacity duration-200 ease-out"
         >
-          <div className="flex items-center gap-1.5 text-foreground font-bold text-[9px] sm:text-[10px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-foreground animate-ping" />
-            <span>TARGET: TERRA (EARTH)</span>
+          {/* Minimal Single-Line Telemetry Tag Anchored Above */}
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 font-ndot tracking-widest text-[9px] sm:text-[10px] text-foreground/90 whitespace-nowrap bg-background/80 backdrop-blur-[2px] px-1.5 py-0.5 border border-foreground/30 shadow-sm flex items-center gap-1.5">
+            <span className="w-1 h-1 rounded-full bg-foreground" />
+            <span>[ TERRA // 1.000 AU ]</span>
           </div>
-          <div className="text-[7.5px] sm:text-[8px] font-mono text-muted-foreground">
-            ORBIT_03 // HABITABLE ZONE // 1.000 AU
-          </div>
+
+          {/* Four delicate corner tick brackets framing Earth (┌ ┐ └ ┘) */}
+          <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-foreground/80" />
+          <span className="absolute top-0 right-0 w-2 h-2 border-t border-r border-foreground/80" />
+          <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-foreground/80" />
+          <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-foreground/80" />
+
+          {/* Micro pulsing targeting cross dot */}
+          <span className="w-1 h-1 rounded-full bg-foreground/80 animate-ping" />
         </div>
       </Html>
     </group>
