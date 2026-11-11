@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import profilePhoto from '@/assets/murali-photo.png';
 import { playTactileClick } from '@/utils/audioFeedback';
+import ResumeButton from './ResumeButton';
 
 // ----------------------------------------------------------------------------
 // Types & Interfaces
@@ -387,15 +388,10 @@ const HeroSection = () => {
                 <span>CONTACT</span>
               </MagneticCTA>
 
-              <MagneticCTA
-                href="/resume.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="glass-panel px-4 py-3.5 font-ndot text-[9px] sm:text-[10px] tracking-[0.2em] text-muted-foreground hover:text-foreground rounded-full transition-colors inline-flex items-center justify-center gap-1.5"
-              >
-                <span>SYSTEM SPEC [CV]</span>
-                <span className="font-mono text-xs">↗</span>
-              </MagneticCTA>
+              <ResumeButton
+                label="SYSTEM SPEC [CV]"
+                resumeUrl="/resume.pdf"
+              />
             </motion.div>
 
             {/* Real-Time Telemetry Bar (Active Live Clock & Coordinates) */}

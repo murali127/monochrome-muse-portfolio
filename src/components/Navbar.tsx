@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import darkLogo from '@/assets/logo.png';
 import lightLogo from '@/assets/light_logo.png';
 import { playTactileClick } from '@/utils/audioFeedback';
+import ResumeButton from './ResumeButton';
 
 const navItems = [
   'ABOUT',
@@ -170,7 +171,13 @@ const Navbar = () => {
             </a>
 
             {/* Subtle Divider */}
-            <div className="h-4 w-px bg-foreground/20 mx-1.5" />
+            <div className="h-4 w-px bg-foreground/20 mx-1" />
+
+            {/* Resume Decouple Trigger */}
+            <ResumeButton
+              label="CV"
+              className="py-1.5 px-3 text-[9px] border border-border/80"
+            />
 
             {/* Contact Primary CTA */}
             <button
@@ -274,6 +281,15 @@ const Navbar = () => {
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">↗</span>
                 </a>
+
+                {/* Mobile Resume Trigger */}
+                <div className="my-1.5 flex justify-center">
+                  <ResumeButton
+                    label="SYSTEM SPEC [CV]"
+                    className="w-full text-center py-2.5 text-[9.5px]"
+                  />
+                </div>
+
                 <button
                   onClick={() => scrollTo('CONTACT')}
                   className="hud-nav-cta min-h-[44px] rounded-full mt-2 px-5 py-2.5 font-ndot text-xs tracking-[0.2em] w-full text-center flex items-center justify-center leading-none"
