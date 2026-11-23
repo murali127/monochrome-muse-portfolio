@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playTactileClick } from '@/utils/audioFeedback';
-import ResumeModal from './ResumeModal';
 
 interface ResumeButtonProps {
   label?: string;
@@ -16,14 +15,13 @@ export const ResumeButton = ({
   className = '',
   resumeUrl = '/resume.pdf',
 }: ResumeButtonProps) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLAnchorElement>(null);
 
   const [isHovered, setIsHovered] = useState(false);
   const [isEjecting, setIsEjecting] = useState(false);
   const [ejectStage, setEjectStage] = useState<'IDLE' | 'EJECTING' | 'OPENED'>('IDLE');
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Decoder text shuffle for hover transformation
   const [displayLabel, setDisplayLabel] = useState(label);
@@ -97,28 +95,18 @@ export const ResumeButton = ({
     setIsHovered(false);
   };
 
-  // Tactile Ejection Sequence on Click - Triggers In-App Tactical Resume Modal
-  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    if (isEjecting) return;
-
-    // Trigger visual ejection sequence and audio feedback
-    setIsEjecting(true);
-    setEjectStage('EJECTING');
+  // Native link navigation to open PDF in a new tab with tactile click feedback
+  const handleClick = useCallback(() => {
     playTactileClick('shutter');
+    setIsEjecting(true);
+    setEjectStage('OPENED');
 
     setTimeout(() => {
-      setEjectStage('OPENED');
-      playTactileClick('toggle');
-      setIsModalOpen(true);
-
-      setTimeout(() => {
-        setIsEjecting(false);
-        setEjectStage('IDLE');
-        setIsHovered(false);
-      }, 600);
-    }, 200);
-  }, [isEjecting]);
+      setIsEjecting(false);
+      setEjectStage('IDLE');
+      setIsHovered(false);
+    }, 600);
+  }, []);
 
   return (
     <div
@@ -211,11 +199,13 @@ export const ResumeButton = ({
       {/* ------------------------------------------------------------------ */}
       {/* Tactile Pill Button with Internal Scramble & Laser Scan Sweep     */}
       {/* ------------------------------------------------------------------ */}
-      <motion.button
+      <motion.a
         ref={buttonRef}
-        type="button"
+        href={resumeUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         onClick={handleClick}
-        aria-label="View Resume System Spec"
+        aria-label="Open Resume in new tab"
         animate={{
           x: offset.x,
           y: offset.y,
@@ -223,7 +213,7 @@ export const ResumeButton = ({
         }}
         transition={{ type: 'spring', stiffness: 350, damping: 25, bounce: 0 }}
         whileTap={{ scale: 0.94 }}
-        className={`relative group inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 font-ndot text-[9px] sm:text-[10px] tracking-[0.22em] transition-all duration-200 cursor-pointer overflow-hidden select-none min-w-[145px] sm:min-w-[160px] ${
+        className={`relative group inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 font-ndot text-[9px] sm:text-[10px] tracking-[0.22em] transition-all duration-200 cursor-pointer overflow-hidden select-none min-w-[145px] sm:min-w-[160px] no-underline ${
           isEjecting
             ? 'bg-foreground text-background font-bold border-2 border-foreground ring-2 ring-foreground/40 shadow-[0_0_30px_rgba(255,255,255,0.4)]'
             : isHovered
@@ -285,14 +275,7 @@ export const ResumeButton = ({
             <span className="font-mono text-xs">✓</span>
           </span>
         )}
-      </motion.button>
-
-      {/* Tactical In-App Resume HUD Reader / Modal */}
-      <ResumeModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        resumeUrl={resumeUrl}
-      />
+      </motion.a>
     </div>
   );
 };
