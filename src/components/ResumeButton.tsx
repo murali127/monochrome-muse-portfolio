@@ -15,7 +15,7 @@ export const ResumeButton = ({
   className = '',
   resumeUrl = '/resume.pdf',
 }: ResumeButtonProps) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLAnchorElement>(null);
 
   const [isHovered, setIsHovered] = useState(false);
   const [isEjecting, setIsEjecting] = useState(false);
@@ -96,44 +96,34 @@ export const ResumeButton = ({
   };
 
   // Tactile Ejection Sequence on Click
-  const handleClick = useCallback(() => {
-    if (isEjecting) return;
-
-    setIsEjecting(true);
-    playTactileClick('shutter');
-
-    if (isTouchDevice) {
-      // Instant tap feedback on mobile
-      setEjectStage('EJECTING');
-      setTimeout(() => {
-        setEjectStage('OPENED');
-        playTactileClick('toggle');
-        window.open(resumeUrl, '_blank');
-        setTimeout(() => {
-          setIsEjecting(false);
-          setEjectStage('IDLE');
-        }, 350);
-      }, 150);
+  const handleClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isEjecting) {
+      e.preventDefault();
       return;
     }
 
-    // 220ms Tactile Cartridge Ejection Sequence on Desktop
+    // Trigger visual ejection sequence and audio feedback in current tab
+    setIsEjecting(true);
     setEjectStage('EJECTING');
+    playTactileClick('shutter');
 
     setTimeout(() => {
       setEjectStage('OPENED');
       playTactileClick('toggle');
 
       setTimeout(() => {
-        window.open(resumeUrl, '_blank');
-        setTimeout(() => {
-          setIsEjecting(false);
-          setEjectStage('IDLE');
-          setIsHovered(false);
-        }, 400);
-      }, 100);
-    }, 140);
-  }, [isEjecting, isTouchDevice, resumeUrl]);
+        setIsEjecting(false);
+        setEjectStage('IDLE');
+        setIsHovered(false);
+      }, 700);
+    }, 180);
+
+    // Native browser anchor navigation proceeds without e.preventDefault().
+    // Opening via native target="_blank" and rel="noopener noreferrer" ensures:
+    // 1. Zero popup-blocker interference (trusted user gesture).
+    // 2. Zero browser extension eval traps or CSP evaluation violations.
+    // 3. Reliable PDF loading across all desktop and mobile browsers.
+  }, [isEjecting]);
 
   return (
     <div
@@ -226,10 +216,13 @@ export const ResumeButton = ({
       {/* ------------------------------------------------------------------ */}
       {/* Tactile Pill Button with Internal Scramble & Laser Scan Sweep     */}
       {/* ------------------------------------------------------------------ */}
-      <motion.button
+      <motion.a
         ref={buttonRef}
-        type="button"
+        href={resumeUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         onClick={handleClick}
+        aria-label="Open Resume PDF in new tab"
         animate={{
           x: offset.x,
           y: offset.y,
@@ -237,7 +230,7 @@ export const ResumeButton = ({
         }}
         transition={{ type: 'spring', stiffness: 350, damping: 25, bounce: 0 }}
         whileTap={{ scale: 0.94 }}
-        className={`relative group inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 font-ndot text-[9px] sm:text-[10px] tracking-[0.22em] transition-all duration-200 cursor-pointer overflow-hidden select-none min-w-[145px] sm:min-w-[160px] ${
+        className={`relative group inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 font-ndot text-[9px] sm:text-[10px] tracking-[0.22em] transition-all duration-200 cursor-pointer overflow-hidden select-none min-w-[145px] sm:min-w-[160px] no-underline ${
           isEjecting
             ? 'bg-foreground text-background font-bold border-2 border-foreground ring-2 ring-foreground/40 shadow-[0_0_30px_rgba(255,255,255,0.4)]'
             : isHovered
@@ -299,7 +292,7 @@ export const ResumeButton = ({
             <span className="font-mono text-xs">✓</span>
           </span>
         )}
-      </motion.button>
+      </motion.a>
     </div>
   );
 };
